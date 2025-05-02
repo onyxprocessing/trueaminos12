@@ -1,0 +1,40 @@
+2025-05-02T19:19:05Z info: Creating virtual machine
+2025-05-02T19:19:16Z info: Virtual machine created
+2025-05-02T19:19:17Z info: Waiting for deployment to be ready
+starting up user application
+Created .env file with necessary environment variables
+up to date, audited 434 packages in 5s
+npm notice
+To address all issues, run:
+npm notice To update run: npm install -g npm@11.3.0
+Starting the application in production mode...
+Using existing AIRTABLE_API_KEY from environment
+Installing dependencies...
+up to date, audited 434 packages in 3s
+command finished with error [sh -c chmod +x ./clone_repository.sh && ./clone_repository.sh]: exit status 127
+Starting the application in production mode...
+Installing dependencies...
+Favicons set up successfully
+
+Installing dependencies...
+Starting the application in production mode...
+Favicons set up successfully
+Preparing TrueAminoStore deployment...
+Using existing AIRTABLE_API_KEY from environment
+Favicons set up successfully
+2 moderate severity vulnerabilities
+
+Created .env file with necessary environment variables
+
+59 packages are looking for funding
+2 moderate severity vulnerabilities
+Preparing TrueAminoStore deployment...
+Using existing AIRTABLE_API_KEY from environment
+TrueAminoStore directory already exists. Using existing directory.
+Setting up favicons...
+  npm audit fix
+Favicons set up successfully
+a port configuration was specified but the required port was never opened
+Starting TrueAminoStore deployment...
+Created .env file with necessary environment variables
+2025-05-02T19:20:46Z error: The deployment failed because the application failed to open a port in time. This can happen because the application takes to long to open a server, or doesn't open one at all on the expected port. Note that this doesn't mean that the application is crashing, only that it's not opening a port in time. The application must serve traffic on the first port specified as 'localPort' in the port configuration specified in the .replit file. Make sure that the application opens a port quickly and that there are no operations taking too long on startup. Check the logs for more information.

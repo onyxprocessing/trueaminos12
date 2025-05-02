@@ -80,6 +80,50 @@ if [ -f "../attached_assets/favicon-32x32.png" ]; then
     echo -e "${GREEN}Favicons set up successfully${NC}"
 fi
 
+# Create a script to start the server and properly export port
+cat > server-start.js << 'EOF'
+// This is a wrapper script to ensure the server properly binds to port 5000
+const { spawn } = require('child_process');
+const http = require('http');
+
+// Start the server process
+console.log('Starting the server process...');
+const server = spawn('npx', ['tsx', 'server/index.ts'], {
+  env: {
+    ...process.env,
+    PORT: '5000',
+    HOST: '0.0.0.0',
+    NODE_ENV: 'production',
+  },
+  stdio: 'inherit'
+});
+
+// Function to check if the server is listening on port 5000
+function checkServerReady() {
+  console.log('Checking if server is ready...');
+  http.get('http://localhost:5000', res => {
+    console.log(`Server is listening! Status code: ${res.statusCode}`);
+  }).on('error', err => {
+    console.log('Server not ready yet, retrying in 1 second...');
+    setTimeout(checkServerReady, 1000);
+  });
+}
+
+// Start checking after a 3-second delay
+setTimeout(checkServerReady, 3000);
+
+// Handle process termination
+process.on('SIGINT', () => {
+  server.kill('SIGINT');
+  process.exit();
+});
+
+server.on('close', (code) => {
+  console.log(`Server process exited with code ${code}`);
+  process.exit(code);
+});
+EOF
+
 # Start the production server
 echo -e "${GREEN}Starting the application in production mode...${NC}"
-exec PORT=5000 HOST=0.0.0.0 NODE_ENV=production npx tsx server/index.ts
+exec node server-start.js
