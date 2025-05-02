@@ -80,9 +80,9 @@ const Footer: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-center pt-6 mt-6">
           <p className="text-gray-400 text-sm">© {new Date().getFullYear()} TrueAminos. All rights reserved.</p>
           <div className="mt-4 md:mt-0 flex space-x-4">
-            <Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition">Privacy Policy</Link>
-            <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition">Terms of Service</Link>
-            <Link href="/shipping" className="text-gray-400 hover:text-white text-sm transition">Shipping Policy</Link>
+            <Link href="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition">Privacy Policy</Link>
+            <Link href="/terms-of-service" className="text-gray-400 hover:text-white text-sm transition">Terms of Service</Link>
+            <Link href="/shipping-policy" className="text-gray-400 hover:text-white text-sm transition">Shipping Policy</Link>
           </div>
         </div>
       </div>
