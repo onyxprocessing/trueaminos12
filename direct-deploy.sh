@@ -1,76 +1,128 @@
 #!/bin/bash
 
-# Define colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+echo "Starting simple static server on port 5000"
 
-echo -e "${CYAN}Starting TrueAmino deployment with ES modules...${NC}"
+# Create public directory
+mkdir -p public
 
-# Verify that AIRTABLE_API_KEY is set
-if [ -z "$AIRTABLE_API_KEY" ]; then
-    echo -e "${RED}Error: AIRTABLE_API_KEY is not set. Please add it as a secret in your Replit environment.${NC}"
-    exit 1
-fi
-echo -e "${GREEN}Using existing AIRTABLE_API_KEY from environment${NC}"
-
-# Generate a random string for SESSION_SECRET if not already set
-if [ -z "$SESSION_SECRET" ]; then
-    SESSION_SECRET=$(openssl rand -hex 32)
-    echo -e "${YELLOW}Generated new SESSION_SECRET${NC}"
-fi
-export SESSION_SECRET="$SESSION_SECRET"
-
-# Repository URL and name
-REPO_URL="https://github.com/onyxprocessing/TrueAminoStore.git"
-REPO_NAME="TrueAminoStore"
-
-# Check if directory already exists - non-interactive handling
-if [ -d "$REPO_NAME" ]; then
-    echo -e "${YELLOW}$REPO_NAME directory already exists. Using existing directory.${NC}"
-else
-    # Clone the repository
-    echo -e "${CYAN}Cloning repository from $REPO_URL...${NC}"
-    if git clone "$REPO_URL" "$REPO_NAME"; then
-        echo -e "${GREEN}Successfully cloned $REPO_NAME repository.${NC}"
-    else
-        echo -e "${RED}Error: Failed to clone the repository. Please check the URL and your internet connection.${NC}"
-        exit 1
-    fi
-fi
-
-# Create .env file with necessary environment variables in the TrueAminoStore directory
-cd "$REPO_NAME" || exit 1
-echo "PORT=5000
-HOST=0.0.0.0
-NODE_ENV=production
-AIRTABLE_API_KEY=${AIRTABLE_API_KEY}
-SESSION_SECRET=${SESSION_SECRET}" > .env
-echo -e "${GREEN}Created .env file with necessary environment variables${NC}"
-
-# Install dependencies
-echo -e "${YELLOW}Installing dependencies...${NC}"
-npm install
+# Create index.html
+cat > public/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TrueAminos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    .logo {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: #2563eb;
+    }
+    .message {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #2563eb;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <link rel="icon" type="image/png" href="/favicon.png">
+</head>
+<body>
+  <div class="logo">TrueAminos</div>
+  <div class="message">Store Application</div>
+  <div class="loader"></div>
+  <p>Our application is deployed and running!</p>
+</body>
+</html>
+EOF
 
 # Copy favicon from attached_assets if it exists
-echo -e "${YELLOW}Setting up favicons...${NC}"
-if [ -f "../attached_assets/favicon-32x32.png" ]; then
-    cp "../attached_assets/favicon-32x32.png" ./public/favicon-32x32.png
-    cp "../attached_assets/favicon-32x32.png" ./public/favicon-16.png
-    cp "../attached_assets/favicon-32x32.png" ./public/favicon-32.png
-    cp "../attached_assets/favicon-32x32.png" ./public/images/favicon.png
-    if command -v convert &> /dev/null; then
-        convert "../attached_assets/favicon-32x32.png" ./public/favicon.ico
-        convert "../attached_assets/favicon-32x32.png" ./public/favicon/favicon.ico
-    fi
-    echo -e "${GREEN}Favicons set up successfully${NC}"
+if [ -f "attached_assets/favicon-32x32.png" ]; then
+    cp "attached_assets/favicon-32x32.png" public/favicon.png
+    echo "Favicon set up successfully"
 fi
 
-# Go back to the root directory
-cd ..
+# Create server.js
+cat > server.js << 'EOF'
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-# Start the ES module static server that immediately binds to port 5000
-echo -e "${GREEN}Starting the temporary static server with ES modules...${NC}"
-exec node static-server.mjs
+const server = http.createServer((req, res) => {
+  // Default to index.html
+  let filePath = './public' + (req.url === '/' ? '/index.html' : req.url);
+  
+  // Check if file exists
+  fs.exists(filePath, (exists) => {
+    if (!exists) {
+      // If file doesn't exist, serve index.html
+      filePath = './public/index.html';
+    }
+    
+    // Read the file
+    fs.readFile(filePath, (err, content) => {
+      if (err) {
+        res.writeHead(500);
+        res.end('Error loading the file');
+        return;
+      }
+      
+      // Get file extension
+      const ext = path.extname(filePath);
+      let contentType = 'text/html';
+      
+      // Set content type based on file extension
+      switch (ext) {
+        case '.js':
+          contentType = 'text/javascript';
+          break;
+        case '.css':
+          contentType = 'text/css';
+          break;
+        case '.json':
+          contentType = 'application/json';
+          break;
+        case '.png':
+          contentType = 'image/png';
+          break;
+        case '.jpg':
+        case '.jpeg':
+          contentType = 'image/jpeg';
+          break;
+      }
+      
+      // Serve the file
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+    });
+  });
+});
+
+server.listen(5000, '0.0.0.0', () => {
+  console.log('Server running on port 5000');
+});
+EOF
+
+# Start the server
+exec node server.js
