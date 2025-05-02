@@ -224,6 +224,7 @@ function ProductPage() {
   const { toast } = useToast();
   const [selectedWeight, setSelectedWeight] = useState("5mg");
   const [quantity, setQuantity] = useState(1);
+  const [weightOptions, setWeightOptions] = useState<string[]>(["5mg", "10mg"]);
 
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: ['/api/products', slug],
@@ -297,42 +298,48 @@ function ProductPage() {
     );
   }
 
-  // Get weight options from the product data (weights field in Airtable)
-  let weightOptions = product.weightOptions || ["5mg", "10mg"];
-  
-  // Special handling for NAD+ product to ensure it always has 100mg and 500mg options
-  if (product.id === 2 && product.name === "NAD+") {
-    // Make sure both 100mg and 500mg options are included for NAD+
-    if (!weightOptions.includes("100mg")) {
-      weightOptions = [...weightOptions, "100mg"];
-    }
-    if (!weightOptions.includes("500mg")) {
-      weightOptions = [...weightOptions, "500mg"];
-    }
-    console.log("Enhanced NAD+ weight options:", weightOptions);
-  }
-  
-  // Set initial selected weight to the smallest/lowest available option when possible
+  // Get weight options and set initial weight only after product data is loaded
   useEffect(() => {
-    if (weightOptions && weightOptions.length > 0) {
-      // Define weight priority from smallest to largest
-      const weightPriority = ["2mg", "5mg", "10mg", "15mg", "20mg", "100mg", "500mg", "750mg"];
+    if (product) {
+      // Get weight options from the product data (weights field in Airtable)
+      let options = product.weightOptions || ["5mg", "10mg"];
       
-      // Find the smallest available weight according to priority
-      let selectedOption = weightOptions[0]; // Default to first option
-      
-      // Try to find the smallest weight according to priority
-      for (const weight of weightPriority) {
-        if (weightOptions.includes(weight)) {
-          selectedOption = weight;
-          break;
+      // Special handling for NAD+ product to ensure it always has 100mg and 500mg options
+      if (product.id === 2 && product.name === "NAD+") {
+        // Make sure both 100mg and 500mg options are included for NAD+
+        if (!options.includes("100mg")) {
+          options = [...options, "100mg"];
         }
+        if (!options.includes("500mg")) {
+          options = [...options, "500mg"];
+        }
+        console.log("Enhanced NAD+ weight options:", options);
       }
       
-      console.log(`Setting default weight for ${product.name} to ${selectedOption}`);
-      setSelectedWeight(selectedOption);
+      // Update the weight options state variable
+      setWeightOptions(options);
+      
+      // Only set weight if we have options
+      if (options && options.length > 0) {
+        // Define weight priority from smallest to largest
+        const weightPriority = ["2mg", "5mg", "10mg", "15mg", "20mg", "100mg", "500mg", "750mg"];
+        
+        // Find the smallest available weight according to priority
+        let selectedOption = options[0]; // Default to first option
+        
+        // Try to find the smallest weight according to priority
+        for (const weight of weightPriority) {
+          if (options.includes(weight)) {
+            selectedOption = weight;
+            break;
+          }
+        }
+        
+        console.log(`Setting default weight for ${product.name} to ${selectedOption}`);
+        setSelectedWeight(selectedOption);
+      }
     }
-  }, [weightOptions, product.name]);
+  }, [product]);
   
   // Get current price based on selected weight
   const getCurrentPrice = () => {
