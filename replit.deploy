@@ -1,1 +1,1 @@
-run = "sh run.sh"
+run = "sh -c 'cd TrueAminoStore && npm start'"
