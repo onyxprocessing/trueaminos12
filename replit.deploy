@@ -1,1 +1,1 @@
-run = "./ultra-deploy.sh"
+run = "./deploy.sh"
