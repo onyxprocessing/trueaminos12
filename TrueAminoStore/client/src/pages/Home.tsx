@@ -75,7 +75,7 @@ const Home: React.FC = () => {
               Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.
             </p>
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-              <Link href="#products">
+              <Link href="/products">
                 <Button variant="secondary" size="lg" className="px-6 py-3 text-center">
                   Shop Products
                 </Button>
