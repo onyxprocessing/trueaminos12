@@ -1,0 +1,82 @@
+import { pgTable, text, serial, integer, boolean, numeric } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// Product categories
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  imageUrl: text("image_url"),
+});
+
+// Products table - Note: Airtable may provide prices as strings
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  price: text("price").notNull(), // Changed to text to match Airtable data
+  categoryId: integer("category_id").notNull(),
+  imageUrl: text("image_url"),
+  slug: text("slug").notNull().unique(),
+  inStock: boolean("in_stock").notNull().default(true),
+  featured: boolean("featured").notNull().default(false),
+});
+
+// Cart items table (for memory storage only)
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  quantity: integer("quantity").notNull().default(1),
+  sessionId: text("session_id").notNull(),
+  selectedWeight: text("selected_weight"),
+});
+
+// Zod schemas for validation
+export const insertCategorySchema = createInsertSchema(categories);
+export const insertProductSchema = createInsertSchema(products);
+export const insertCartItemSchema = createInsertSchema(cartItems);
+
+// Types for use in application
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+}
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+// Custom Product interface to match Airtable data structure
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  description2?: string; // Additional description field from Airtable
+  price: string; // Generic price (now used as price5mg)
+  price5mg?: string; // Price specific to 5mg weight
+  price10mg?: string; // Price specific to 10mg weight
+  price15mg?: string; // Price specific to 15mg weight
+  price20mg?: string; // Price specific to 20mg weight
+  price2mg?: string; // Price specific to 2mg weight
+  price750mg?: string; // Price specific to 750mg weight (MK-677)
+  price100mg?: string; // Price specific to 100mg weight (NAD+)
+  price500mg?: string; // Price specific to 500mg weight (NAD+)
+  categoryId: number;
+  imageUrl: string | null;
+  image2Url?: string | null;
+  image3Url?: string | null;
+  weightOptions?: string[];
+  slug: string;
+  inStock: boolean;
+  featured: boolean;
+}
+
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+
+export type CartItem = typeof cartItems.$inferSelect;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+
+// Extended types for cart with product details
+export type CartItemWithProduct = CartItem & {
+  product: Product;
+};
