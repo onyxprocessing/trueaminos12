@@ -68,6 +68,18 @@ echo -e "${GREEN}Created .env file with necessary environment variables${NC}"
 echo -e "${YELLOW}Installing dependencies...${NC}"
 npm install
 
+# Copy favicon into correct locations
+echo -e "${YELLOW}Setting up favicons...${NC}"
+if [ -f "../attached_assets/favicon-32x32.png" ]; then
+    cp "../attached_assets/favicon-32x32.png" ./public/favicon-32x32.png
+    cp "../attached_assets/favicon-32x32.png" ./public/favicon-16.png
+    cp "../attached_assets/favicon-32x32.png" ./public/favicon-32.png
+    cp "../attached_assets/favicon-32x32.png" ./public/images/favicon.png
+    convert "../attached_assets/favicon-32x32.png" ./public/favicon.ico
+    convert "../attached_assets/favicon-32x32.png" ./public/favicon/favicon.ico
+    echo -e "${GREEN}Favicons set up successfully${NC}"
+fi
+
 # Start the production server
 echo -e "${GREEN}Starting the application in production mode...${NC}"
 exec PORT=5000 HOST=0.0.0.0 NODE_ENV=production npx tsx server/index.ts
