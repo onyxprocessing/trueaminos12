@@ -15,6 +15,8 @@ createRoot(document.getElementById("root")!).render(
       <meta property="og:type" content="website" />
       <meta property="og:url" content="https://trueaminos.com" />
       <link rel="canonical" href="https://trueaminos.com" />
+      <link rel="icon" href="/favicon-32x32.png" type="image/png" />
+      <link rel="shortcut icon" href="/favicon-32x32.png" type="image/png" />
     </Helmet>
     <App />
   </HelmetProvider>
