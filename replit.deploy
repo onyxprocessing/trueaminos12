@@ -36,15 +36,38 @@ fi
 # Set environment variables
 export PORT=5000
 export HOST=0.0.0.0
-export NODE_ENV=development
+export NODE_ENV=production
+
+# Generate a random string for SESSION_SECRET if not already set
+if [ -z "$SESSION_SECRET" ]; then
+    SESSION_SECRET=$(openssl rand -hex 32)
+    echo -e "${YELLOW}Generated new SESSION_SECRET${NC}"
+fi
+export SESSION_SECRET="$SESSION_SECRET"
+
+# Verify that AIRTABLE_API_KEY is set
+if [ -z "$AIRTABLE_API_KEY" ]; then
+    echo -e "${RED}Error: AIRTABLE_API_KEY is not set. Please add it as a secret in your Replit environment.${NC}"
+    exit 1
+fi
+echo -e "${GREEN}Using existing AIRTABLE_API_KEY from environment${NC}"
 
 # Change to the TrueAminoStore directory
 cd "$REPO_NAME" || exit 1
+
+# Create .env file with necessary environment variables
+echo "PORT=5000
+HOST=0.0.0.0
+NODE_ENV=production
+AIRTABLE_API_KEY=${AIRTABLE_API_KEY}
+SESSION_SECRET=${SESSION_SECRET}" > .env
+
+echo -e "${GREEN}Created .env file with necessary environment variables${NC}"
 
 # Check if npm dependencies are installed
 echo -e "${YELLOW}Installing dependencies...${NC}"
 npm install
 
-# Start the development server
-echo -e "${GREEN}Starting the application...${NC}"
-exec NODE_ENV=development PORT=5000 HOST=0.0.0.0 npx tsx server/index.ts
+# Start the production server
+echo -e "${GREEN}Starting the application in production mode...${NC}"
+exec PORT=5000 HOST=0.0.0.0 NODE_ENV=production npx tsx server/index.ts

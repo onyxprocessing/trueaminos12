@@ -1,6 +1,6 @@
 modules = ["nodejs-20"]
 [nix]
-packages = ["gh", "jq"]
+packages = ["gh", "jq", "imagemagick"]
 channel = "stable-24_05"
 
 [workflows]

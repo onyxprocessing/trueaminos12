@@ -1,0 +1,47 @@
+2025-05-02T19:07:59Z info: Deployment: 80aaf399-08db-480b-b5b7-7b785606e534
+2025-05-02T19:07:59Z info: Build: 15d9fae2-10ac-4894-9b5d-b3fea954521f
+2025-05-02T19:07:59Z info: Connecting to builder
+2025-05-02T19:08:03Z info: Builder connected
+2025-05-02T19:08:03Z info: Installing packages
+2025-05-02T19:08:04Z info: Skipping Build as no Build command set
+2025-05-02T19:08:04Z info: Pushing pid1 binary layer...
+2025-05-02T19:08:05Z info: Pushing Repl layer...
+2025-05-02T19:08:05Z info: Pushing hosting layer...
+2025-05-02T19:08:05Z info: Retrieved cached nix layer
+2025-05-02T19:08:05Z info: Created hosting layer
+2025-05-02T19:08:06Z info: Created pid1 binary layer
+2025-05-02T19:08:34Z info: Created Repl layer
+2025-05-02T19:08:34Z info: Pushed image manifest
+2025-05-02T19:08:35Z info: Pushed soci index manifest
+2025-05-02T19:08:40Z info: Creating virtual machine
+2025-05-02T19:09:18Z info: Virtual machine created
+2025-05-02T19:09:18Z info: Waiting for deployment to be ready
+Import cancelled by user.
+command finished successfully with exit code 0
+starting up user application
+Import cancelled by user.
+
+Starting import of TrueAminoStore repository...
+Warning: TrueAminoStore directory already exists.
+Warning: TrueAminoStore directory already exists.
+starting up user application
+Import cancelled by user.
+main done, exiting
+forwarding local port 5000 to external port 80 (mapped as 1104)
+main done, exiting
+main done, exiting
+Warning: TrueAminoStore directory already exists.
+Import cancelled by user.
+main done, exiting
+command finished successfully with exit code 0
+Warning: TrueAminoStore directory already exists.
+Import cancelled by user.
+Starting import of TrueAminoStore repository...
+command finished successfully with exit code 0
+Starting import of TrueAminoStore repository...
+main done, exiting
+Import cancelled by user.
+Warning: TrueAminoStore directory already exists.
+
+Import cancelled by user.
+2025-05-02T19:13:19Z error: The deployment failed to initialize due to a configuration or code error. Check the logs tab for more information. For additional support, contact us at support@replit.com. 
