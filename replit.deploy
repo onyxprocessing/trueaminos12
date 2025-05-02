@@ -1,1 +1,1 @@
-run = "./deploy.sh"
+run = "./deploy-final.sh"
