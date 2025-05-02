@@ -52,6 +52,7 @@ export interface Product {
   name: string;
   description: string;
   description2?: string; // Additional description field from Airtable
+  meta?: string; // SEO meta description for the product
   price: string; // Generic price (now used as price5mg)
   price5mg?: string; // Price specific to 5mg weight
   price10mg?: string; // Price specific to 10mg weight

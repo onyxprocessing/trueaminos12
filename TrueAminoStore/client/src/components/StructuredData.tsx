@@ -1,4 +1,3 @@
-import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 interface Product {
@@ -17,86 +16,65 @@ interface StructuredDataProps {
 }
 
 export default function StructuredData({ type, data, product }: StructuredDataProps) {
-  let structuredData = {};
-
-  // Website Schema
-  if (type === 'website') {
-    structuredData = {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'TrueAminos',
-      url: 'https://trueaminos.com',
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: 'https://trueaminos.com/search?q={search_term_string}',
-        'query-input': 'required name=search_term_string'
-      }
-    };
-  }
-
-  // Organization Schema
-  if (type === 'organization') {
-    structuredData = {
-      '@context': 'https://schema.org',
-      '@type': 'Organization',
-      name: 'TrueAminos',
-      url: 'https://trueaminos.com',
-      logo: 'https://trueaminos.com/favicon-32x32.png',
-      sameAs: [
-        'https://facebook.com/trueaminos',
-        'https://instagram.com/trueaminos',
-        'https://twitter.com/trueaminos'
-      ],
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: 'Franklin',
-        addressRegion: 'TN',
-        addressCountry: 'US'
-      },
-      contactPoint: {
-        '@type': 'ContactPoint',
-        contactType: 'customer service',
-        email: 'support@trueaminos.com'
-      }
-    };
-  }
-
-  // Product Schema
-  if (type === 'product' && product) {
-    const productPrice = parseFloat(product.price);
-    const imageUrl = product.imageUrl || 'https://trueaminos.com/social-share.svg';
-    
-    structuredData = {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: product.name,
-      description: product.description,
-      image: imageUrl,
-      sku: `TA-${product.id}`,
-      mpn: `TA-${product.id}`,
-      brand: {
-        '@type': 'Brand',
-        name: 'TrueAminos'
-      },
-      offers: {
-        '@type': 'Offer',
-        url: `https://trueaminos.com/product/${product.slug}`,
-        priceCurrency: 'USD',
-        price: productPrice,
-        priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-        availability: 'https://schema.org/InStock',
-        seller: {
-          '@type': 'Organization',
-          name: 'TrueAminos'
-        }
-      }
-    };
-  }
-
+  // Default organization data
+  const organizationData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "TrueAminos",
+    "url": "https://trueaminos.com",
+    "logo": "https://trueaminos.com/favicon-32x32.png",
+    "description": "Premium quality research peptides and SARMs for scientific purposes.",
+    ...(data || {})
+  };
+  
+  // Website data
+  const websiteData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "TrueAminos",
+    "url": "https://trueaminos.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://trueaminos.com/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    },
+    ...(data || {})
+  };
+  
+  // Product data (requires a product to be passed)
+  const productData = product ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "productID": product.id.toString(),
+    "name": product.name,
+    "description": product.description,
+    "url": `https://trueaminos.com/product/${product.slug}`,
+    "image": product.imageUrl || "https://trueaminos.com/facebook-card.svg",
+    "offers": {
+      "@type": "Offer",
+      "price": product.price,
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock",
+      "url": `https://trueaminos.com/product/${product.slug}`
+    },
+    "brand": {
+      "@type": "Brand",
+      "name": "TrueAminos"
+    },
+    ...(data || {})
+  } : {};
+  
+  // Select the correct data structure based on type
+  const jsonLdData = type === 'product' && product 
+    ? productData 
+    : type === 'organization' 
+      ? organizationData 
+      : websiteData;
+  
   return (
     <Helmet>
       <script type="application/ld+json">
-        {JSON.stringify(structuredData)}
+        {JSON.stringify(jsonLdData)}
       </script>
     </Helmet>
   );

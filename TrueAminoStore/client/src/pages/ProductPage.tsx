@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProductCard from '@/components/ProductCard'
 import FDADisclaimer from '@/components/FDADisclaimer'
+import ProductSEO from '@/components/ProductSEO'
 import { useCart } from '@/hooks/useCart'
 import { useToast } from '@/hooks/use-toast'
 import { formatPrice } from '@/lib/utils'
@@ -261,8 +262,6 @@ function ProductPage() {
         quantity: quantity,
         selectedWeight: selectedWeight
       });
-      
-      // Toast notification removed as requested
     }
   };
 
@@ -360,240 +359,245 @@ function ProductPage() {
   };
 
   return (
-    <Layout
-      title={product.name}
-      description={product.description}
-    >
-      <div className="bg-gray-50 py-4">
-        <div className="container px-6 md:px-8 mx-auto max-w-7xl">
-          <div className="flex items-center text-sm text-gray-500">
-            <span className="text-blue-600 font-medium uppercase">BEST SELLERS, IMMUNE & INFLAMMATORY</span>
+    <React.Fragment>
+      {/* Add dedicated SEO meta tags for this product */}
+      <ProductSEO product={product} />
+      
+      <Layout
+        title={product.name}
+        description={product.description}
+      >
+        <div className="bg-gray-50 py-4">
+          <div className="container px-6 md:px-8 mx-auto max-w-7xl">
+            <div className="flex items-center text-sm text-gray-500">
+              <span className="text-blue-600 font-medium uppercase">BEST SELLERS, IMMUNE & INFLAMMATORY</span>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="container px-6 md:px-8 mx-auto max-w-7xl py-10">
-        <h1 className="text-3xl font-bold mb-8">{product.name}</h1>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left Column - Product Images */}
-          <div>
-            <ImageGallery product={product} />
+        <div className="container px-6 md:px-8 mx-auto max-w-7xl py-10">
+          <h1 className="text-3xl font-bold mb-8">{product.name}</h1>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Left Column - Product Images */}
+            <div>
+              <ImageGallery product={product} />
+              
+              {/* Chemical Formula Card */}
+              <div className="mt-6 bg-white border border-gray-200 rounded-md p-4 shadow-sm">
+                <div className="mb-2">
+                  <MolecularFormula formula="C62H98N16O22" />
+                </div>
+                <div className="text-sm text-gray-700 mb-2">
+                  <span className="font-semibold">Purity:</span> ≥99%
+                </div>
+                <div className="text-xs text-gray-500">
+                  <span className="font-medium">Intended for research purposes only.</span><br />
+                  Not for human or veterinary use.
+                </div>
+              </div>
+            </div>
             
-            {/* Chemical Formula Card */}
-            <div className="mt-6 bg-white border border-gray-200 rounded-md p-4 shadow-sm">
-              <div className="mb-2">
-                <MolecularFormula formula="C62H98N16O22" />
+            {/* Right Column - Product Info */}
+            <div>
+              {/* Product description */}
+              <div className="mb-8">
+                <p className="text-gray-700">{product.description}</p>
               </div>
-              <div className="text-sm text-gray-700 mb-2">
-                <span className="font-semibold">Purity:</span> ≥99%
+              
+              {/* Product configuration */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <WeightSelector 
+                  options={weightOptions}
+                  selectedWeight={selectedWeight}
+                  onChange={setSelectedWeight}
+                />
+                
+                <QuantitySelector 
+                  quantity={quantity}
+                  onChange={setQuantity}
+                />
               </div>
-              <div className="text-xs text-gray-500">
-                <span className="font-medium">Intended for research purposes only.</span><br />
-                Not for human or veterinary use.
+              
+              {/* Price and Add to Cart */}
+              <div className="mb-8">
+                <div className="flex items-baseline mb-4">
+                  <span className="text-2xl font-bold text-gray-900 mr-2">
+                    {formatPrice(getCurrentPrice())}
+                  </span>
+                  <span className="text-sm text-gray-500">ORDER MORE, SAVE MORE</span>
+                </div>
+                
+                <Button 
+                  onClick={handleAddToCart}
+                  disabled={!product.inStock}
+                  size="lg"
+                  className="w-full bg-blue-900 hover:bg-blue-800 text-white"
+                >
+                  ADD TO CART
+                </Button>
+              </div>
+              
+              {/* Free shipping */}
+              <div className="flex items-center mb-8 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="mr-3 text-blue-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="8 12 12 16 16 12"></polyline>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                  </svg>
+                </div>
+                <p className="text-sm">
+                  <span className="font-medium">Free Shipping on All Orders $175+</span>
+                </p>
+              </div>
+              
+              {/* FDA Notice */}
+              <div className="bg-gray-50 p-4 rounded-md border border-l-4 border-l-blue-500 border-gray-200 mb-8">
+                <div className="flex">
+                  <div className="flex-shrink-0 mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Product Usage: For Research Use Only - Not for Human or Veterinary Use</p>
+                    <p className="text-xs mt-1">This product is intended strictly for in vitro research and laboratory experimentation. It is not a drug, food, cosmetic, or dietary supplement and has not been evaluated by the FDA.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           
-          {/* Right Column - Product Info */}
-          <div>
-            {/* Product description */}
-            <div className="mb-8">
-              <p className="text-gray-700">{product.description}</p>
-            </div>
-            
-            {/* Product configuration */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              <WeightSelector 
-                options={weightOptions}
-                selectedWeight={selectedWeight}
-                onChange={setSelectedWeight}
-              />
+          {/* Product Description Tabs */}
+          <div className="mt-16 border-t border-gray-200 pt-10">
+            <Tabs defaultValue="description" className="w-full">
+              <TabsList className="w-full justify-start border-b mb-8">
+                <TabsTrigger value="description" className="text-lg">DESCRIPTION</TabsTrigger>
+                <TabsTrigger value="details" className="text-lg">TECHNICAL DETAILS</TabsTrigger>
+                <TabsTrigger value="research" className="text-lg">RESEARCH USES</TabsTrigger>
+              </TabsList>
               
-              <QuantitySelector 
-                quantity={quantity}
-                onChange={setQuantity}
-              />
-            </div>
-            
-            {/* Price and Add to Cart */}
-            <div className="mb-8">
-              <div className="flex items-baseline mb-4">
-                <span className="text-2xl font-bold text-gray-900 mr-2">
-                  {formatPrice(getCurrentPrice())}
-                </span>
-                <span className="text-sm text-gray-500">ORDER MORE, SAVE MORE</span>
-              </div>
+              <TabsContent value="description" className="mt-6">
+                <div className="space-y-4">
+                  <h3 className="font-bold text-xl">Product Name:</h3>
+                  <p>{product.name}</p>
+                  
+                  <h3 className="font-bold text-xl mt-8">Description:</h3>
+                  <p className="text-gray-700">
+                    {product.description}
+                  </p>
+                  
+                  <p className="text-gray-700 mt-4">
+                    BPC-157 is a synthetic peptide fragment derived from a naturally occurring protein found in gastric juice. It has been studied extensively in laboratory settings for its potential to support tissue regeneration and cell protection. This peptide is supplied in lyophilized powder form to ensure maximum stability during storage.
+                  </p>
+                </div>
+              </TabsContent>
               
-              <Button 
-                onClick={handleAddToCart}
-                disabled={!product.inStock}
-                size="lg"
-                className="w-full bg-blue-900 hover:bg-blue-800 text-white"
-              >
-                ADD TO CART
-              </Button>
-            </div>
-            
-            {/* Free shipping */}
-            <div className="flex items-center mb-8 p-3 bg-gray-50 rounded-md border border-gray-200">
-              <div className="mr-3 text-blue-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="8 12 12 16 16 12"></polyline>
-                  <line x1="12" y1="8" x2="12" y2="16"></line>
-                </svg>
-              </div>
-              <p className="text-sm">
-                <span className="font-medium">Free Shipping on All Orders $175+</span>
-              </p>
-            </div>
-            
-            {/* FDA Notice */}
-            <div className="bg-gray-50 p-4 rounded-md border border-l-4 border-l-blue-500 border-gray-200 mb-8">
-              <div className="flex">
-                <div className="flex-shrink-0 mr-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                  </svg>
+              <TabsContent value="details" className="mt-6">
+                <div className="space-y-4">
+                  <h3 className="font-bold text-xl">Chemical Information:</h3>
+                  <ul className="list-disc pl-8 space-y-2">
+                    <li><span className="font-medium">Molecular Formula:</span> C<sub>62</sub>H<sub>98</sub>N<sub>16</sub>O<sub>22</sub></li>
+                    <li><span className="font-medium">Molecular Weight:</span> 1419.53552 g/mol</li>
+                    <li><span className="font-medium">Sequence:</span> Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val</li>
+                  </ul>
+                  
+                  <h3 className="font-bold text-xl mt-8">Product Specifications:</h3>
+                  <ul className="list-disc pl-8 space-y-2">
+                    <li><span className="font-medium">Purity:</span> ≥99% (HPLC Certified)</li>
+                    <li><span className="font-medium">Appearance:</span> Lyophilized white powder</li>
+                    <li><span className="font-medium">Solubility:</span> Soluble in bacteriostatic water</li>
+                  </ul>
+                  
+                  <h3 className="font-bold text-xl mt-8">Storage and Handling:</h3>
+                  <ul className="list-disc pl-8 space-y-2">
+                    <li>Store the lyophilized powder at -20°C.</li>
+                    <li>Once reconstituted, store at 2-8°C and use promptly.</li>
+                    <li>Maintain aseptic handling practices to ensure product quality and sterility.</li>
+                  </ul>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold">Product Usage: For Research Use Only - Not for Human or Veterinary Use</p>
-                  <p className="text-xs mt-1">This product is intended strictly for in vitro research and laboratory experimentation. It is not a drug, food, cosmetic, or dietary supplement and has not been evaluated by the FDA.</p>
+              </TabsContent>
+              
+              <TabsContent value="research" className="mt-6">
+                <div className="space-y-4">
+                  <h3 className="font-bold text-xl">Research Applications:</h3>
+                  <p>BPC-157 is a versatile tool for research, with focus areas that include:</p>
+                  <ul className="list-disc pl-8 space-y-2">
+                    <li><span className="font-medium">Tissue Regeneration:</span> Examining its effects on cellular repair mechanisms in controlled preclinical models.</li>
+                    <li><span className="font-medium">Inflammatory Pathways:</span> Exploration of peptide interactions with cytokines and inflammatory markers.</li>
+                    <li><span className="font-medium">Angiogenesis:</span> Investigation of its potential role in promoting new blood vessel formation during wound healing.</li>
+                  </ul>
+                  
+                  <h3 className="font-bold text-xl mt-8">References:</h3>
+                  <p>This product has been cited in various research studies, including:</p>
+                  <ul className="list-disc pl-8 space-y-2">
+                    <li>Sikiric, P., et al. (2003). "BPC-157 and the Healing of Injured Tendons." Journal of Cellular Biology Research.</li>
+                    <li>Cheng, Y., et al. (2016). "Anti-Inflammatory Effects of BPC-157 in Preclinical Models." Peptide Research Journal.</li>
+                  </ul>
+                  
+                  <div className="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400">
+                    <p className="font-bold">Important Note:</p>
+                    <p className="mt-1">BPC-157 is FOR RESEARCH USE ONLY. It is not intended for human or veterinary use. Misuse of this product is strictly prohibited and may violate federal, state, or local laws.</p>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           </div>
-        </div>
-        
-        {/* Product Description Tabs */}
-        <div className="mt-16 border-t border-gray-200 pt-10">
-          <Tabs defaultValue="description" className="w-full">
-            <TabsList className="w-full justify-start border-b mb-8">
-              <TabsTrigger value="description" className="text-lg">DESCRIPTION</TabsTrigger>
-              <TabsTrigger value="details" className="text-lg">TECHNICAL DETAILS</TabsTrigger>
-              <TabsTrigger value="research" className="text-lg">RESEARCH USES</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="description" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="font-bold text-xl">Product Name:</h3>
-                <p>{product.name}</p>
-                
-                <h3 className="font-bold text-xl mt-8">Description:</h3>
-                <p className="text-gray-700">
-                  {product.description}
-                </p>
-                
-                <p className="text-gray-700 mt-4">
-                  BPC-157 is a synthetic peptide fragment derived from a naturally occurring protein found in gastric juice. It has been studied extensively in laboratory settings for its potential to support tissue regeneration and cell protection. This peptide is supplied in lyophilized powder form to ensure maximum stability during storage.
-                </p>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="details" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="font-bold text-xl">Chemical Information:</h3>
-                <ul className="list-disc pl-8 space-y-2">
-                  <li><span className="font-medium">Molecular Formula:</span> C<sub>62</sub>H<sub>98</sub>N<sub>16</sub>O<sub>22</sub></li>
-                  <li><span className="font-medium">Molecular Weight:</span> 1419.53552 g/mol</li>
-                  <li><span className="font-medium">Sequence:</span> Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val</li>
-                </ul>
-                
-                <h3 className="font-bold text-xl mt-8">Product Specifications:</h3>
-                <ul className="list-disc pl-8 space-y-2">
-                  <li><span className="font-medium">Purity:</span> ≥99% (HPLC Certified)</li>
-                  <li><span className="font-medium">Appearance:</span> Lyophilized white powder</li>
-                  <li><span className="font-medium">Solubility:</span> Soluble in bacteriostatic water</li>
-                </ul>
-                
-                <h3 className="font-bold text-xl mt-8">Storage and Handling:</h3>
-                <ul className="list-disc pl-8 space-y-2">
-                  <li>Store the lyophilized powder at -20°C.</li>
-                  <li>Once reconstituted, store at 2-8°C and use promptly.</li>
-                  <li>Maintain aseptic handling practices to ensure product quality and sterility.</li>
-                </ul>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="research" className="mt-6">
-              <div className="space-y-4">
-                <h3 className="font-bold text-xl">Research Applications:</h3>
-                <p>BPC-157 is a versatile tool for research, with focus areas that include:</p>
-                <ul className="list-disc pl-8 space-y-2">
-                  <li><span className="font-medium">Tissue Regeneration:</span> Examining its effects on cellular repair mechanisms in controlled preclinical models.</li>
-                  <li><span className="font-medium">Inflammatory Pathways:</span> Exploration of peptide interactions with cytokines and inflammatory markers.</li>
-                  <li><span className="font-medium">Angiogenesis:</span> Investigation of its potential role in promoting new blood vessel formation during wound healing.</li>
-                </ul>
-                
-                <h3 className="font-bold text-xl mt-8">References:</h3>
-                <p>This product has been cited in various research studies, including:</p>
-                <ul className="list-disc pl-8 space-y-2">
-                  <li>Sikiric, P., et al. (2003). "BPC-157 and the Healing of Injured Tendons." Journal of Cellular Biology Research.</li>
-                  <li>Cheng, Y., et al. (2016). "Anti-Inflammatory Effects of BPC-157 in Preclinical Models." Peptide Research Journal.</li>
-                </ul>
-                
-                <div className="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400">
-                  <p className="font-bold">Important Note:</p>
-                  <p className="mt-1">BPC-157 is FOR RESEARCH USE ONLY. It is not intended for human or veterinary use. Misuse of this product is strictly prohibited and may violate federal, state, or local laws.</p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-        
-        {/* Related Products */}
-        {relatedProducts && relatedProducts.length > 1 && (
-          <div className="mt-16">
-            <h2 className="font-heading font-bold text-2xl mb-6">Related Products</h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {loadingRelated ? (
-                // Loading state
-                Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div className="h-48 bg-gray-200 animate-pulse" />
-                    <div className="p-4">
-                      <div className="h-4 bg-gray-200 rounded animate-pulse mb-2 w-1/4" />
-                      <div className="h-6 bg-gray-200 rounded animate-pulse mb-2" />
-                      <div className="h-4 bg-gray-200 rounded animate-pulse mb-4" />
-                      <div className="flex justify-between items-center">
-                        <div className="h-6 bg-gray-200 rounded animate-pulse w-1/4" />
-                        <div className="h-8 bg-gray-200 rounded animate-pulse w-1/3" />
+          
+          {/* Related Products */}
+          {relatedProducts && relatedProducts.length > 1 && (
+            <div className="mt-16">
+              <h2 className="font-heading font-bold text-2xl mb-6">Related Products</h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {loadingRelated ? (
+                  // Loading state
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+                      <div className="h-48 bg-gray-200 animate-pulse" />
+                      <div className="p-4">
+                        <div className="h-4 bg-gray-200 rounded animate-pulse mb-2 w-1/4" />
+                        <div className="h-6 bg-gray-200 rounded animate-pulse mb-2" />
+                        <div className="h-4 bg-gray-200 rounded animate-pulse mb-4" />
+                        <div className="flex justify-between items-center">
+                          <div className="h-6 bg-gray-200 rounded animate-pulse w-1/4" />
+                          <div className="h-8 bg-gray-200 rounded animate-pulse w-1/3" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                relatedProducts
-                  .filter(related => related.id !== product.id)
-                  .slice(0, 4)
-                  .map(related => (
-                    <ProductCard key={related.id} product={related} />
                   ))
-              )}
+                ) : (
+                  relatedProducts
+                    .filter(related => related.id !== product.id)
+                    .slice(0, 4)
+                    .map(related => (
+                      <ProductCard key={related.id} product={related} />
+                    ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Full-width FDA Disclaimer */}
+        <div className="bg-gray-50 py-8 border-t border-gray-200 mt-16">
+          <div className="container px-6 md:px-8 mx-auto max-w-7xl">
+            <div className="max-w-4xl mx-auto px-4">
+              <h3 className="font-bold text-lg mb-4">Product Usage: For Research Use Only - Not for Human or Veterinary Use</h3>
+              <p className="text-sm">
+                This product is intended strictly for in vitro research and laboratory experimentation by qualified professionals. It is not a drug, food, cosmetic, or dietary supplement and has not been evaluated by the FDA. This product should not be used in the diagnosis, treatment, cure, or prevention of any disease.
+              </p>
+              <p className="text-sm mt-2">
+                The safety information provided here is not comprehensive and is intended for research personnel only. For more information, please consult appropriate safety literature and regulatory guidelines.
+              </p>
             </div>
           </div>
-        )}
-      </div>
-      
-      {/* Full-width FDA Disclaimer */}
-      <div className="bg-gray-50 py-8 border-t border-gray-200 mt-16">
-        <div className="container px-6 md:px-8 mx-auto max-w-7xl">
-          <div className="max-w-4xl mx-auto px-4">
-            <h3 className="font-bold text-lg mb-4">Product Usage: For Research Use Only - Not for Human or Veterinary Use</h3>
-            <p className="text-sm">
-              This product is intended strictly for in vitro research and laboratory experimentation by qualified professionals. It is not a drug, food, cosmetic, or dietary supplement and has not been evaluated by the FDA. This product should not be used in the diagnosis, treatment, cure, or prevention of any disease.
-            </p>
-            <p className="text-sm mt-2">
-              The safety information provided here is not comprehensive and is intended for research personnel only. For more information, please consult appropriate safety literature and regulatory guidelines.
-            </p>
-          </div>
         </div>
-      </div>
-    </Layout>
+      </Layout>
+    </React.Fragment>
   );
 }
 
