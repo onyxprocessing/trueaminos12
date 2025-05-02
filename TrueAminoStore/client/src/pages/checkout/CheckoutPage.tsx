@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useCart } from '../../hooks/useCart';
 import Layout from '../../components/Layout';
-import { apiRequest } from '../../lib/queryClient';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { formatPrice } from '../../lib/utils';
@@ -130,11 +129,20 @@ const CheckoutPage = () => {
     const createPaymentIntent = async () => {
       try {
         setIsLoading(true);
-        const data = await apiRequest<{clientSecret: string}>("/api/create-payment-intent", {
-          method: "POST",
-          data: { amount: cart.subtotal }
+        const response = await fetch('/api/create-payment-intent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ amount: cart.subtotal }),
+          credentials: 'include',
         });
         
+        if (!response.ok) {
+          throw new Error('Failed to create payment intent');
+        }
+        
+        const data = await response.json();
         setClientSecret(data.clientSecret);
       } catch (err: any) {
         console.error('Error creating payment intent:', err);

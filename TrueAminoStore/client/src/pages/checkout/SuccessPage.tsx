@@ -106,7 +106,7 @@ const SuccessPage = () => {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
-                  onClick={() => navigate('/shop')} 
+                  onClick={() => navigate('/')} 
                   className="w-full sm:w-auto bg-blue-900 hover:bg-blue-800"
                 >
                   Continue Shopping
