@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { Helmet, HelmetProvider } from 'react-helmet-async';
+import './favicon-32x32.png';
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
