@@ -1,6 +1,6 @@
 modules = ["nodejs-20"]
 [nix]
-packages = ["gh"]
+packages = ["gh", "jq"]
 channel = "stable-24_05"
 
 [workflows]

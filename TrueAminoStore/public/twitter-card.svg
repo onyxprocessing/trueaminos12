@@ -1,0 +1,66 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="675" fill="#0A1626"/>
+  
+  <!-- Gradient Overlay -->
+  <rect width="1200" height="675" fill="url(#gradient)" opacity="0.7"/>
+  
+  <!-- Main Content Container -->
+  <rect x="100" y="100" width="1000" height="475" rx="8" fill="#0F2137" stroke="#0085FF" stroke-width="2"/>
+  
+  <!-- Logo "TA" -->
+  <g transform="translate(150, 150)">
+    <text x="0" y="70" font-family="Arial, sans-serif" font-weight="bold" font-size="80" fill="#0085FF">T</text>
+    <text x="50" y="70" font-family="Arial, sans-serif" font-weight="bold" font-size="80" fill="#0085FF">A</text>
+  </g>
+  
+  <!-- Website Name -->
+  <text x="600" y="190" font-family="Arial, sans-serif" font-weight="bold" font-size="72" fill="white" text-anchor="middle">TrueAminos</text>
+  
+  <!-- Divider Line -->
+  <rect x="250" y="240" width="700" height="3" fill="#0085FF"/>
+  
+  <!-- Tagline -->
+  <text x="600" y="300" font-family="Arial, sans-serif" font-size="40" fill="#E6E6E6" text-anchor="middle">Premium Research Peptides &amp; SARMs</text>
+  
+  <!-- Product Icons -->
+  <g transform="translate(200, 350)">
+    <circle cx="50" cy="50" r="40" fill="#0085FF" opacity="0.2"/>
+    <text x="50" y="65" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="white" text-anchor="middle">BPC</text>
+  </g>
+  
+  <g transform="translate(400, 350)">
+    <circle cx="50" cy="50" r="40" fill="#0085FF" opacity="0.2"/>
+    <text x="50" y="65" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="white" text-anchor="middle">NAD+</text>
+  </g>
+  
+  <g transform="translate(600, 350)">
+    <circle cx="50" cy="50" r="40" fill="#0085FF" opacity="0.2"/>
+    <text x="50" y="50" font-family="Arial, sans-serif" font-weight="bold" font-size="20" fill="white" text-anchor="middle">TB</text>
+    <text x="50" y="75" font-family="Arial, sans-serif" font-weight="bold" font-size="20" fill="white" text-anchor="middle">500</text>
+  </g>
+  
+  <g transform="translate(800, 350)">
+    <circle cx="50" cy="50" r="40" fill="#0085FF" opacity="0.2"/>
+    <text x="50" y="65" font-family="Arial, sans-serif" font-weight="bold" font-size="20" fill="white" text-anchor="middle">SARMs</text>
+  </g>
+  
+  <!-- Bottom Tagline -->
+  <text x="600" y="480" font-family="Arial, sans-serif" font-size="32" fill="#CCCCCC" text-anchor="middle">Verified Purity • Scientific Research • Fast Shipping</text>
+  
+  <!-- Website URL -->
+  <text x="600" y="600" font-family="Arial, sans-serif" font-weight="bold" font-size="36" fill="#0085FF" text-anchor="middle">www.trueaminos.com</text>
+  
+  <!-- Decorative Elements -->
+  <circle cx="150" cy="600" r="40" fill="#0085FF" opacity="0.2"/>
+  <circle cx="1050" cy="600" r="40" fill="#0085FF" opacity="0.2"/>
+  <circle cx="1050" cy="150" r="40" fill="#0085FF" opacity="0.2"/>
+  
+  <!-- Definitions -->
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0085FF" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#000B18" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -16,14 +16,19 @@ createRoot(document.getElementById("root")!).render(
       <meta property="og:url" content="https://trueaminos.com" />
       <meta property="og:title" content="TrueAminos | Premium Research Peptides & SARMs" />
       <meta property="og:description" content="Premium quality research compounds for scientific purposes. BPC-157, NAD+, Sermorelin, GLP1, Semax, and more with verified purity." />
-      <meta property="og:image" content="https://trueaminos.com/social-share.svg" />
+      <meta property="og:image" content="https://trueaminos.com/facebook-card.svg" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:locale" content="en_US" />
+      <meta property="og:site_name" content="TrueAminos" />
       
       {/* Twitter */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content="https://trueaminos.com" />
-      <meta property="twitter:title" content="TrueAminos | Premium Research Peptides & SARMs" />
-      <meta property="twitter:description" content="Premium quality research compounds for scientific purposes. BPC-157, NAD+, Sermorelin, GLP1, Semax, and more with verified purity." />
-      <meta property="twitter:image" content="https://trueaminos.com/social-share.svg" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:url" content="https://trueaminos.com" />
+      <meta name="twitter:title" content="TrueAminos | Premium Research Peptides & SARMs" />
+      <meta name="twitter:description" content="Premium quality research compounds for scientific purposes. BPC-157, NAD+, Sermorelin, GLP1, Semax, and more with verified purity." />
+      <meta name="twitter:image" content="https://trueaminos.com/twitter-card.svg" />
+      <meta name="twitter:image:alt" content="TrueAminos - Premium Research Peptides" />
       
       {/* Additional SEO tags */}
       <meta name="robots" content="index, follow" />
