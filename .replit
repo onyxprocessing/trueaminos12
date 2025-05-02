@@ -25,7 +25,7 @@ args = "cd TrueAminoStore && npm install && NODE_ENV=development PORT=5000 HOST=
 waitForPort = 5000
 
 [deployment]
-run = ["sh", "-c", "./deploy.sh"]
+run = ["sh", "-c", "cd TrueAminoStore && npm start"]
 deploymentTarget = "cloudrun"
 
 [[ports]]
