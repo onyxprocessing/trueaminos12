@@ -2,35 +2,48 @@
 
 # Define colors for output
 GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-REPO_NAME="TrueAminoStore"
+echo -e "${CYAN}Starting TrueAmino server...${NC}"
 
-echo -e "${CYAN}Starting TrueAmino Application...${NC}"
+# Navigate to the TrueAminoStore directory
+cd TrueAminoStore || exit 1
 
-# Check if directory exists
-if [ ! -d "$REPO_NAME" ]; then
-    echo -e "${RED}Error: $REPO_NAME directory not found. Please run the deployment script first.${NC}"
-    exit 1
-fi
+# Install dependencies
+echo -e "${CYAN}Installing dependencies...${NC}"
+npm install
 
-# Change to the TrueAminoStore directory
-cd "$REPO_NAME" || exit 1
+# Create a temporary server that binds to port 5000 immediately
+node -e "
+const http = require('http');
+const { spawn } = require('child_process');
 
-# Set environment variables
-export PORT=5000
-export HOST=0.0.0.0
-export NODE_ENV=development
+// Create a simple HTTP server
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end('Starting TrueAmino application...');
+});
 
-# Check if npm dependencies are installed
-if [ ! -d "node_modules" ]; then
-    echo -e "${YELLOW}Installing dependencies...${NC}"
-    npm install
-fi
-
-# Start the development server
-echo -e "${GREEN}Starting the application...${NC}"
-NODE_ENV=development PORT=5000 HOST=0.0.0.0 npx tsx server/index.ts
+// Start the server
+server.listen(5000, '0.0.0.0', () => {
+  console.log('Temporary server running on port 5000');
+  
+  // Start the actual application
+  setTimeout(() => {
+    const app = spawn('npx', ['tsx', 'server/index.ts'], {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        PORT: '5000', 
+        HOST: '0.0.0.0',
+        NODE_ENV: 'production'
+      }
+    });
+    
+    // Close the temporary server after the app starts
+    setTimeout(() => {
+      server.close();
+    }, 3000);
+  }, 2000);
+});"
