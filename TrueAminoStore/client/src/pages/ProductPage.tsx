@@ -218,7 +218,32 @@ const MolecularFormula: React.FC<{ formula: string }> = ({ formula }) => {
   );
 };
 
+// Get current price based on selected weight - moved outside the component body as a pure function
+function getPriceByWeightExternal(product: Product, weight: string): number {
+  // If weight-specific price exists, use it
+  if (weight === "5mg" && product.price5mg) {
+    return parseFloat(product.price5mg);
+  } else if (weight === "10mg" && product.price10mg) {
+    return parseFloat(product.price10mg);
+  } else if (weight === "15mg" && product.price15mg) {
+    return parseFloat(product.price15mg);
+  } else if (weight === "20mg" && product.price20mg) {
+    return parseFloat(product.price20mg);
+  } else if (weight === "2mg" && product.price2mg) {
+    return parseFloat(product.price2mg);
+  } else if (weight === "750mg" && product.price750mg) {
+    return parseFloat(product.price750mg);
+  } else if (weight === "100mg" && product.price100mg) {
+    return parseFloat(product.price100mg);
+  } else if (weight === "500mg" && product.price500mg) {
+    return parseFloat(product.price500mg);
+  }
+  // Default fallback to the generic price
+  return parseFloat(product.price || "0");
+}
+
 function ProductPage() {
+  // All hooks must be declared at the top level, in the same order, every render
   const { slug } = useParams<{ slug: string }>();
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -226,12 +251,19 @@ function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [weightOptions, setWeightOptions] = useState<string[]>(["5mg", "10mg"]);
 
+  // Declare all queries, even if they might not be used
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: ['/api/products', slug],
     queryFn: () => apiRequest<Product>(`/api/products/${slug}`),
     enabled: !!slug
   });
   
+  const { data: relatedProducts, isLoading: loadingRelated } = useQuery<Product[]>({
+    queryKey: ['/api/products/category', product?.categoryId],
+    queryFn: () => apiRequest<Product[]>(`/api/products/category/${product?.categoryId}`),
+    enabled: !!product?.categoryId,
+  });
+
   // Log product data when it changes
   useEffect(() => {
     if (product) {
@@ -246,59 +278,7 @@ function ProductPage() {
     }
   }, [product]);
 
-  const { data: relatedProducts, isLoading: loadingRelated } = useQuery<Product[]>({
-    queryKey: ['/api/products/category', product?.categoryId],
-    queryFn: () => apiRequest<Product[]>(`/api/products/category/${product?.categoryId}`),
-    enabled: !!product?.categoryId,
-  });
-
-  const handleAddToCart = () => {
-    if (product) {
-      // Log the current price based on selected weight
-      const currentPrice = getCurrentPrice();
-      console.log(`Adding to cart with price: ${currentPrice} for weight: ${selectedWeight}`);
-      
-      addItem({
-        productId: product.id,
-        quantity: quantity,
-        selectedWeight: selectedWeight
-      });
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <Layout title="Loading...">
-        <div className="container py-8">
-          <div className="animate-pulse">
-            <div className="h-10 bg-gray-200 rounded w-1/4 mb-8" />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-              <div className="h-[400px] bg-gray-200 rounded" />
-              <div className="space-y-4">
-                <div className="h-8 bg-gray-200 rounded w-3/4" />
-                <div className="h-6 bg-gray-200 rounded w-1/4" />
-                <div className="h-24 bg-gray-200 rounded" />
-                <div className="h-10 bg-gray-200 rounded w-1/3" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (error || !product) {
-    return (
-      <Layout title="Product Not Found">
-        <div className="container py-8">
-          <h1 className="text-2xl font-bold mb-6">Product Not Found</h1>
-          <p>The product you are looking for does not exist or has been removed.</p>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Get weight options and set initial weight only after product data is loaded
+  // Setup weight options and initial selection
   useEffect(() => {
     if (product) {
       // Get weight options from the product data (weights field in Airtable)
@@ -340,30 +320,57 @@ function ProductPage() {
       }
     }
   }, [product]);
-  
-  // Get current price based on selected weight
-  const getCurrentPrice = () => {
-    // If weight-specific price exists, use it
-    if (selectedWeight === "5mg" && product.price5mg) {
-      return parseFloat(product.price5mg);
-    } else if (selectedWeight === "10mg" && product.price10mg) {
-      return parseFloat(product.price10mg);
-    } else if (selectedWeight === "15mg" && product.price15mg) {
-      return parseFloat(product.price15mg);
-    } else if (selectedWeight === "20mg" && product.price20mg) {
-      return parseFloat(product.price20mg);
-    } else if (selectedWeight === "2mg" && product.price2mg) {
-      return parseFloat(product.price2mg);
-    } else if (selectedWeight === "750mg" && product.price750mg) {
-      return parseFloat(product.price750mg);
-    } else if (selectedWeight === "100mg" && product.price100mg) {
-      return parseFloat(product.price100mg);
-    } else if (selectedWeight === "500mg" && product.price500mg) {
-      return parseFloat(product.price500mg);
+
+  // Define handlers at the top level, not in conditionals
+  const handleAddToCart = () => {
+    if (product) {
+      // Log the current price based on selected weight
+      const currentPrice = getPriceByWeightExternal(product, selectedWeight);
+      console.log(`Adding to cart with price: ${currentPrice} for weight: ${selectedWeight}`);
+      
+      addItem({
+        productId: product.id,
+        quantity: quantity,
+        selectedWeight: selectedWeight
+      });
     }
-    // Default fallback to the generic price
-    return parseFloat(product.price);
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Layout title="Loading...">
+        <div className="container py-8">
+          <div className="animate-pulse">
+            <div className="h-10 bg-gray-200 rounded w-1/4 mb-8" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="h-[400px] bg-gray-200 rounded" />
+              <div className="space-y-4">
+                <div className="h-8 bg-gray-200 rounded w-3/4" />
+                <div className="h-6 bg-gray-200 rounded w-1/4" />
+                <div className="h-24 bg-gray-200 rounded" />
+                <div className="h-10 bg-gray-200 rounded w-1/3" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Error state
+  if (error || !product) {
+    return (
+      <Layout title="Product Not Found">
+        <div className="container py-8">
+          <h1 className="text-2xl font-bold mb-6">Product Not Found</h1>
+          <p>The product you are looking for does not exist or has been removed.</p>
+        </div>
+      </Layout>
+    );
+  }
+  
+  // No need to redefine getCurrentPrice, use the one we already defined
 
   return (
     <React.Fragment>
@@ -430,7 +437,7 @@ function ProductPage() {
               <div className="mb-8">
                 <div className="flex items-baseline mb-4">
                   <span className="text-2xl font-bold text-gray-900 mr-2">
-                    {formatPrice(getCurrentPrice())}
+                    {formatPrice(getPriceByWeightExternal(product, selectedWeight))}
                   </span>
                   <span className="text-sm text-gray-500">ORDER MORE, SAVE MORE</span>
                 </div>
