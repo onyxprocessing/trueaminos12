@@ -461,8 +461,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Calculate the total amount from cart
-      const amount = cartItems.reduce((sum, item) => 
+      let amount = cartItems.reduce((sum, item) => 
         sum + getPriceByWeight(item.product, item.selectedWeight) * item.quantity, 0);
+      
+      // Allow override of amount from client (e.g., when shipping is included)
+      if (req.body && req.body.amount) {
+        console.log('Using client-provided amount:', req.body.amount);
+        amount = parseFloat(req.body.amount);
+      }
       
       // Create description containing the items ordered
       const description = `Order from TrueAminos: ${cartItems.map(item => 
