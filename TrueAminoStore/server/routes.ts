@@ -6,6 +6,7 @@ import { z } from "zod";
 import session from 'express-session';
 import MemoryStore from 'memorystore';
 import fetch from 'node-fetch';
+import Stripe from 'stripe';
 
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
@@ -51,6 +52,16 @@ async function proxyImage(url: string): Promise<Buffer | null> {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize Stripe
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecretKey) {
+    console.error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+    throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+  }
+  
+  const stripe = new Stripe(stripeSecretKey, {
+    apiVersion: '2023-10-16' as any,
+  });
   // Set up session middleware for cart management
   const MemoryStoreSession = MemoryStore(session);
   app.use(session({
@@ -434,6 +445,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         message: "Error submitting contact form" 
       });
+    }
+  });
+
+  // Stripe Payment Endpoints
+  
+  // Create Payment Intent API
+  app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
+    try {
+      const sessionId = req.session.id;
+      const cartItems = await storage.getCartItems(sessionId);
+      
+      if (cartItems.length === 0) {
+        return res.status(400).json({ message: "Your cart is empty" });
+      }
+      
+      // Calculate the total amount from cart
+      const amount = cartItems.reduce((sum, item) => 
+        sum + getPriceByWeight(item.product, item.selectedWeight) * item.quantity, 0);
+      
+      // Create description containing the items ordered
+      const description = `Order from TrueAminos: ${cartItems.map(item => 
+        `${item.product.name} (${item.selectedWeight || ''}) x${item.quantity}`
+      ).join(', ')}`;
+      
+      console.log('Creating payment intent for amount:', amount);
+      
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Stripe requires amount in cents
+        currency: "usd",
+        description,
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        metadata: {
+          session_id: sessionId,
+        },
+      });
+      
+      // Send publishable key and PaymentIntent details to client
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        amount: amount,
+        itemCount: cartItems.length
+      });
+    } catch (error: any) {
+      console.error('Error creating payment intent:', error);
+      res.status(500).json({ 
+        message: "Error creating payment intent", 
+        error: error.message 
+      });
+    }
+  });
+  
+  // Stripe webhook handling for completed payments
+  app.post('/api/webhook', async (req: Request, res: Response) => {
+    const sig = req.headers['stripe-signature'] as string;
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    let event;
+    
+    try {
+      if (endpointSecret) {
+        // Verify webhook signature
+        event = stripe.webhooks.constructEvent(
+          req.body,
+          sig,
+          endpointSecret
+        );
+      } else {
+        // No signature verification if webhook secret is not set
+        event = req.body;
+        console.warn('⚠️ Webhook signature verification disabled! Set STRIPE_WEBHOOK_SECRET to enable.');
+      }
+      
+      // Handle specific event types
+      if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        console.log(`💰 Payment succeeded: ${paymentIntent.id}`);
+        
+        // Here we would typically:
+        // 1. Record the order in a database
+        // 2. Send confirmation email
+        // 3. Clear the user's cart
+        const sessionId = paymentIntent.metadata.session_id;
+        if (sessionId) {
+          // Clear the cart associated with this session
+          await storage.clearCart(sessionId);
+        }
+      } else {
+        console.log(`Unhandled event type: ${event.type}`);
+      }
+      
+      // Return a response to acknowledge receipt of the event
+      res.json({ received: true });
+    } catch (err: any) {
+      console.error(`Webhook Error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err.message}`);
     }
   });
 
