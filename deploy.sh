@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Define colors for output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Repository URL
+REPO_URL="https://github.com/onyxprocessing/TrueAminoStore.git"
+REPO_NAME="TrueAminoStore"
+
+echo -e "${CYAN}Preparing TrueAminoStore deployment...${NC}"
+
+# Check if git is installed
+if ! command -v git &> /dev/null; then
+    echo -e "${RED}Error: Git is not installed. Please install git first.${NC}"
+    exit 1
+fi
+
+# Check if directory already exists - non-interactive handling
+if [ -d "$REPO_NAME" ]; then
+    echo -e "${YELLOW}$REPO_NAME directory already exists. Using existing directory.${NC}"
+else
+    # Clone the repository
+    echo -e "${CYAN}Cloning repository from $REPO_URL...${NC}"
+    if git clone "$REPO_URL" "$REPO_NAME"; then
+        echo -e "${GREEN}Successfully cloned $REPO_NAME repository.${NC}"
+    else
+        echo -e "${RED}Error: Failed to clone the repository. Please check the URL and your internet connection.${NC}"
+        exit 1
+    fi
+fi
+
+# Set environment variables
+export PORT=5000
+export HOST=0.0.0.0
+export NODE_ENV=development
+
+# Change to the TrueAminoStore directory
+cd "$REPO_NAME" || exit 1
+
+# Check if npm dependencies are installed
+echo -e "${YELLOW}Installing dependencies...${NC}"
+npm install
+
+# Start the development server
+echo -e "${GREEN}Starting the application...${NC}"
+NODE_ENV=development PORT=5000 HOST=0.0.0.0 npx tsx server/index.ts

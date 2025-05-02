@@ -1,0 +1,49 @@
+2025-05-02T18:59:32Z info: Deployment: 80aaf399-08db-480b-b5b7-7b785606e534
+2025-05-02T18:59:32Z info: Build: 20999742-337b-4e76-b332-7076712d1d6e
+2025-05-02T18:59:32Z info: Connecting to builder
+2025-05-02T18:59:36Z info: Builder connected
+2025-05-02T18:59:36Z info: Installing packages
+2025-05-02T18:59:36Z info: Skipping Build as no Build command set
+2025-05-02T18:59:37Z info: Pushing pid1 binary layer...
+2025-05-02T18:59:38Z info: Pushing hosting layer...
+2025-05-02T18:59:38Z info: Pushing Repl layer...
+2025-05-02T18:59:38Z info: Nix layers for this Repl are uncached.
+2025-05-02T18:59:38Z info: Pushing nix-0 layer...
+2025-05-02T18:59:38Z info: Created hosting layer
+2025-05-02T18:59:39Z info: Created pid1 binary layer
+2025-05-02T18:59:52Z info: Created nix-0 layer
+2025-05-02T18:59:52Z info: uploading image for cached layer
+2025-05-02T18:59:53Z info: pushed cache image manifest
+2025-05-02T18:59:54Z info: pushed cache soci index manifest
+2025-05-02T18:59:54Z info: uploading cached layer
+2025-05-02T18:59:54Z info: successfully uploaded cached layer
+2025-05-02T19:00:08Z info: Created Repl layer
+2025-05-02T19:00:09Z info: Pushed image manifest
+2025-05-02T19:00:10Z info: Pushed soci index manifest
+2025-05-02T19:01:18Z info: Creating virtual machine
+2025-05-02T19:01:42Z info: Virtual machine created
+2025-05-02T19:01:42Z info: Waiting for deployment to be ready
+command finished successfully with exit code 0
+Starting import of TrueAminoStore repository...
+Warning: TrueAminoStore directory already exists.
+main done, exiting
+starting up user application
+main done, exiting
+starting up user application
+Import cancelled by user.
+Import cancelled by user.
+main done, exiting
+command finished successfully with exit code 0
+Starting import of TrueAminoStore repository...
+Starting import of TrueAminoStore repository...
+Warning: TrueAminoStore directory already exists.
+forwarding local port 5000 to external port 80 (mapped as 1104)
+command finished successfully with exit code 0
+main done, exiting
+main done, exiting
+command finished successfully with exit code 0
+command finished successfully with exit code 0
+Starting import of TrueAminoStore repository...
+Import cancelled by user.
+Warning: TrueAminoStore directory already exists.
+Starting import of TrueAminoStore repository...
