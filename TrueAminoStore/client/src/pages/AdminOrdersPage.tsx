@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'wouter';
 import axios from 'axios';
 
 interface Order {
@@ -157,7 +157,7 @@ const AdminOrdersPage: React.FC = () => {
                   <td className="py-2 px-4">{order.productName}</td>
                   <td className="py-2 px-4">{order.quantity}</td>
                   <td className="py-2 px-4">{order.selectedWeight || 'N/A'}</td>
-                  <td className="py-2 px-4">${order.salesPrice.toFixed(2)}</td>
+                  <td className="py-2 px-4">${typeof order.salesPrice === 'number' ? order.salesPrice.toFixed(2) : order.salesPrice}</td>
                   <td className="py-2 px-4 capitalize">{order.shipping}</td>
                   <td className="py-2 px-4">
                     <Link 

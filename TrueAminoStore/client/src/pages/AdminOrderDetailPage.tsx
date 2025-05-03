@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'wouter';
 import axios from 'axios';
 
 interface Order {
@@ -175,14 +175,14 @@ const AdminOrderDetailPage: React.FC = () => {
                   <td className="py-2 px-4">{order.productName}</td>
                   <td className="py-2 px-4">{order.quantity}</td>
                   <td className="py-2 px-4">{order.selectedWeight || 'N/A'}</td>
-                  <td className="py-2 px-4">${order.salesPrice.toFixed(2)}</td>
-                  <td className="py-2 px-4">${(order.salesPrice * order.quantity).toFixed(2)}</td>
+                  <td className="py-2 px-4">${typeof order.salesPrice === 'number' ? order.salesPrice.toFixed(2) : order.salesPrice}</td>
+                  <td className="py-2 px-4">${typeof order.salesPrice === 'number' ? (order.salesPrice * order.quantity).toFixed(2) : order.salesPrice}</td>
                 </tr>
               </tbody>
               <tfoot className="bg-gray-50">
                 <tr>
                   <td colSpan={4} className="py-2 px-4 text-right font-medium">Total</td>
-                  <td className="py-2 px-4 font-bold">${(order.salesPrice * order.quantity).toFixed(2)}</td>
+                  <td className="py-2 px-4 font-bold">${typeof order.salesPrice === 'number' ? (order.salesPrice * order.quantity).toFixed(2) : order.salesPrice}</td>
                 </tr>
               </tfoot>
             </table>
