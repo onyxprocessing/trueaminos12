@@ -23,6 +23,7 @@ import fetch from 'node-fetch';
 import Stripe from 'stripe';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
+import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
 import { setupStripeTest } from './test-stripe';
 
 // Helper function to get the correct price based on selected weight
