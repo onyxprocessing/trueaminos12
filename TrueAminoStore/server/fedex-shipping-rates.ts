@@ -72,6 +72,7 @@ export interface ShippingRateOption {
   price: number;
   currency: string;
   deliveryDate?: string;
+  isMockData?: boolean;
 }
 
 // Get FedEx OAuth token
@@ -193,8 +194,24 @@ export async function getShippingRates(request: ShippingRateRequest): Promise<Sh
     return parseShippingRates(response.data);
   } catch (error: any) {
     console.error('Error getting shipping rates:', error.message);
-    // In case of error, return mock data
-    return getMockShippingRates();
+    console.error('Request details:', JSON.stringify({
+      address: request.recipientAddress,
+      packageSize: request.packageSize
+    }, null, 2));
+    
+    if (error.response) {
+      console.error('FedEx API response status:', error.response.status);
+      console.error('FedEx API response data:', JSON.stringify(error.response.data, null, 2));
+    }
+    
+    // In case of error, return mock data with a warning flag
+    const mockRates = getMockShippingRates();
+    
+    // Add a flag to each rate to indicate it's mock data
+    return mockRates.map(rate => ({
+      ...rate,
+      isMockData: true
+    }));
   }
 }
 
@@ -244,7 +261,12 @@ function parseShippingRates(response: any): ShippingRateOption[] {
     return rates;
   } catch (error) {
     console.error('Error parsing shipping rates:', error);
-    return getMockShippingRates();
+    // Return mock data with a flag
+    const mockRates = getMockShippingRates();
+    return mockRates.map(rate => ({
+      ...rate,
+      isMockData: true
+    }));
   }
 }
 

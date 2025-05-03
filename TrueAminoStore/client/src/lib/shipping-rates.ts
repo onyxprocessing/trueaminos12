@@ -15,6 +15,7 @@ export interface ShippingRateOption {
   price: number;
   currency: string;
   deliveryDate?: string;
+  isMockData?: boolean;
 }
 
 /**

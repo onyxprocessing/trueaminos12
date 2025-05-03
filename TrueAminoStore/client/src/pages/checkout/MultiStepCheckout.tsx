@@ -709,7 +709,8 @@ const MultiStepCheckout: React.FC = () => {
           id: rate.serviceType.toLowerCase().replace(/_/g, '-'),
           name: rate.serviceName,
           price: rate.price,
-          days: rate.transitTime
+          days: rate.transitTime,
+          isMockData: rate.isMockData || false
         }));
         
         // Update shipping options with real FedEx rates
@@ -720,16 +721,31 @@ const MultiStepCheckout: React.FC = () => {
           setShippingMethod(sortedRates[0].serviceType.toLowerCase().replace(/_/g, '-'));
         }
         
-        toast({
-          title: 'Shipping Rates Updated',
-          description: `${sortedRates.length} shipping options available`,
-        });
+        // Check if we're showing mock data
+        const hasMockData = sortedRates.some(rate => rate.isMockData);
+        
+        if (hasMockData) {
+          toast({
+            title: 'Using Standard Shipping Rates',
+            description: 'Using default shipping rates as location-based rates are unavailable',
+            variant: 'default'
+          });
+        } else {
+          toast({
+            title: 'Shipping Rates Updated',
+            description: `${sortedRates.length} shipping options available for your location`,
+            variant: 'default' 
+          });
+        }
+        
+        console.log('Shipping rates updated:', JSON.stringify(newShippingOptions, null, 2));
       } else {
         // If we failed to get shipping rates, fall back to the default options
         setDynamicShippingOptions(SHIPPING_OPTIONS);
         toast({
           title: 'Using Standard Shipping Rates',
-          description: ratesResult.message || 'Could not retrieve real-time shipping rates',
+          description: ratesResult.message || 'Could not retrieve location-based shipping rates',
+          variant: 'default'
         });
       }
     } catch (err: any) {
