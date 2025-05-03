@@ -51,27 +51,31 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE_ID}`;
     
     // Prepare the data for Airtable with all requested fields
+    // Field names must exactly match what's in Airtable (lowercase)
+    // Only include fields we confirmed exist in the Airtable schema
     const airtableData = {
       fields: {
-        "Order ID": orderData.orderId,
-        "First Name": orderData.firstName,
-        "Last Name": orderData.lastName,
-        "Address": orderData.address,
-        "City": orderData.city,
-        "State": orderData.state,
-        "Zip": orderData.zip,
-        "MG": orderData.mg || '',
-        "Sales Price": orderData.salesPrice,
-        "Quantity": orderData.quantity,
-        "Product ID": orderData.productId,
-        "Product": orderData.product || '', // Product name
-        "Shipping": orderData.shipping,
-        "Payment": orderData.payment,
-        "Email": orderData.email || '',
-        "Phone": orderData.phone || '',
-        "Affiliate Code": orderData.affiliateCode || ''
+        "order id": orderData.orderId,
+        "first name": orderData.firstName,
+        "last name": orderData.lastName,
+        "address": orderData.address,
+        "city": orderData.city,
+        "state": orderData.state,
+        "zip": orderData.zip,
+        "mg": orderData.mg || '',
+        "saleprice": orderData.salesPrice,
+        "quantity": orderData.quantity,
+        "productid": orderData.productId.toString(),
+        "product": orderData.product || '', // Product name
+        "shipping": orderData.shipping,
+        "payment": orderData.payment
       }
     };
+    
+    // Log any extra fields that we're not sending to Airtable
+    if (orderData.email) console.log(`Note: Customer email ${orderData.email} not stored in Airtable`);
+    if (orderData.phone) console.log(`Note: Customer phone ${orderData.phone} not stored in Airtable`);
+    if (orderData.affiliateCode) console.log(`Note: Affiliate code ${orderData.affiliateCode} not stored in Airtable`);
     
     console.log('Creating order record in Airtable:', JSON.stringify(airtableData, null, 2));
     
@@ -293,6 +297,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
       if (products && products.length > 0) {
         // Create one record for each product in the order
         for (const product of products) {
+          // Only include fields that exist in Airtable schema
           const orderData: OrderData = {
             orderId,
             firstName: customerData.firstName,
@@ -301,8 +306,8 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
             city: customerData.city,
             state: customerData.state,
             zip: customerData.zip,
-            email: customerData.email,
-            phone: customerData.phone,
+            email: customerData.email, // These will be logged but not sent to Airtable
+            phone: customerData.phone, // These will be logged but not sent to Airtable
             salesPrice: product.price || 0,
             quantity: product.quantity || 1,
             productId: product.id || 0,
@@ -310,7 +315,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
             mg: product.weight || '',
             shipping: shippingMethod,
             payment: paymentDetails,
-            affiliateCode: paymentIntent.metadata.affiliate_code || ''
+            affiliateCode: paymentIntent.metadata.affiliate_code || '' // Will be logged but not sent
           };
           
           await createOrderInAirtable(orderData);
@@ -318,6 +323,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
         }
       } else {
         // Create at least one record even if we don't have detailed product data
+        // Only include fields we know exist in Airtable
         const orderData: OrderData = {
           orderId,
           firstName: customerData.firstName,
@@ -326,15 +332,15 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
           city: customerData.city,
           state: customerData.state,
           zip: customerData.zip,
-          email: customerData.email,
-          phone: customerData.phone,
+          email: customerData.email, // Will be logged but not sent to Airtable
+          phone: customerData.phone, // Will be logged but not sent to Airtable
           salesPrice: paymentIntent.amount / 100, // Convert from cents
           quantity: 1,
           productId: 0, // Unknown product
           product: "Unknown Product", // Default product name
           shipping: shippingMethod,
           payment: paymentDetails,
-          affiliateCode: paymentIntent.metadata.affiliate_code || ''
+          affiliateCode: paymentIntent.metadata.affiliate_code || '' // Will be logged but not sent
         };
         
         await createOrderInAirtable(orderData);
