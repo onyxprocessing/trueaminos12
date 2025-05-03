@@ -154,6 +154,13 @@ const MultiStepCheckout: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
+        
+        // Save to sessionStorage for later use on the success page
+        sessionStorage.setItem('checkout_first_name', firstName);
+        sessionStorage.setItem('checkout_last_name', lastName);
+        sessionStorage.setItem('checkout_email', email || '');
+        sessionStorage.setItem('checkout_phone', phone || '');
+        
         setCurrentStep(data.nextStep);
         toast({
           title: 'Personal Information Saved',
@@ -388,6 +395,8 @@ const MultiStepCheckout: React.FC = () => {
         // Store checkout information in sessionStorage for the success page
         sessionStorage.setItem('checkout_first_name', firstName);
         sessionStorage.setItem('checkout_last_name', lastName);
+        sessionStorage.setItem('checkout_email', email || '');
+        sessionStorage.setItem('checkout_phone', phone || '');
         sessionStorage.setItem('checkout_address', address);
         sessionStorage.setItem('checkout_city', city);
         sessionStorage.setItem('checkout_state', state);

@@ -173,11 +173,32 @@ export default function SuccessOrderPage() {
           )}
 
           <div className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-6">
-            <h2 className="font-medium text-blue-800 mb-2">What Happens Next?</h2>
-            <ul className="list-disc list-inside space-y-1 text-sm text-blue-700">
-              <li>You will receive an email confirmation of your order.</li>
-              <li>Your order will be processed and shipped within 1-2 business days.</li>
-              <li>You'll receive tracking information once your order has been shipped.</li>
+            <div className="flex items-start">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h2 className="font-medium text-blue-800 mb-2">Order Confirmation Sent</h2>
+                <p className="text-sm text-blue-700 mb-2">
+                  A confirmation email has been sent to {sessionStorage.getItem('checkout_email') || 'your email address'} with 
+                  your order details and tracking information.
+                </p>
+                <p className="text-sm text-blue-700 mb-1">
+                  If you don't see the email in your inbox, please check your spam or junk folder.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-green-50 border border-green-100 rounded-md p-4 mb-6">
+            <h2 className="font-medium text-green-800 mb-2">What Happens Next?</h2>
+            <ul className="list-disc list-inside space-y-1 text-sm text-green-700">
+              <li>Your order will be processed and shipped within 1-2 business days via USPS.</li>
+              <li>Shipping typically takes 1-2 business days from dispatch (flat rate shipping).</li>
+              <li>Use the tracking number in your email to monitor your delivery status.</li>
             </ul>
           </div>
 
