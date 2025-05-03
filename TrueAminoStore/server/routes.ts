@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, Product } from "@shared/schema";
@@ -7,6 +7,7 @@ import session from 'express-session';
 import MemoryStore from 'memorystore';
 import fetch from 'node-fetch';
 import Stripe from 'stripe';
+import { recordPaymentToAirtable } from './airtable-orders';
 
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
@@ -575,15 +576,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const paymentIntent = event.data.object;
         console.log(`💰 Payment succeeded: ${paymentIntent.id}`);
         
-        // Here we would typically:
-        // 1. Record the order in a database
-        // 2. Send confirmation email
-        // 3. Clear the user's cart
+        // 1. Record the order in Airtable
+        try {
+          const success = await recordPaymentToAirtable(paymentIntent);
+          if (success) {
+            console.log(`✅ Order recorded in Airtable for payment: ${paymentIntent.id}`);
+          } else {
+            console.error(`❌ Failed to record order in Airtable for payment: ${paymentIntent.id}`);
+          }
+        } catch (error) {
+          console.error('Error recording order in Airtable:', error);
+        }
+        
+        // 2. Clear the user's cart
         const sessionId = paymentIntent.metadata.session_id;
         if (sessionId) {
           // Clear the cart associated with this session
           await storage.clearCart(sessionId);
         }
+        
+        // 3. In the future, we might want to add email confirmation here
       } else {
         console.log(`Unhandled event type: ${event.type}`);
       }
