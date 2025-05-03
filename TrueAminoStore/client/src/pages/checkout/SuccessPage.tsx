@@ -41,13 +41,20 @@ const SuccessPageContent = () => {
   
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
 
+  // Add a ref to track if we've already cleared the cart
+  const cartCleared = React.useRef(false);
+
   useEffect(() => {
     if (!stripe) {
       return;
     }
 
-    // Clear cart regardless of payment status
-    clearCart();
+    // Clear cart only once regardless of payment status
+    if (!cartCleared.current) {
+      console.log('Clearing cart from success page');
+      clearCart();
+      cartCleared.current = true;
+    }
 
     // Get the payment intent ID from the URL
     const clientSecret = new URLSearchParams(window.location.search).get(
