@@ -401,6 +401,16 @@ const CheckoutPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedShippingMethod, setSelectedShippingMethod] = useState(SHIPPING_OPTIONS[0].id);
+  
+  // Customer information state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
 
   // Calculate shipping cost based on selected method and subtotal
   const calculateShippingCost = () => {
@@ -430,15 +440,27 @@ const CheckoutPage = () => {
         // Get initial total with shipping
         const totalAmount = calculateTotal();
         
+        // Include customer information if available in the form
+        const customerInfo = {
+          amount: totalAmount,
+          shipping_method: selectedShippingMethod,
+          // Include any customer data that might be filled in already
+          firstName,
+          lastName,
+          email,
+          phone,
+          address,
+          city,
+          state,
+          zipCode
+        };
+        
         const response = await fetch('/api/create-payment-intent', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
-            amount: totalAmount,
-            shipping_method: selectedShippingMethod
-          }),
+          body: JSON.stringify(customerInfo),
           credentials: 'include',
         });
         
@@ -469,16 +491,28 @@ const CheckoutPage = () => {
       try {
         const totalAmount = calculateTotal();
         
-        // Update the payment intent with new amount
+        // Include customer information in the update as well
+        const updateData = {
+          amount: totalAmount,
+          shipping_method: selectedShippingMethod,
+          // Include customer data that might have been filled in
+          firstName,
+          lastName,
+          email,
+          phone,
+          address,
+          city,
+          state,
+          zipCode
+        };
+        
+        // Update the payment intent with new amount and customer data
         await fetch('/api/update-payment-intent', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
-            amount: totalAmount,
-            shipping_method: selectedShippingMethod
-          }),
+          body: JSON.stringify(updateData),
           credentials: 'include',
         });
         

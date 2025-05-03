@@ -478,17 +478,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Creating payment intent for amount:', amount);
       
+      // Extract customer data from request body if available
+      const {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zipCode,
+        shipping_method
+      } = req.body;
+      
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Stripe requires amount in cents
         currency: "usd",
         description,
+        receipt_email: email, // Add receipt email if provided
         automatic_payment_methods: {
           enabled: true,
         },
+        shipping: firstName && address ? {
+          name: `${firstName} ${lastName || ''}`.trim(),
+          address: {
+            line1: address || '',
+            city: city || '',
+            state: state || '',
+            postal_code: zipCode || '',
+            country: 'US',
+          },
+          phone: phone || '',
+        } : undefined,
         metadata: {
           session_id: sessionId,
-          shipping_method: req.body.shipping_method || 'standard'
+          shipping_method: shipping_method || req.body.shipping_method || 'standard',
+          customer_name: firstName && lastName ? `${firstName} ${lastName}` : '',
+          customer_email: email || '',
+          customer_phone: phone || '',
+          products: JSON.stringify(cartItems.map(item => ({
+            id: item.product.id,
+            name: item.product.name,
+            weight: item.selectedWeight || '',
+            quantity: item.quantity,
+            price: getPriceByWeight(item.product, item.selectedWeight)
+          })))
         },
       });
       
