@@ -328,8 +328,10 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
           salesPrice: paymentIntent.amount / 100, // Convert from cents
           quantity: 1,
           productId: 0, // Unknown product
+          product: "Unknown Product", // Default product name
           shipping: shippingMethod,
-          payment: paymentDetails
+          payment: paymentDetails,
+          affiliateCode: paymentIntent.metadata.affiliate_code || ''
         };
         
         await createOrderInAirtable(orderData);
