@@ -35,7 +35,7 @@ export interface IStorage {
 
   // Cart methods
   getCartItems(sessionId: string): Promise<CartItemWithProduct[]>;
-  getCartItem(sessionId: string, productId: number): Promise<CartItem | undefined>;
+  getCartItem(sessionId: string, productId: number, selectedWeight?: string): Promise<CartItem | undefined>;
   addToCart(cartItem: InsertCartItem): Promise<CartItem>;
   updateCartItem(id: number, quantity: number): Promise<CartItem | undefined>;
   removeCartItem(id: number): Promise<boolean>;
@@ -231,21 +231,28 @@ export class AirtableMemStorage implements IStorage {
   }
 
   async addToCart(cartItem: InsertCartItem): Promise<CartItem> {
+    // Ensure cartItem has valid quantity and selectedWeight values
+    const validatedCartItem = {
+      ...cartItem,
+      quantity: cartItem.quantity || 1, // Default to 1 if quantity is undefined
+      selectedWeight: cartItem.selectedWeight || null // Default to null if selectedWeight is undefined
+    };
+    
     // Check if item already exists in cart with the same weight (if specified)
     const existingItem = await this.getCartItem(
-      cartItem.sessionId, 
-      cartItem.productId, 
-      cartItem.selectedWeight
+      validatedCartItem.sessionId, 
+      validatedCartItem.productId, 
+      validatedCartItem.selectedWeight
     );
     
     if (existingItem) {
       // Update quantity of existing item
-      return this.updateCartItem(existingItem.id, existingItem.quantity + cartItem.quantity) as Promise<CartItem>;
+      return this.updateCartItem(existingItem.id, existingItem.quantity + validatedCartItem.quantity) as Promise<CartItem>;
     }
     
     // Add new item to cart
     const id = this.cartItemIdCounter++;
-    const newCartItem = { ...cartItem, id };
+    const newCartItem = { ...validatedCartItem, id } as CartItem;
     this.cartItems.set(id, newCartItem);
     return newCartItem;
   }

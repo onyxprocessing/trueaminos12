@@ -1,10 +1,24 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express, Request as ExpressRequest, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, Product } from "@shared/schema";
 import { z } from "zod";
-import session from 'express-session';
+import * as expressSession from 'express-session';
 import MemoryStore from 'memorystore';
+
+// Define a new type that extends Express Request to include session
+interface Request extends ExpressRequest {
+  session: {
+    id: string;
+    paymentIntentId?: string;
+    cookie: any;
+    regenerate: (callback: (err?: any) => void) => void;
+    destroy: (callback: (err?: any) => void) => void;
+    reload: (callback: (err?: any) => void) => void;
+    save: (callback: (err?: any) => void) => void;
+    touch: (callback: (err?: any) => void) => void;
+  };
+}
 import fetch from 'node-fetch';
 import Stripe from 'stripe';
 import { recordPaymentToAirtable } from './airtable-orders';
@@ -72,8 +86,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.error('Error testing Stripe connection:', err.message);
   }
   // Set up session middleware for cart management
-  const MemoryStoreSession = MemoryStore(session);
-  app.use(session({
+  const MemoryStoreSession = MemoryStore(expressSession);
+  app.use(expressSession.default({
     secret: 'trueaminos-secret-key',
     resave: false,
     saveUninitialized: true,

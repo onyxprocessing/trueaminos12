@@ -70,29 +70,46 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addItem = async (item: { productId: number; quantity: number; selectedWeight?: string }) => {
     try {
       setIsLoading(true)
-      const data = await apiRequest<{
-        addedItem: CartItem;
-        cart: {
-          items: CartItemWithProduct[];
-          itemCount: number;
-          subtotal: number;
-        }
-      }>('/api/cart', {
+      console.log('Adding item to cart:', item)
+      
+      // Ensure we have proper values for all fields
+      const validatedItem = {
+        productId: item.productId,
+        quantity: item.quantity || 1,
+        selectedWeight: item.selectedWeight || null
+      }
+      
+      const data = await apiRequest<CartApiResponse>('/api/cart', {
         method: 'POST',
-        data: item
+        data: validatedItem
       })
+      
+      if (!data || !data.cart) {
+        throw new Error('Invalid response from server')
+      }
+      
+      console.log('Item added successfully:', data.addedItem)
       
       setItems(data.cart.items || [])
       setItemCount(data.cart.itemCount || 0)
       setSubtotal(data.cart.subtotal || 0)
       
+      // Show success notification
+      toast({
+        title: 'Added to Cart',
+        description: 'Item has been added to your cart.',
+      })
+      
       // Invalidate queries that might be affected
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding item to cart:', error)
+      
+      // Provide more detailed error message if available
+      const errorMessage = error.message || 'Failed to add item to cart'
       toast({
         title: 'Error',
-        description: 'Failed to add item to cart.',
+        description: errorMessage,
         variant: 'destructive',
       })
     } finally {
