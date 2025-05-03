@@ -1,3 +1,4 @@
+import React from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -37,6 +38,11 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/terms-of-service" component={TermsOfService} />
       <Route path="/shipping-policy" component={ShippingPolicy} />
+      <Route path="/stripe-test">
+        <React.Suspense fallback={<div className="container py-10 text-center">Loading Stripe test tools...</div>}>
+          {React.createElement(React.lazy(() => import("./pages/StripeTest")))}
+        </React.Suspense>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

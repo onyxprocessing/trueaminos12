@@ -884,6 +884,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return true;
   }
 
+  // Register test Stripe endpoints for debugging
+  try {
+    // Import dynamically since this is a TypeScript module
+    import('./test-stripe').then(module => {
+      module.setupStripeTest(app);
+      console.log('✅ Stripe test endpoints registered successfully');
+    }).catch(error => {
+      console.error('Failed to import test-stripe module:', error);
+    });
+  } catch (error) {
+    console.error('Failed to register Stripe test endpoints:', error);
+  }
+  
   // Initialize HTTP server
   const httpServer = createServer(app);
   return httpServer;
