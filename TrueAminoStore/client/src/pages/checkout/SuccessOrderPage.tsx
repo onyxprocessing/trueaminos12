@@ -18,13 +18,17 @@ export default function SuccessOrderPage() {
     const orderIds = searchParams.get('order_ids') || '';
     const amount = searchParams.get('amount') || '0';
     const shippingMethod = searchParams.get('shipping_method') || 'standard';
+    const shippingPrice = searchParams.get('shipping_price') || '0';
+    const estimatedDelivery = searchParams.get('estimated_delivery') || '';
     
-    // Store order details in state
+    // Store order details in state with enhanced shipping information
     setOrderDetails({
       paymentMethod,
       orderIds: orderIds.split(',').filter((id: string) => id),
       amount: parseFloat(amount),
-      shippingMethod
+      shippingMethod,
+      shippingPrice: parseFloat(shippingPrice),
+      estimatedDelivery
     });
     
     setLoading(false);
@@ -134,6 +138,18 @@ export default function SuccessOrderPage() {
                           <div className="flex justify-between">
                             <span className="text-gray-600">Method:</span>
                             <span>{orderDetails.shippingMethod}</span>
+                          </div>
+                        )}
+                        {orderDetails.shippingPrice > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Shipping Cost:</span>
+                            <span>${orderDetails.shippingPrice.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {orderDetails.estimatedDelivery && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Estimated Delivery:</span>
+                            <span>{orderDetails.estimatedDelivery}</span>
                           </div>
                         )}
                         {fullName && (

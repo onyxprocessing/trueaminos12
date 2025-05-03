@@ -370,12 +370,17 @@ const MultiStepCheckout: React.FC = () => {
         // Clear the cart
         cart.clearCart();
         
-        // Store order data for success page
+        // Get the selected shipping option for detailed information
+        const selectedShippingOption = dynamicShippingOptions.find(opt => opt.id === shippingMethod);
+        
+        // Store order data for success page with enhanced shipping details
         const orderParams = new URLSearchParams({
           amount: paymentAmount.toString(),
           payment_method: paymentMethod,
           order_ids: (data.orderIds || []).join(','),
-          shipping_method: shippingMethod
+          shipping_method: selectedShippingOption?.name || shippingMethod,
+          shipping_price: selectedShippingOption?.price?.toString() || '0',
+          estimated_delivery: selectedShippingOption?.days || ''
         });
         
         console.log('Order params for success page:', orderParams.toString());
