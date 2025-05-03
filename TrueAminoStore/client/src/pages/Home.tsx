@@ -13,15 +13,27 @@ import { Product, Category } from '@shared/schema'
 import { apiRequest } from '@/lib/queryClient'
 
 const Home: React.FC = () => {
-  // Fetch featured products
+  // Fetch featured products with corrected response handling
   const { data: rawFeaturedProducts, isLoading: loadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products/featured'],
-    queryFn: () => apiRequest<Product[]>('/api/products/featured')
+    queryFn: async () => {
+      const response = await apiRequest<any>('/api/products/featured');
+      // Check if the response is a Response object from fetch and needs to be parsed
+      if (response instanceof Response) {
+        const jsonData = await response.json();
+        return jsonData;
+      }
+      // Otherwise, it's already parsed
+      return response;
+    }
   })
   
   // Process featured products to handle NAD+ special case
   const featuredProducts = useMemo(() => {
-    if (!rawFeaturedProducts) return null;
+    if (!rawFeaturedProducts || !Array.isArray(rawFeaturedProducts)) {
+      console.warn("Featured products is not an array:", rawFeaturedProducts);
+      return [];
+    }
     
     return rawFeaturedProducts.map(product => {
       // Special handling for NAD+ product
@@ -50,9 +62,19 @@ const Home: React.FC = () => {
     });
   }, [rawFeaturedProducts])
   
-  // Fetch categories
+  // Fetch categories with corrected response handling
   const { data: categories, isLoading: loadingCategories } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
+    queryFn: async () => {
+      const response = await apiRequest<any>('/api/categories');
+      // Check if the response is a Response object from fetch and needs to be parsed
+      if (response instanceof Response) {
+        const jsonData = await response.json();
+        return jsonData;
+      }
+      // Otherwise, it's already parsed
+      return response;
+    }
   })
   
   return (

@@ -7,15 +7,35 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Overload signatures
+export async function apiRequest<T>(url: string): Promise<T>;
+export async function apiRequest<T>(method: string, url: string): Promise<T>;
+export async function apiRequest<T>(method: string, url: string, data: any): Promise<T>;
 export async function apiRequest<T>(
-  url: string,
-  options?: {
+  urlOrMethod: string,
+  urlOrOptions?: string | {
     method?: string;
     data?: unknown;
+  },
+  optionalData?: any
+): Promise<T | Response> {
+  let method = 'GET';
+  let url = urlOrMethod;
+  let data: any = null;
+  
+  // Handle overloaded function signatures
+  if (arguments.length >= 2) {
+    if (typeof urlOrOptions === 'string') {
+      // apiRequest(method, url) or apiRequest(method, url, data)
+      method = urlOrMethod;
+      url = urlOrOptions;
+      data = optionalData;
+    } else if (urlOrOptions && typeof urlOrOptions === 'object') {
+      // apiRequest(url, options)
+      method = urlOrOptions.method || 'GET';
+      data = urlOrOptions.data;
+    }
   }
-): Promise<T> {
-  const method = options?.method || 'GET';
-  const data = options?.data;
   
   // If the URL is not absolute, make it absolute
   let absoluteUrl = url;
@@ -40,8 +60,8 @@ export async function apiRequest<T>(
     
     console.log('Response received:', res.status, res.statusText);
     
-    await throwIfResNotOk(res);
-    return res.json();
+    // Return the full response object for manual handling
+    return res;
   } catch (error) {
     console.error('API request error to', absoluteUrl, ':', error);
     throw error;

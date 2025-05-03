@@ -4,9 +4,18 @@ import { apiRequest } from '@/lib/queryClient'
 import { queryClient } from '@/lib/queryClient'
 import { CartItemWithProduct } from '@shared/schema'
 
+// Define CartItem type to resolve TypeScript errors
+type CartItem = {
+  id: number;
+  productId: number;
+  quantity: number;
+  sessionId: string;
+  selectedWeight?: string;
+};
+
 interface CartApiResponse {
-  addedItem?: any;
-  updatedItem?: any;
+  addedItem?: CartItem;
+  updatedItem?: CartItem;
   cart: {
     items: CartItemWithProduct[];
     itemCount: number;
@@ -70,24 +79,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addItem = async (item: { productId: number; quantity: number; selectedWeight?: string }) => {
     try {
       setIsLoading(true)
-      const data = await apiRequest<{
-        addedItem: CartItem;
-        cart: {
-          items: CartItemWithProduct[];
-          itemCount: number;
-          subtotal: number;
+      const response = await apiRequest<Response>('POST', '/api/cart', item);
+      
+      if (response instanceof Response) {
+        if (!response.ok) {
+          throw new Error(`Failed to add item: ${response.statusText}`);
         }
-      }>('/api/cart', {
-        method: 'POST',
-        data: item
-      })
-      
-      setItems(data.cart.items || [])
-      setItemCount(data.cart.itemCount || 0)
-      setSubtotal(data.cart.subtotal || 0)
-      
-      // Invalidate queries that might be affected
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] })
+        
+        const data = await response.json();
+        setItems(data.cart.items || [])
+        setItemCount(data.cart.itemCount || 0)
+        setSubtotal(data.cart.subtotal || 0)
+        
+        // Invalidate queries that might be affected
+        queryClient.invalidateQueries({ queryKey: ['/api/cart'] })
+      }
     } catch (error) {
       console.error('Error adding item to cart:', error)
       toast({
@@ -103,24 +109,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateItemQuantity = async (id: number, quantity: number) => {
     try {
       setIsLoading(true)
-      const data = await apiRequest<{
-        updatedItem: CartItem;
-        cart: {
-          items: CartItemWithProduct[];
-          itemCount: number;
-          subtotal: number;
+      const response = await apiRequest<Response>('PUT', `/api/cart/${id}`, { quantity });
+      
+      if (response instanceof Response) {
+        if (!response.ok) {
+          throw new Error(`Failed to update item: ${response.statusText}`);
         }
-      }>(`/api/cart/${id}`, {
-        method: 'PUT',
-        data: { quantity }
-      })
-      
-      setItems(data.cart.items || [])
-      setItemCount(data.cart.itemCount || 0)
-      setSubtotal(data.cart.subtotal || 0)
-      
-      // Invalidate queries that might be affected
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] })
+        
+        const data = await response.json();
+        setItems(data.cart.items || [])
+        setItemCount(data.cart.itemCount || 0)
+        setSubtotal(data.cart.subtotal || 0)
+        
+        // Invalidate queries that might be affected
+        queryClient.invalidateQueries({ queryKey: ['/api/cart'] })
+      }
     } catch (error) {
       console.error('Error updating cart item:', error)
       toast({
@@ -136,22 +139,21 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const removeItem = async (id: number) => {
     try {
       setIsLoading(true)
-      const data = await apiRequest<{
-        cart: {
-          items: CartItemWithProduct[];
-          itemCount: number;
-          subtotal: number;
+      const response = await apiRequest<Response>('DELETE', `/api/cart/${id}`);
+      
+      if (response instanceof Response) {
+        if (!response.ok) {
+          throw new Error(`Failed to remove item: ${response.statusText}`);
         }
-      }>(`/api/cart/${id}`, {
-        method: 'DELETE'
-      })
-      
-      setItems(data.cart.items || [])
-      setItemCount(data.cart.itemCount || 0)
-      setSubtotal(data.cart.subtotal || 0)
-      
-      // Invalidate queries that might be affected
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] })
+        
+        const data = await response.json();
+        setItems(data.cart.items || [])
+        setItemCount(data.cart.itemCount || 0)
+        setSubtotal(data.cart.subtotal || 0)
+        
+        // Invalidate queries that might be affected
+        queryClient.invalidateQueries({ queryKey: ['/api/cart'] })
+      }
     } catch (error) {
       console.error('Error removing cart item:', error)
       toast({
@@ -175,11 +177,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Then try to clear the cart on the server
       try {
-        await apiRequest<{
-          success: boolean;
-        }>('/api/cart', {
-          method: 'DELETE'
-        })
+        const response = await apiRequest<Response>('DELETE', '/api/cart');
+        
+        if (!response.ok) {
+          console.error(`Failed to clear cart: ${response.statusText}`);
+        }
       } catch (error) {
         console.error('Error clearing cart on server:', error);
         // Silently continue even if the API call fails

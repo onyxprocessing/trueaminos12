@@ -47,9 +47,15 @@ const SuccessPageContent = () => {
   async function triggerOrderProcessing(paymentIntentId: string) {
     try {
       console.log(`Triggering manual order processing for payment: ${paymentIntentId}`);
-      // Call a new endpoint we'll create to manually process the order
-      const response = await apiRequest('POST', '/api/process-payment', { 
-        paymentIntentId 
+      // Call the endpoint to manually process the order
+      const response = await fetch('/api/process-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ paymentIntentId }),
+        credentials: 'include'
       });
       
       if (response.ok) {
