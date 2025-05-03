@@ -2,7 +2,10 @@ import { CartItemWithProduct } from "@shared/schema";
 import fetch from 'node-fetch';
 
 // Airtable API key from environment variable
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d";
+const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
+if (!AIRTABLE_API_KEY) {
+  console.error('⚠️ AIRTABLE_API_KEY is not set! Orders will not be recorded in Airtable.');
+}
 const AIRTABLE_BASE_ID = "app3XDDBbU0ZZDBiY";
 const ORDERS_TABLE_ID = "tblI5N0Xn65DB5L5s";
 
