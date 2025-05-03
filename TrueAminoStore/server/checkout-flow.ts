@@ -15,6 +15,8 @@ import {
   markCheckoutCompleted 
 } from './airtable-checkout';
 import { createOrderWithPaymentMethod } from './db-direct-order';
+import { getCustomerBySessionId } from './db-customer';
+import { sendOrderConfirmationEmail } from './email-service';
 
 // Define custom Request type with session
 interface Request extends ExpressRequest {
@@ -223,6 +225,29 @@ export async function handleShippingInfo(req: Request, res: Response) {
       console.log('Suggested address:', addressValidationDetails.suggestedAddress);
     }
     
+    // Define shipping options with prices
+    const shippingOptions = {
+      'standard': { price: 5.99, estimatedDelivery: '5-7 business days' },
+      'express': { price: 12.99, estimatedDelivery: '2-3 business days' },
+      'priority': { price: 19.99, estimatedDelivery: '1-2 business days' },
+      'international': { price: 24.99, estimatedDelivery: '7-14 business days' },
+      'free': { price: 0, estimatedDelivery: '7-10 business days' }
+    };
+    
+    // Get the shipping details based on selected method
+    const selectedShipping = shippingOptions[shippingMethod as keyof typeof shippingOptions] || 
+                            { price: 5.99, estimatedDelivery: '5-7 business days' };
+    
+    // Use provided shipping details from FedEx API if available, otherwise use fallback
+    const finalShippingDetails = shippingDetails || {
+      method: shippingMethod,
+      price: selectedShipping.price,
+      estimatedDelivery: selectedShipping.estimatedDelivery,
+      notes: `Shipping to ${address}, ${city}, ${state} ${zipCode}`,
+      addressValidated: isAddressValidated || false,
+      addressClassification: addressValidationDetails?.classification || 'unknown'
+    };
+    
     // Store in session for later use with detailed shipping info
     req.session.shippingInfo = {
       address,
@@ -290,30 +315,7 @@ export async function handleShippingInfo(req: Request, res: Response) {
     // Calculate total
     const cartTotal = calculateCartTotal(cartItems);
     
-    // Define shipping options with prices
-    const shippingOptions = {
-      'standard': { price: 5.99, estimatedDelivery: '5-7 business days' },
-      'express': { price: 12.99, estimatedDelivery: '2-3 business days' },
-      'priority': { price: 19.99, estimatedDelivery: '1-2 business days' },
-      'international': { price: 24.99, estimatedDelivery: '7-14 business days' },
-      'free': { price: 0, estimatedDelivery: '7-10 business days' }
-    };
-    
-    // Get the shipping details based on selected method
-    const selectedShipping = shippingOptions[shippingMethod as keyof typeof shippingOptions] || 
-                            { price: 5.99, estimatedDelivery: '5-7 business days' };
-    
-    // Use provided shipping details from FedEx API if available, otherwise use fallback
-    const finalShippingDetails = shippingDetails || {
-      method: shippingMethod,
-      price: selectedShipping.price,
-      estimatedDelivery: selectedShipping.estimatedDelivery,
-      notes: `Shipping to ${address}, ${city}, ${state} ${zipCode}`,
-      addressValidated: isAddressValidated || false,
-      addressClassification: addressValidationDetails?.classification || 'unknown'
-    };
-    
-    // Log real shipping details
+    // Log shipping details
     console.log('Using shipping details:', JSON.stringify(finalShippingDetails, null, 2));
     
     console.log('Original shipping details:', JSON.stringify(shippingDetails, null, 2));
@@ -615,6 +617,42 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
         paymentDetails
       );
       console.log('Orders created successfully with IDs:', orderIds);
+      
+      // Send confirmation email directly from checkout flow (in addition to the one in Airtable)
+      // This ensures email is sent even if Airtable process fails
+      try {
+        const customer = await getCustomerBySessionId(req.session.id);
+        if (customer && customer.email) {
+          const { sendOrderConfirmationEmail } = await import('./email-service');
+          
+          // Create order data for email
+          const orderData = {
+            orderId: `TA-${Date.now()}-${Math.floor(Math.random() * 999999).toString(36).toUpperCase()}`,
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+            email: customer.email,
+            phone: customer.phone || '',
+            address: customer.address,
+            city: customer.city,
+            state: customer.state,
+            zip: customer.zip,
+            quantity: 1, // Will be displayed in email
+            salesPrice: paymentDetails.amount || calculateCartTotal(await storage.getCartItems(req.session.id)),
+            productId: 0,
+            shipping: customer.shipping || 'Standard Shipping',
+            payment: paymentMethod
+          };
+          
+          console.log(`📧 Sending order confirmation email to ${customer.email}`);
+          await sendOrderConfirmationEmail(orderData);
+          console.log('📧 Order confirmation email sent successfully');
+        } else {
+          console.log('⚠️ Cannot send confirmation email - customer or email not found');
+        }
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        // Continue with order flow even if email fails
+      }
     } catch (orderError) {
       console.error('Error creating orders:', orderError);
       // For testing purposes, we'll use a dummy order ID
