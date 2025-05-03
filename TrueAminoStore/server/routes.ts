@@ -644,6 +644,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+  
+  // FedEx shipping rates API endpoint
+  app.post('/api/shipping-rates', async (req: Request, res: Response) => {
+    try {
+      const { getShippingRates, formatAddressForFedEx, estimatePackageSize } = await import('./fedex-shipping-rates');
+      
+      const { 
+        street, 
+        city, 
+        state, 
+        zipCode, 
+        country = 'US'
+      } = req.body;
+      
+      // Validate required fields
+      if (!street || !city || !state || !zipCode) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'Missing required address fields'
+        });
+      }
+      
+      // Get cart items to estimate package size
+      const sessionId = req.session.id;
+      const cartItems = await storage.getCartItems(sessionId);
+      
+      if (!cartItems || cartItems.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Your cart is empty'
+        });
+      }
+      
+      // Format address for FedEx API
+      const recipientAddress = formatAddressForFedEx(street, city, state, zipCode, country);
+      
+      // Estimate package size based on cart items
+      const packageSize = estimatePackageSize(cartItems);
+      
+      // Get shipping rates from FedEx API
+      const shippingRates = await getShippingRates({
+        recipientAddress,
+        packageSize
+      });
+      
+      res.json({
+        success: true,
+        rates: shippingRates
+      });
+    } catch (error: any) {
+      console.error('Error getting shipping rates:', error);
+      res.status(500).json({ 
+        success: false,
+        message: `Error retrieving shipping rates: ${error.message}`
+      });
+    }
+  });
 
   // Start checkout process and get ID
   app.post('/api/checkout/initialize', async (req: Request, res: Response) => {
