@@ -3,12 +3,19 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, Product } from "@shared/schema";
 import { z } from "zod";
-import session from 'express-session';
-import MemoryStore from 'memorystore';
+import expressSession from 'express-session';
+import createMemoryStore from 'memorystore';
 import fetch from 'node-fetch';
 import Stripe from 'stripe';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
+
+declare module 'express-session' {
+  interface SessionData {
+    id: string;
+    paymentIntentId?: string;
+  }
+}
 
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
@@ -65,12 +72,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     apiVersion: '2023-10-16' as any,
   });
   // Set up session middleware for cart management
-  const MemoryStoreSession = MemoryStore(session);
-  app.use(session({
+  const MemoryStore = createMemoryStore(expressSession);
+  app.use(expressSession({
     secret: 'trueaminos-secret-key',
     resave: false,
     saveUninitialized: true,
-    store: new MemoryStoreSession({
+    store: new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     }),
     cookie: { 

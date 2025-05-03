@@ -2,10 +2,8 @@
  * Test script to verify Stripe API connection and validate API keys
  */
 
-// Load environment variables
-require('dotenv').config();
-
-const Stripe = require('stripe');
+// No need to import dotenv, environment variables are already set in the workflow
+import Stripe from 'stripe';
 
 async function testStripeConnection() {
   console.log('Testing Stripe connection...');
