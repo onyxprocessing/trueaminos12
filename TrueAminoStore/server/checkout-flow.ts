@@ -132,16 +132,46 @@ export async function handlePersonalInfo(req: Request, res: Response) {
       return `${productName} ${weight} x${quantity}`;
     });
     
-    // Update in Airtable with all customer info and cart data
-    await updateCheckoutInAirtable(checkoutId, {
+    // Update in Airtable with all customer info and cart data immediately
+    console.log('Updating Airtable with customer personal info:', {
       firstName,
       lastName,
       email: email || '',
-      phone: phone || '',
-      status: 'personal_info',
-      cartItems: cartItems,
-      updatedAt: new Date().toISOString()
+      phone: phone || ''
     });
+    
+    // Make multiple attempts if needed to ensure data is saved
+    let success = false;
+    for (let attempt = 1; attempt <= 3 && !success; attempt++) {
+      try {
+        success = await updateCheckoutInAirtable(checkoutId, {
+          firstName,
+          lastName,
+          email: email || '',
+          phone: phone || '',
+          status: 'personal_info',
+          cartItems: cartItems,
+          updatedAt: new Date().toISOString()
+        });
+        
+        if (success) {
+          console.log(`✅ Successfully saved customer personal info to Airtable on attempt ${attempt}`);
+        } else {
+          console.log(`❌ Failed to save customer info to Airtable on attempt ${attempt}`);
+          // Short delay before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (airtableError) {
+        console.error(`Error updating Airtable on attempt ${attempt}:`, airtableError);
+        // Short delay before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    if (!success) {
+      console.error('⚠️ Failed to save customer info to Airtable after multiple attempts');
+      // We'll continue anyway to not block the checkout flow
+    }
     
     res.json({
       success: true,
@@ -251,17 +281,48 @@ export async function handleShippingInfo(req: Request, res: Response) {
     
     // Update in Airtable with all customer info and cart data
     if (req.session.checkoutId) {
-      await updateCheckoutInAirtable(req.session.checkoutId, {
+      console.log('Updating Airtable with shipping info:', {
         address,
         city,
         state,
         zip: zipCode,
-        shippingMethod,
-        status: 'shipping_info',
-        cartItems: cartItems,
-        totalAmount: cartTotal,
-        updatedAt: new Date().toISOString()
+        shippingMethod
       });
+      
+      // Make multiple attempts if needed to ensure data is saved
+      let success = false;
+      for (let attempt = 1; attempt <= 3 && !success; attempt++) {
+        try {
+          success = await updateCheckoutInAirtable(req.session.checkoutId, {
+            address,
+            city,
+            state,
+            zip: zipCode,
+            shippingMethod,
+            status: 'shipping_info',
+            cartItems: cartItems,
+            totalAmount: cartTotal,
+            updatedAt: new Date().toISOString()
+          });
+          
+          if (success) {
+            console.log(`✅ Successfully saved shipping info to Airtable on attempt ${attempt}`);
+          } else {
+            console.log(`❌ Failed to save shipping info to Airtable on attempt ${attempt}`);
+            // Short delay before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (airtableError) {
+          console.error(`Error updating Airtable with shipping info on attempt ${attempt}:`, airtableError);
+          // Short delay before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!success) {
+        console.error('⚠️ Failed to save shipping info to Airtable after multiple attempts');
+        // We'll continue anyway to not block the checkout flow
+      }
     }
     
     // We already have the cart items and total from above
@@ -309,10 +370,35 @@ export async function handlePaymentMethod(req: Request, res: Response) {
     
     // Update in Airtable
     if (req.session.checkoutId) {
-      await updateCheckoutInAirtable(req.session.checkoutId, {
-        status: 'payment_selection',
-        updatedAt: new Date().toISOString()
-      });
+      console.log('Updating Airtable with payment method selection:', paymentMethod);
+      
+      // Make multiple attempts if needed to ensure data is saved
+      let success = false;
+      for (let attempt = 1; attempt <= 3 && !success; attempt++) {
+        try {
+          success = await updateCheckoutInAirtable(req.session.checkoutId, {
+            status: 'payment_selection',
+            updatedAt: new Date().toISOString()
+          });
+          
+          if (success) {
+            console.log(`✅ Successfully saved payment method to Airtable on attempt ${attempt}`);
+          } else {
+            console.log(`❌ Failed to save payment method to Airtable on attempt ${attempt}`);
+            // Short delay before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (airtableError) {
+          console.error(`Error updating Airtable with payment method on attempt ${attempt}:`, airtableError);
+          // Short delay before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!success) {
+        console.error('⚠️ Failed to save payment method to Airtable after multiple attempts');
+        // We'll continue anyway to not block the checkout flow
+      }
     }
     
     // Get cart items and calculate amount
@@ -415,10 +501,35 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
     
     // Update in Airtable
     if (req.session.checkoutId) {
-      await updateCheckoutInAirtable(req.session.checkoutId, {
-        status: 'payment_processing',
-        updatedAt: new Date().toISOString()
-      });
+      console.log('Updating Airtable with payment processing status');
+      
+      // Make multiple attempts if needed to ensure data is saved
+      let success = false;
+      for (let attempt = 1; attempt <= 3 && !success; attempt++) {
+        try {
+          success = await updateCheckoutInAirtable(req.session.checkoutId, {
+            status: 'payment_processing',
+            updatedAt: new Date().toISOString()
+          });
+          
+          if (success) {
+            console.log(`✅ Successfully saved payment processing status to Airtable on attempt ${attempt}`);
+          } else {
+            console.log(`❌ Failed to save payment processing status to Airtable on attempt ${attempt}`);
+            // Short delay before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (airtableError) {
+          console.error(`Error updating Airtable with payment processing status on attempt ${attempt}:`, airtableError);
+          // Short delay before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!success) {
+        console.error('⚠️ Failed to save payment processing status to Airtable after multiple attempts');
+        // We'll continue anyway to not block the checkout flow
+      }
     }
     
     // Create payment details object
@@ -450,7 +561,32 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
     
     // Mark checkout as completed
     if (req.session.checkoutId) {
-      await markCheckoutCompleted(req.session.checkoutId);
+      console.log('Marking checkout as completed in Airtable');
+      
+      // Make multiple attempts if needed to ensure data is saved
+      let success = false;
+      for (let attempt = 1; attempt <= 3 && !success; attempt++) {
+        try {
+          success = await markCheckoutCompleted(req.session.checkoutId);
+          
+          if (success) {
+            console.log(`✅ Successfully marked checkout as completed in Airtable on attempt ${attempt}`);
+          } else {
+            console.log(`❌ Failed to mark checkout as completed in Airtable on attempt ${attempt}`);
+            // Short delay before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } catch (airtableError) {
+          console.error(`Error marking checkout as completed in Airtable on attempt ${attempt}:`, airtableError);
+          // Short delay before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!success) {
+        console.error('⚠️ Failed to mark checkout as completed in Airtable after multiple attempts');
+        // We'll continue anyway to not block the checkout flow
+      }
       
       // Clear checkout data from session
       req.session.checkoutStep = 'completed';
