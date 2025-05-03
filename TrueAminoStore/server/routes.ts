@@ -1148,97 +1148,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.error('Failed to register Stripe test endpoints:', error);
   }
   
-  // Add API endpoint to sync orders from Stripe
-  app.post('/api/admin/sync-stripe-orders', async (req: Request, res: Response) => {
-    try {
-      const { syncFromDate } = req.body;
-      
-      console.log('🔄 Manual Stripe order synchronization requested');
-      
-      // Import dynamically to avoid circular dependencies
-      const { syncOrdersFromStripe } = await import('./stripe-sync');
-      
-      // Convert date string to timestamp if provided
-      let startTimestamp: number | undefined = undefined;
-      if (syncFromDate) {
-        startTimestamp = Math.floor(new Date(syncFromDate).getTime() / 1000);
-      }
-      
-      // Run the synchronization
-      const result = await syncOrdersFromStripe(startTimestamp);
-      
-      return res.json({
-        success: result.success,
-        message: `Processed ${result.totalProcessed} orders: ${result.savedToDatabase} saved to database, ${result.savedToAirtable} saved to Airtable`,
-        details: result
-      });
-    } catch (error) {
-      console.error('Error in Stripe order sync endpoint:', error);
-      return res.status(500).json({
-        success: false,
-        message: `Error synchronizing orders: ${String(error)}`
-      });
-    }
-  });
-  
-  // Setup periodic Stripe order synchronization (every 15 minutes)
-  // This ensures orders are always saved even if webhooks fail
-  let stripeOrderSyncInterval: NodeJS.Timeout;
-  
-  async function startStripeSyncInterval() {
-    // Clear existing interval if any
-    if (stripeOrderSyncInterval) {
-      clearInterval(stripeOrderSyncInterval);
-    }
-    
-    // Set interval for every 15 minutes
-    stripeOrderSyncInterval = setInterval(async () => {
-      try {
-        console.log('⏰ Running scheduled Stripe order synchronization');
-        
-        // Only sync orders from the last 6 hours to avoid too much processing
-        const sixHoursAgo = Math.floor(Date.now() / 1000) - (6 * 60 * 60);
-        
-        // Import dynamically to avoid circular dependencies
-        const { syncOrdersFromStripe } = await import('./stripe-sync');
-        
-        // Run the synchronization
-        await syncOrdersFromStripe(sixHoursAgo);
-      } catch (error) {
-        console.error('Error in scheduled Stripe order sync:', error);
-      }
-    }, 15 * 60 * 1000); // 15 minutes
-    
-    // Also run once immediately on startup (with a short delay)
-    setTimeout(async () => {
-      try {
-        console.log('🚀 Running initial Stripe order synchronization');
-        
-        // Only sync orders from the last 24 hours on startup
-        const oneDayAgo = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
-        
-        // Import dynamically to avoid circular dependencies
-        const { syncOrdersFromStripe } = await import('./stripe-sync');
-        
-        // Run the synchronization
-        await syncOrdersFromStripe(oneDayAgo);
-      } catch (error) {
-        console.error('Error in initial Stripe order sync:', error);
-      }
-    }, 5000); // 5 second delay to let the server fully start
-  }
-  
-  // Start the interval
-  startStripeSyncInterval();
+  // Admin API endpoints are defined here
   
   // Initialize HTTP server
   const httpServer = createServer(app);
   
-  // Clean up interval on server close
+  // Configure server events
   httpServer.on('close', () => {
-    if (stripeOrderSyncInterval) {
-      clearInterval(stripeOrderSyncInterval);
-    }
+    console.log('Server shutting down');
   });
   
   return httpServer;
