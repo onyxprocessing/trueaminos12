@@ -1,0 +1,97 @@
+, and support metabolic regulation without impacting blood sugar or growth factors. Supplied in high-purity lyophilized powder form, AOD-9604 from True Aminos is strictly intended for scientific research in fields such as weight regulation and peptide signaling pathways.\",\"description2\":\"{\\n  \\\"productName\\\": \\\"AOD-9604\\\",\\n  \\\"chemicalInfo\\\": {\\n    \\\"formula\\\": \\\"C78H123N23O23S2\\\",\\n    \\\"weight\\\": \\\"1815.12 g/mol\\\",\\n    \\\"CAS\\\": \\\"386264-39-7\\\",\\n    \\\"PubChemCID\\\": \\\"71300630\\\",\\n    \\\"synonyms\\\": [\\n      \\\"AOD9604\\\",\\n      \\\"AOD-9604\\\",\\n      \\\"Tyr-somatostatin (177-191)\\\",\\n      \\\"somatostatin fragment\\\",\\n      \\\"AOD 9604\\\"\\n    ]\\n  },\\n  \\\"description\\\": \\\"AOD-9604 is a modified peptide derived from the C-terminal region of human growth hormone, specifically designed to stimulate lipolytic activity without significantly affecting insulin levels or IGF-1. True Aminos supplies this research-grade peptide in a 10mg lyophilized powder vial, with over 99% purity, ideal for experimental models focused on fat loss, metabolic pathways, and peptide signaling. It is not intended for human or veterinary use.\\\",\\n  \\\"researchApplications\\\": [\\n    {\\n      \\\"area\\\": \\\"Fat Metabolism\\\",\\n      \\\"details\\\": \\\"Researching AOD-9604’s impact on lipolysis and fat breakdown without GH-related side effects.\\\"\\n    },\\n    {\\n      \\\"area\\\": \\\"Weight Regulation\\\",\\n      \\\"details\\\": \\\"Exploring potential roles in obesity and metabolic disorder research models.\\\"\\n    },\\n    {\\n      \\\"area\\\": \\\"Peptide Signaling\\\",\\n      \\\"details\\\": \\\"Studying how synthetic HGH fragments interact with adipose tissue receptors.\\\"\\n    }\\n  ],\\n  \\\"storageHandling\\\": [\\n    \\\"Store at ≤6°C in sealed vials, away from direct light and moisture.\\\",\\n    \\\"Reconstitute with bacteriostatic water prior to use.\\\",\\n    \\\"Use sterile techniques and handle with laboratory-grade safety protocols.\\\"\\n  ],\\n  \\\"specifications\\\": {\\n    \\\"purity\\\": \\\"≥99% (HPLC Verified)\\\",\\n    \\\"appearance\\\": \\\"Solid white lyophilized powder in 3mL vial\\\",\\n    \\\"solubility\\\": \\\"Soluble in bacteriostatic water\\\"\\n  },\\n  \\\"importantNote\\\": \\\"AOD-9604 is intended for laboratory research only. It is not approved for human consumption or use in medical or veterinary settings. Misuse may be unlawful and unsafe.\\\",\\n  \\\"references\\\": [\\n    {\\n      \\\"authors\\\": \\\"Ng, F. M., et al.\\\",\\n      \\\"year\\\": \\\"2000\\\",\\n      \\\"title\\\": \\\"Biological Activity of a Modified HGH Fragment (AOD-9604) in Adipose Regulation.\\\",\\n      \\\"journal\\\": \\\"Metabolic Peptide Research Journal\\\"\\n    },\\n    {\\n      \\\"authors\\\": \\\"LeRoith, D., et al.\\\",\\n      \\\"year\\\": \\\"2003\\\",\\n      \\\"title\\\": \\\"GH and its Fragments in Metabolic Control.\\\",\\n      \\\"journal\\\": \\\"Endocrinology Today\\\"\\n    }\\n  ]\\n}\\n\",\"price\":\"0\",\"price5mg\":\"0\",\"price10mg\":\"80\",\"price15mg\":\"0\",\"price20mg\":\"0\",\"price2mg\":\"0\",\"price750mg\":\"0\",\"price100mg\":\"0\",\"price500mg\":\"0\",\"categoryId\":1,\"imageUrl\":\"/api/image-proxy?url=https%3A%2F%2Fv5.airtableusercontent.com%2Fv3%2Fu%2F40%2F40%2F1746316800000%2FFRdZ6AcFD8qOBBSAWX8vOA%2FponP_dTTtAVrbTGOZP41fz41syqciW0MUlh3vKsSdXvrvG85juH2KlXBeocvAowHayLCdlJHkEstF2RHF6Le1mrULq8bV9H0yNqzjKSFMLVWKkljEe5yKSWmmZ6yI1JvPGe-vKzR5urz20dW2Ddth31i7h29AX3BVbvc6c3qoXkqokhfJl1bZas7419fv891%2F0i5aswJGQRSU0FW68sI01G5D8v0L4lcDUBSyeg9VZ7o\",\"image2Url\":null,\"image3Url\":null,\"weightOptions\":[\"10mg\"],\"slug\":\"aod-9604\",\"inStock\":true,\"featured\":false}}]",
+    "total": 80,
+    "shippingdetails": "{\"method\":\"standard\",\"price\":5.99,\"estimatedDelivery\":\"5-7 business days\",\"notes\":\"Shipping to 3402 West Hamilton Avenue, Franklin, DE 99999\"}",
+    "paymentdetails": "{\"method\":\"card\",\"status\":\"pending\",\"timestamp\":\"2025-05-03T21:33:48.720Z\",\"cardDetails\":{\"lastFour\":\"5555\",\"expiryMonth\":\"55555\",\"expiryYear\":\"YY\",\"nameOnCard\":\"jj\"},\"bankDetails\":null,\"cryptoDetails\":null}"
+  }
+}
+✅ Checkout updated in Airtable: CHK-1746307859268-80D319
+✅ Successfully saved payment processing status to Airtable on attempt 1
+Error creating order with payment method: error: duplicate key value violates unique constraint "orders_pkey"
+    at file:///home/runner/workspace/TrueAminoStore/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/TrueAminoStore/node_modules/src/neon-serverless/session.ts:102:18)
+    at async createOrderWithPaymentMethod (/home/runner/workspace/TrueAminoStore/server/db-direct-order.ts:74:23)
+    at async handlePaymentConfirmation (/home/runner/workspace/TrueAminoStore/server/checkout-flow.ts:596:18)
+    at async <anonymous> (/home/runner/workspace/TrueAminoStore/server/routes.ts:601:5) {
+  length: 183,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (id)=(0) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'orders',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'orders_pkey',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
+Error creating orders: error: duplicate key value violates unique constraint "orders_pkey"
+    at file:///home/runner/workspace/TrueAminoStore/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/TrueAminoStore/node_modules/src/neon-serverless/session.ts:102:18)
+    at async createOrderWithPaymentMethod (/home/runner/workspace/TrueAminoStore/server/db-direct-order.ts:74:23)
+    at async handlePaymentConfirmation (/home/runner/workspace/TrueAminoStore/server/checkout-flow.ts:596:18)
+    at async <anonymous> (/home/runner/workspace/TrueAminoStore/server/routes.ts:601:5) {
+  length: 183,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (id)=(0) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'orders',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'orders_pkey',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
+Marking checkout as completed in Airtable
+Updating checkout with data: {
+  "status": "completed",
+  "updatedAt": "2025-05-03T21:33:49.566Z"
+}
+Setting status: completed
+Sending update to Airtable URL: https://api.airtable.com/v0/app3XDDBbU0ZZDBiY/tblhjfzTX2zjf22s1/recKSOC8ipTUHHgWU
+Update fields: {
+  "status": "completed",
+  "updatedat": "2025-05-03T21:33:49.696Z"
+}
+Airtable update response: {
+  "id": "recKSOC8ipTUHHgWU",
+  "createdTime": "2025-05-03T21:31:00.000Z",
+  "fields": {
+    "session id": "HR1f62IzAEaUUPM_MlLTE--E4Anvu9Ki",
+    "address": "3402 West Hamilton Avenue",
+    "state": "DE",
+    "city": "Franklin",
+    "zip": "99999",
+    "shippingmethod": "standard",
+    "phone": "55555",
+    "email": "cjwallacebaseball@gmail.com",
+    "checkoutid": "CHK-1746307859268-80D319",
+    "status": "completed",
+    "createdat": "2025-05-03T21:30:59.268Z",
+    "updatedat": "2025-05-03T21:33:49.696Z",
+    "firstname": "Jack",
+    "lastname": "Spicer",
+    "cartitems": "[{\"productId\":7,\"quantity\":1,\"sessionId\":\"HR1f62IzAEaUUPM_MlLTE--E4Anvu9Ki\",\"selectedWeight\":\"10mg\",\"id\":3,\"product\":{\"id\":7,\"name\":\"AOD-9604\",\"description\":\"AOD-9604 is a synthetic peptide fragment derived from human growth hormone (HGH), specifically targeting the fat metabolism-regulating region of the hormone. It has been widely researched for its potential to promote lipolysis, reduce adipose tissue, and support metabolic regulation without impacting blood sugar or growth factors. Supplied in high-purity lyophilized powder form, AOD-9604 from True Aminos is strictly intended for scientific research in fields such as weight regulation and peptide signaling pathways.\",\"description2\":\"{\\n  \\\"productName\\\": \\\"AOD-9604\\\",\\n  \\\"chemicalInfo\\\": {\\n    \\\"formula\\\": \\\"C78H123N23O23S2\\\",\\n    \\\"weight\\\": \\\"1815.12 g/mol\\\",\\n    \\\"CAS\\\": \\\"386264-39-7\\\",\\n    \\\"PubChemCID\\\": \\\"71300630\\\",\\n    \\\"synonyms\\\": [\\n      \\\"AOD9604\\\",\\n      \\\"AOD-9604\\\",\\n      \\\"Tyr-somatostatin (177-191)\\\",\\n      \\\"somatostatin fragment\\\",\\n      \\\"AOD 9604\\\"\\n    ]\\n  },\\n  \\\"description\\\": \\\"AOD-9604 is a modified peptide derived from the C-terminal region of human growth hormone, specifically designed to stimulate lipolytic activity without significantly affecting insulin levels or IGF-1. True Aminos supplies this research-grade peptide in a 10mg lyophilized powder vial, with over 99% purity, ideal for experimental models focused on fat loss, metabolic pathways, and peptide signaling. It is not intended for human or veterinary use.\\\",\\n  \\\"researchApplications\\\": [\\n    {\\n      \\\"area\\\": \\\"Fat Metabolism\\\",\\n      \\\"details\\\": \\\"Researching AOD-9604’s impact on lipolysis and fat breakdown without GH-related side effects.\\\"\\n    },\\n    {\\n      \\\"area\\\": \\\"Weight Regulation\\\",\\n      \\\"details\\\": \\\"Exploring potential roles in obesity and metabolic disorder research models.\\\"\\n    },\\n    {\\n      \\\"area\\\": \\\"Peptide Signaling\\\",\\n      \\\"details\\\": \\\"Studying how synthetic HGH fragments interact with adipose tissue receptors.\\\"\\n    }\\n  ],\\n  \\\"storageHandling\\\": [\\n    \\\"Store at ≤6°C in sealed vials, away from direct light and moisture.\\\",\\n    \\\"Reconstitute with bacteriostatic water prior to use.\\\",\\n    \\\"Use sterile techniques and handle with laboratory-grade safety protocols.\\\"\\n  ],\\n  \\\"specifications\\\": {\\n    \\\"purity\\\": \\\"≥99% (HPLC Verified)\\\",\\n    \\\"appearance\\\": \\\"Solid white lyophilized powder in 3mL vial\\\",\\n    \\\"solubility\\\": \\\"Soluble in bacteriostatic water\\\"\\n  },\\n  \\\"importantNote\\\": \\\"AOD-9604 is intended for laboratory research only. It is not approved for human consumption or use in medical or veterinary settings. Misuse may be unlawful and unsafe.\\\",\\n  \\\"references\\\": [\\n    {\\n      \\\"authors\\\": \\\"Ng, F. M., et al.\\\",\\n      \\\"year\\\": \\\"2000\\\",\\n      \\\"title\\\": \\\"Biological Activity of a Modified HGH Fragment (AOD-9604) in Adipose Regulation.\\\",\\n      \\\"journal\\\": \\\"Metabolic Peptide Research Journal\\\"\\n    },\\n    {\\n      \\\"authors\\\": \\\"LeRoith, D., et al.\\\",\\n      \\\"year\\\": \\\"2003\\\",\\n      \\\"title\\\": \\\"GH and its Fragments in Metabolic Control.\\\",\\n      \\\"journal\\\": \\\"Endocrinology Today\\\"\\n    }\\n  ]\\n}\\n\",\"price\":\"0\",\"price5mg\":\"0\",\"price10mg\":\"80\",\"price15mg\":\"0\",\"price20mg\":\"0\",\"price2mg\":\"0\",\"price750mg\":\"0\",\"price100mg\":\"0\",\"price500mg\":\"0\",\"categoryId\":1,\"imageUrl\":\"/api/image-proxy?url=https%3A%2F%2Fv5.airtableusercontent.com%2Fv3%2Fu%2F40%2F40%2F1746316800000%2FFRdZ6AcFD8qOBBSAWX8vOA%2FponP_dTTtAVrbTGOZP41fz41syqciW0MUlh3vKsSdXvrvG85juH2KlXBeocvAowHayLCdlJHkEstF2RHF6Le1mrULq8bV9H0yNqzjKSFMLVWKkljEe5yKSWmmZ6yI1JvPGe-vKzR5urz20dW2Ddth31i7h29AX3BVbvc6c3qoXkqokhfJl1bZas7419fv891%2F0i5aswJGQRSU0FW68sI01G5D8v0L4lcDUBSyeg9VZ7o\",\"image2Url\":null,\"image3Url\":null,\"weightOptions\":[\"10mg\"],\"slug\":\"aod-9604\",\"inStock\":true,\"featured\":false}}]",
+    "total": 80,
+    "shippingdetails": "{\"method\":\"standard\",\"price\":5.99,\"estimatedDelivery\":\"5-7 business days\",\"notes\":\"Shipping to 3402 West Hamilton Avenue, Franklin, DE 99999\"}",
+    "paymentdetails": "{\"method\":\"card\",\"status\":\"pending\",\"timestamp\":\"2025-05-03T21:33:48.720Z\",\"cardDetails\":{\"lastFour\":\"5555\",\"expiryMonth\":\"55555\",\"expiryYear\":\"YY\",\"nameOnCard\":\"jj\"},\"bankDetails\":null,\"cryptoDetails\":null}"
+  }
+}
+✅ Checkout updated in Airtable: CHK-1746307859268-80D319
+✅ Successfully marked checkout as completed in Airtable on attempt 1
+9:33:49 PM [express] POST /api/checkout/confirm-payment 200 in 1172ms :: {"success":true,"paymentMet…
+9:33:50 PM [express] DELETE /api/cart 200 in 1ms :: {"success":true,"cart":{"items":[],"itemCount":0…

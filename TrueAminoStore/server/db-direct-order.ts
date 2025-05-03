@@ -66,7 +66,7 @@ export async function createOrderWithPaymentMethod(
         paymentIntentId: paymentDetails?.id || '',
         paymentDetails: paymentDetailsString,
         paymentStatus: 'completed',
-        id: 0, // Placeholder, will be set by database
+        // Remove the id field to allow the database to auto-generate it
         createdAt: new Date()
       };
 

@@ -317,14 +317,18 @@ const MultiStepCheckout: React.FC = () => {
     
     try {
       setIsLoading(true);
+      console.log('Submitting payment confirmation...');
       
       const response = await apiRequest('POST', '/api/checkout/confirm-payment', {
         paymentMethod,
         transactionId,
       });
       
+      console.log('Payment confirmation response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Payment confirmation successful, data:', data);
         
         // Clear the cart
         cart.clearCart();
@@ -337,6 +341,8 @@ const MultiStepCheckout: React.FC = () => {
           shipping_method: shippingMethod
         });
         
+        console.log('Order params for success page:', orderParams.toString());
+        
         // Store checkout information in sessionStorage for the success page
         sessionStorage.setItem('checkout_first_name', firstName);
         sessionStorage.setItem('checkout_last_name', lastName);
@@ -346,6 +352,7 @@ const MultiStepCheckout: React.FC = () => {
         sessionStorage.setItem('checkout_zip', zipCode);
         
         // Navigate to the success page with the order data
+        console.log('Redirecting to:', `/checkout/confirmation?${orderParams.toString()}`);
         navigate(`/checkout/confirmation?${orderParams.toString()}`);
       } else {
         const errorData = await response.json();
