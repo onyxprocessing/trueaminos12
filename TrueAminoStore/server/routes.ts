@@ -9,6 +9,7 @@ import fetch from 'node-fetch';
 import Stripe from 'stripe';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
+import { setupStripeTest } from './test-stripe';
 
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
@@ -66,6 +67,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const stripe = new Stripe(stripeSecretKey, {
     apiVersion: '2023-10-16' as any,
   });
+  
+  // Register Stripe test endpoints
+  setupStripeTest(app);
+  console.log('✅ Stripe test endpoints registered successfully');
   
   // Test Stripe connection
   try {
