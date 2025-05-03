@@ -198,25 +198,64 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
     try {
       console.log('Creating order records for payment:', paymentIntent.id);
       
-      // Create at least one record even if we don't have detailed cart data
-      const orderData: OrderData = {
-        orderId,
-        firstName: customerData.firstName,
-        lastName: customerData.lastName,
-        address: customerData.address,
-        city: customerData.city,
-        state: customerData.state,
-        zip: customerData.zip,
-        email: customerData.email,
-        phone: customerData.phone,
-        salesPrice: paymentIntent.amount / 100, // Convert from cents
-        quantity: 1,
-        productId: 0, // Unknown product
-        shipping: shippingMethod,
-        payment: paymentDetails
-      };
+      // Try to extract product information from metadata if available
+      let products = [];
+      if (paymentIntent.metadata.products) {
+        try {
+          products = JSON.parse(paymentIntent.metadata.products);
+          console.log('Found product details in payment intent metadata:', products.length);
+        } catch (e) {
+          console.warn('Failed to parse products JSON from metadata:', e);
+        }
+      }
       
-      await createOrderInAirtable(orderData);
+      if (products && products.length > 0) {
+        // Create one record for each product in the order
+        for (const product of products) {
+          const orderData: OrderData = {
+            orderId,
+            firstName: customerData.firstName,
+            lastName: customerData.lastName,
+            address: customerData.address,
+            city: customerData.city,
+            state: customerData.state,
+            zip: customerData.zip,
+            email: customerData.email,
+            phone: customerData.phone,
+            salesPrice: product.price || 0,
+            quantity: product.quantity || 1,
+            productId: product.id || 0,
+            mg: product.weight || '',
+            shipping: shippingMethod,
+            payment: paymentDetails
+          };
+          
+          await createOrderInAirtable(orderData);
+          console.log(`Order record created for product ${product.name} (${product.id})`);
+        }
+      } else {
+        // Create at least one record even if we don't have detailed product data
+        const orderData: OrderData = {
+          orderId,
+          firstName: customerData.firstName,
+          lastName: customerData.lastName,
+          address: customerData.address,
+          city: customerData.city,
+          state: customerData.state,
+          zip: customerData.zip,
+          email: customerData.email,
+          phone: customerData.phone,
+          salesPrice: paymentIntent.amount / 100, // Convert from cents
+          quantity: 1,
+          productId: 0, // Unknown product
+          shipping: shippingMethod,
+          payment: paymentDetails
+        };
+        
+        await createOrderInAirtable(orderData);
+        console.log('Order record created with general payment data');
+      }
+      
       console.log('Order recorded successfully for payment:', paymentIntent.id);
       return true;
     } catch (error) {

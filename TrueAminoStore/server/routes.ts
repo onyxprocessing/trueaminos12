@@ -674,6 +674,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // 3. In the future, we might want to add email confirmation here
+      } else if (event.type === 'payment_intent.payment_failed') {
+        const paymentIntent = event.data.object;
+        const error = paymentIntent.last_payment_error;
+        
+        console.log(`❌ Payment failed: ${paymentIntent.id}`);
+        if (error) {
+          console.log(`   Error type: ${error.type}`);
+          console.log(`   Error code: ${error.code}`);
+          console.log(`   Error message: ${error.message}`);
+        }
+        
+        // Record failed payment for analytics purposes
+        // In the future, we might want to implement recovery emails or retry workflows
+      } else if (event.type === 'charge.succeeded') {
+        const charge = event.data.object;
+        console.log(`💳 Charge succeeded: ${charge.id} for payment ${charge.payment_intent}`);
+        
+        // Additional charge processing can be done here
+        // For example, you might want to update order status or trigger fulfillment
       } else {
         console.log(`Unhandled event type: ${event.type}`);
       }

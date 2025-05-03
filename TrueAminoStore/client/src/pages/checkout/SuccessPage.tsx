@@ -4,7 +4,20 @@ import Layout from '../../components/Layout';
 import { Button } from '../../components/ui/button';
 import { useStripe, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import { PaymentIntent as StripePaymentIntent } from '@stripe/stripe-js';
 import { useCart } from '../../hooks/useCart';
+
+// Extended PaymentIntent type that includes metadata
+interface PaymentIntent extends StripePaymentIntent {
+  metadata?: {
+    [key: string]: string;
+    shipping_method?: string;
+    customer_name?: string;
+    customer_email?: string;
+    customer_phone?: string;
+    products?: string;
+  };
+}
 
 // Load Stripe outside of component to avoid re-creating Stripe object on each render
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
@@ -19,7 +32,19 @@ const SuccessPageContent = () => {
   const [, navigate] = useLocation();
   const { clearCart } = useCart();
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'processing' | 'error'>('processing');
-  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  type PaymentDetails = {
+    id: string;
+    paymentId: string;
+    amount: number;
+    date: string;
+    shipping?: {
+      method: string;
+      name: string;
+      address: string;
+    };
+  };
+  
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
 
   useEffect(() => {
     if (!stripe) {
@@ -40,14 +65,32 @@ const SuccessPageContent = () => {
           setPaymentStatus('error');
           return;
         }
+        
+        // Cast the paymentIntent to our extended type that includes metadata
+        const intent = paymentIntent as PaymentIntent;
 
-        switch (paymentIntent.status) {
+        switch (intent.status) {
           case 'succeeded':
             setPaymentStatus('success');
+            
+            // Generate a formatted "TA-" order ID that matches the format used in airtable-orders.ts
+            const timestamp = Math.floor(Date.now() / 1000);
+            const randomChars = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const formattedOrderId = `TA-${timestamp}-${randomChars}`;
+            
+            // Get shipping information if available
+            const shippingMethod = intent.metadata?.shipping_method || 'Standard';
+            
             setPaymentDetails({
-              id: paymentIntent.id,
-              amount: paymentIntent.amount / 100, // Convert from cents
+              id: formattedOrderId,
+              paymentId: intent.id,
+              amount: intent.amount / 100, // Convert from cents
               date: new Date().toLocaleDateString(),
+              shipping: {
+                method: shippingMethod,
+                name: intent.shipping?.name || '',
+                address: intent.shipping?.address ? `${intent.shipping.address.line1}, ${intent.shipping.address.city}, ${intent.shipping.address.state} ${intent.shipping.address.postal_code}` : '',
+              }
             });
             break;
           case 'processing':
@@ -85,19 +128,51 @@ const SuccessPageContent = () => {
 
               {paymentDetails && (
                 <div className="border border-gray-200 rounded-md p-4 bg-gray-50 mb-6">
-                  <h2 className="font-medium mb-2">Order Details</h2>
-                  <div className="space-y-1 text-sm">
+                  <h2 className="font-medium text-blue-800 mb-3">Order Details</h2>
+                  <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Order ID:</span>
-                      <span>{paymentDetails.id}</span>
+                      <span className="text-gray-600 font-medium">Order ID:</span>
+                      <span className="font-mono">{paymentDetails.id}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Date:</span>
+                      <span className="text-gray-600 font-medium">Date:</span>
                       <span>{paymentDetails.date}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Total Amount:</span>
-                      <span>${paymentDetails.amount.toFixed(2)}</span>
+                      <span className="text-gray-600 font-medium">Total Amount:</span>
+                      <span className="font-medium">${paymentDetails.amount.toFixed(2)}</span>
+                    </div>
+                    
+                    {paymentDetails.shipping && (
+                      <>
+                        <div className="border-t border-gray-200 my-2 pt-2">
+                          <h3 className="font-medium mb-2">Shipping Information</h3>
+                          <div className="space-y-1">
+                            {paymentDetails.shipping.method && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Method:</span>
+                                <span>{paymentDetails.shipping.method}</span>
+                              </div>
+                            )}
+                            {paymentDetails.shipping.name && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Recipient:</span>
+                                <span>{paymentDetails.shipping.name}</span>
+                              </div>
+                            )}
+                            {paymentDetails.shipping.address && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Address:</span>
+                                <span className="text-right w-2/3">{paymentDetails.shipping.address}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    <div className="text-xs text-gray-500 mt-3 border-t border-gray-200 pt-2">
+                      Payment ID: {paymentDetails.paymentId}
                     </div>
                   </div>
                 </div>
