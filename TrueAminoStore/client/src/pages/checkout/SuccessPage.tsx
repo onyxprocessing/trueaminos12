@@ -76,6 +76,28 @@ const SuccessPageContent = () => {
             // Get shipping information if available
             const shippingMethod = intent.metadata?.shipping_method || 'Standard';
             
+            // Call our server to record the order in Airtable as a backup to the webhook
+            fetch('/api/record-payment-success', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                paymentIntentId: intent.id
+              }),
+              credentials: 'include',
+            })
+            .then(response => {
+              if (!response.ok) {
+                console.error('Failed to record order on success page. This is okay if the webhook processes it.');
+              } else {
+                console.log('Order recorded successfully from success page');
+              }
+            })
+            .catch(err => {
+              console.error('Error recording order from success page:', err);
+            });
+            
             setPaymentDetails({
               id: formattedOrderId,
               paymentId: intent.id,

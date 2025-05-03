@@ -579,6 +579,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Endpoint for recording successful payment from the success page (backup to webhook)
+  app.post("/api/record-payment-success", async (req: Request, res: Response) => {
+    try {
+      const { paymentIntentId } = req.body;
+      
+      if (!paymentIntentId) {
+        return res.status(400).json({ message: "No payment intent ID provided" });
+      }
+      
+      console.log(`🔄 Manual recording of payment from success page: ${paymentIntentId}`);
+      
+      // Retrieve payment intent from Stripe
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        if (paymentIntent.status === 'succeeded') {
+          await processPaymentSuccess(paymentIntent);
+          return res.status(200).json({ success: true, message: "Order recorded successfully" });
+        } else {
+          console.log(`Payment status is not succeeded: ${paymentIntent.status}`);
+          return res.status(400).json({ success: false, message: `Payment not succeeded: ${paymentIntent.status}` });
+        }
+      } catch (error) {
+        console.error(`Error retrieving payment intent ${paymentIntentId}:`, error);
+        return res.status(500).json({ success: false, message: "Error retrieving payment intent" });
+      }
+    } catch (error: any) {
+      console.error('Error recording payment success:', error);
+      res.status(500).json({ 
+        message: "Error recording payment success", 
+        error: error.message 
+      });
+    }
+  });
+  
   // Endpoint to update an existing payment intent amount (without requiring a new form)
   app.post("/api/update-payment-intent", async (req: Request, res: Response) => {
     try {
