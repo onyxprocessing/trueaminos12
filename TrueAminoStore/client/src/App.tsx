@@ -14,6 +14,7 @@ import Checkout from "@/pages/Checkout";
 import CheckoutPage from "@/pages/checkout/CheckoutPage";
 import MultiStepCheckout from "@/pages/checkout/MultiStepCheckout";
 import SuccessPage from "@/pages/checkout/SuccessPage";
+import SuccessOrderPage from "@/pages/checkout/SuccessOrderPage";
 import ProductsPage from "@/pages/ProductsPage";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
@@ -35,7 +36,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/checkout/multi-step" component={MultiStepCheckout} />
       <Route path="/checkout" component={MultiStepCheckout} />
-      <Route path="/checkout/confirmation" component={SuccessPage} />
+      <Route path="/checkout/confirmation" component={SuccessOrderPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/certifications" component={CertificationsPage} />
