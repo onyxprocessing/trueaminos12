@@ -23,6 +23,8 @@ interface OrderData {
   payment: string;
   email?: string;
   phone?: string;
+  product?: string; // Product name
+  affiliateCode?: string;
 }
 
 /**
@@ -45,7 +47,7 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
   try {
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE_ID}`;
     
-    // Prepare the data for Airtable
+    // Prepare the data for Airtable with all requested fields
     const airtableData = {
       fields: {
         "Order ID": orderData.orderId,
@@ -59,10 +61,12 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
         "Sales Price": orderData.salesPrice,
         "Quantity": orderData.quantity,
         "Product ID": orderData.productId,
+        "Product": orderData.product || '', // Product name
         "Shipping": orderData.shipping,
-        "Payment Details": orderData.payment,
+        "Payment": orderData.payment,
         "Email": orderData.email || '',
-        "Phone": orderData.phone || ''
+        "Phone": orderData.phone || '',
+        "Affiliate Code": orderData.affiliateCode || ''
       }
     };
     
@@ -134,8 +138,10 @@ export async function createOrdersFromCart(
         salesPrice: parseFloat(item.product.price),
         quantity: item.quantity,
         productId: item.product.id,
+        product: item.product.name,
         shipping,
-        payment: paymentDetails
+        payment: paymentDetails,
+        affiliateCode: ''
       };
       
       const recordId = await createOrderInAirtable(orderData);
@@ -297,9 +303,11 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
             salesPrice: product.price || 0,
             quantity: product.quantity || 1,
             productId: product.id || 0,
+            product: product.name || '',
             mg: product.weight || '',
             shipping: shippingMethod,
-            payment: paymentDetails
+            payment: paymentDetails,
+            affiliateCode: paymentIntent.metadata.affiliate_code || ''
           };
           
           await createOrderInAirtable(orderData);
