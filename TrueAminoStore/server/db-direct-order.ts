@@ -57,8 +57,8 @@ export async function createOrderWithPaymentMethod(
         productName: item.product.name,
         quantity: item.quantity,
         selectedWeight: item.selectedWeight || '',
-        // Convert price to number for database storage
-        salesPrice: parseFloat(getPriceByWeight(item.product, item.selectedWeight).toString()),
+        // Get price as number for database storage
+        salesPrice: getPriceByWeight(item.product, item.selectedWeight),
         shipping: customer.shipping,
         paymentMethod,
         paymentIntentId: paymentDetails?.id || '',
@@ -106,9 +106,13 @@ export async function createOrderWithPaymentMethod(
 /**
  * Helper function to get price based on selected weight
  */
-function getPriceByWeight(product: any, selectedWeight: string | null): string | number {
-  if (!selectedWeight) return product.price || '0';
+function getPriceByWeight(product: any, selectedWeight: string | null): number {
+  if (!selectedWeight) {
+    const price = product.price || '0';
+    return typeof price === 'string' ? parseFloat(price) : price;
+  }
 
   const priceField = `price${selectedWeight.toLowerCase()}`;
-  return product[priceField] || product.price || '0';
+  const price = product[priceField] || product.price || '0';
+  return typeof price === 'string' ? parseFloat(price) : price;
 }

@@ -898,250 +898,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Customer information endpoint - first step of checkout
-  app.post('/api/checkout/customer-info', async (req: Request, res: Response) => {
-    try {
-      const sessionId = req.session.id;
-      
-      // Extract customer data from request body
-      const {
-        firstName,
-        lastName,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        zipCode,
-        shipping
-      } = req.body;
-      
-      // Validate required fields
-      if (!firstName || !lastName || !address || !city || !state || !zipCode || !shipping) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
-      
-      // Format customer data for database
-      const customerData = {
-        sessionId,
-        firstName,
-        lastName,
-        email: email || '',
-        phone: phone || '',
-        address,
-        city,
-        state,
-        zip: zipCode,
-        shipping,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        id: 0 // Placeholder, will be set by database
-      };
-      
-      // Import the customer functions 
-      const { saveCustomerInfo } = await import('./db-customer');
-      
-      // Save customer information
-      const savedCustomer = await saveCustomerInfo(customerData);
-      
-      // Calculate cart total for next step
-      const cartItems = await storage.getCartItems(sessionId);
-      const cartTotal = cartItems.reduce((sum, item) => 
-        sum + getPriceByWeight(item.product, item.selectedWeight) * item.quantity, 0);
-      
-      res.json({
-        success: true,
-        customerId: savedCustomer.id,
-        cartTotal: cartTotal,
-        itemCount: cartItems.length,
-        nextStep: 'payment-method'
-      });
-    } catch (error: any) {
-      console.error('Error saving customer information:', error);
-      res.status(500).json({ 
-        message: "Error saving customer information", 
-        error: error.message 
-      });
-    }
+  // New multi-step checkout endpoints
+  
+  // Step 1: Personal information (name, email, phone)
+  app.post('/api/checkout/personal-info', async (req: Request, res: Response) => {
+    const { handlePersonalInfo } = await import('./checkout-flow');
+    await handlePersonalInfo(req, res);
   });
   
-  // Payment method selection endpoint
+  // Step 2: Shipping information (address, city, state, zip, shipping method)
+  app.post('/api/checkout/shipping-info', async (req: Request, res: Response) => {
+    const { handleShippingInfo } = await import('./checkout-flow');
+    await handleShippingInfo(req, res);
+  });
+  
+  // Step 3: Payment method selection (card, bank, crypto)
   app.post('/api/checkout/payment-method', async (req: Request, res: Response) => {
-    try {
-      const sessionId = req.session.id;
-      const { paymentMethod } = req.body;
-      
-      // Validate payment method
-      if (!paymentMethod || !['card', 'bank', 'crypto'].includes(paymentMethod)) {
-        return res.status(400).json({ message: "Invalid payment method. Please choose card, bank, or crypto." });
-      }
-      
-      // Get customer info to verify checkout flow
-      const { getCustomerBySessionId } = await import('./db-customer');
-      const customer = await getCustomerBySessionId(sessionId);
-      
-      if (!customer) {
-        return res.status(400).json({ message: "Please complete customer information first" });
-      }
-      
-      // Calculate amount
-      const cartItems = await storage.getCartItems(sessionId);
-      if (cartItems.length === 0) {
-        return res.status(400).json({ message: "Your cart is empty" });
-      }
-      
-      const amount = cartItems.reduce((sum, item) => 
-        sum + getPriceByWeight(item.product, item.selectedWeight) * item.quantity, 0);
-      
-      // Return different responses based on payment method
-      if (paymentMethod === 'card') {
-        // For card payments, create a payment intent with Stripe
-        const params: Stripe.PaymentIntentCreateParams = {
-          amount: Math.round(amount * 100), // Stripe requires amount in cents
-          currency: 'usd',
-          automatic_payment_methods: { enabled: true },
-          metadata: {
-            session_id: sessionId,
-            shipping_method: customer.shipping
-          }
-        };
-        
-        // Create a compact order summary
-        const orderSummary = {
-          customer: `${customer.firstName} ${customer.lastName}`,
-          email: customer.email || '',
-          items: cartItems.map(item => ({
-            id: item.productId,
-            name: item.product.name.substring(0, 20), // Limit length
-            qty: item.quantity,
-            weight: item.selectedWeight || null
-          })),
-          shipping: customer.shipping
-        };
-        
-        // Store order summary in metadata
-        if (params.metadata) {
-          params.metadata.orderSummary = JSON.stringify(orderSummary);
-          
-          // Add customer info to metadata
-          params.metadata.customer_name = `${customer.firstName} ${customer.lastName}`;
-          params.metadata.customer_email = customer.email || '';
-          params.metadata.customer_phone = customer.phone || '';
-        }
-        
-        // Only add receipt_email for valid emails
-        if (customer.email && customer.email.trim() !== '' && customer.email.includes('@')) {
-          params.receipt_email = customer.email;
-        }
-        
-        // Add shipping information
-        params.shipping = {
-          name: `${customer.firstName} ${customer.lastName}`,
-          address: {
-            line1: customer.address,
-            city: customer.city,
-            state: customer.state,
-            postal_code: customer.zip,
-            country: 'US',
-          }
-        };
-        
-        if (customer.phone) {
-          params.shipping.phone = customer.phone;
-        }
-        
-        // Create payment intent
-        const paymentIntent = await stripe.paymentIntents.create(params);
-        
-        // Save to session
-        req.session.paymentIntentId = paymentIntent.id;
-        
-        // Return client secret for Stripe integration
-        res.json({
-          clientSecret: paymentIntent.client_secret,
-          amount: amount,
-          paymentMethod: 'card',
-          nextStep: 'card-payment'
-        });
-      } else if (paymentMethod === 'bank') {
-        // For bank payments, provide bank transfer instructions
-        res.json({
-          paymentMethod: 'bank',
-          amount: amount,
-          bankInfo: {
-            accountName: 'TrueAminos LLC',
-            accountNumber: '123456789',
-            routingNumber: '987654321',
-            bankName: 'First National Bank',
-            instructions: 'Please include your name and email in the transfer memo'
-          },
-          nextStep: 'confirm-payment'
-        });
-      } else if (paymentMethod === 'crypto') {
-        // For crypto payments, provide wallet address
-        res.json({
-          paymentMethod: 'crypto',
-          amount: amount,
-          cryptoInfo: {
-            bitcoin: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-            ethereum: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-            instructions: 'After sending payment, click the confirm button to complete your order'
-          },
-          nextStep: 'confirm-payment'
-        });
-      }
-    } catch (error: any) {
-      console.error('Error processing payment method selection:', error);
-      res.status(500).json({ 
-        message: "Error processing payment method", 
-        error: error.message 
-      });
-    }
+    const { handlePaymentMethod } = await import('./checkout-flow');
+    await handlePaymentMethod(req, res);
   });
   
-  // Confirm non-card payment (for bank and crypto)
+  // Step 4: Payment confirmation (for bank and crypto)
   app.post('/api/checkout/confirm-payment', async (req: Request, res: Response) => {
+    const { handlePaymentConfirmation } = await import('./checkout-flow');
+    await handlePaymentConfirmation(req, res);
+  });
+  
+  // Start checkout process and get ID
+  app.post('/api/checkout/initialize', async (req: Request, res: Response) => {
     try {
-      const sessionId = req.session.id;
-      const { paymentMethod, transactionId } = req.body;
+      const { initializeCheckout } = await import('./checkout-flow');
+      const checkoutId = await initializeCheckout(req);
       
-      // Validate payment method
-      if (!paymentMethod || !['bank', 'crypto'].includes(paymentMethod)) {
-        return res.status(400).json({ message: "Invalid payment method for confirmation" });
+      if (!checkoutId) {
+        return res.status(500).json({ message: "Failed to initialize checkout" });
       }
       
-      // Get customer info
-      const { getCustomerBySessionId } = await import('./db-customer');
-      const customer = await getCustomerBySessionId(sessionId);
-      
-      if (!customer) {
-        return res.status(400).json({ message: "Please complete customer information first" });
-      }
-      
-      // Create payment details object
-      const paymentDetails = {
-        method: paymentMethod,
-        transactionId: transactionId || `manual-${Date.now()}`,
-        status: 'pending',
-        amount: 0, // Will be calculated from cart
-        currency: 'usd',
-        created: new Date().toISOString()
-      };
-      
-      // Create orders in the database
-      const { createOrderWithPaymentMethod } = await import('./db-direct-order');
-      const orderIds = await createOrderWithPaymentMethod(sessionId, paymentMethod, paymentDetails);
+      // Get cart items for summary
+      const cartItems = await storage.getCartItems(req.session.id);
       
       res.json({
         success: true,
-        paymentMethod,
-        orderIds,
-        message: `Your ${paymentMethod} payment is being processed. Your order has been placed.`
+        checkoutId,
+        cartItemCount: cartItems.length,
+        nextStep: 'personal_info'
       });
     } catch (error: any) {
-      console.error('Error confirming payment:', error);
+      console.error('Error initializing checkout:', error);
       res.status(500).json({ 
-        message: "Error confirming payment", 
+        message: "Error initializing checkout process", 
         error: error.message 
       });
     }
