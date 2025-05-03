@@ -491,16 +491,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shipping_method
       } = req.body;
       
-      // Create a PaymentIntent with the order amount and currency
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Stripe requires amount in cents
+      // Create a payment intent creation params object
+      const params: any = {
+        amount: Math.round(amount * 100), // Convert to cents
         currency: "usd",
         description,
-        receipt_email: email, // Add receipt email if provided
         automatic_payment_methods: {
           enabled: true,
         },
-        shipping: firstName && address ? {
+        metadata: {
+          session_id: sessionId,
+          shipping_method: shipping_method || 'standard'
+        }
+      };
+      
+      // Add product information to metadata
+      params.metadata.products = JSON.stringify(cartItems.map(item => ({
+        id: item.product.id,
+        name: item.product.name,
+        weight: item.selectedWeight || '',
+        quantity: item.quantity,
+        price: getPriceByWeight(item.product, item.selectedWeight)
+      })));
+      
+      // Add customer info to metadata if provided
+      if (firstName || lastName) {
+        params.metadata.customer_name = `${firstName || ''} ${lastName || ''}`.trim();
+      }
+      
+      if (email) {
+        params.metadata.customer_email = email;
+        
+        // Only add receipt_email for valid emails
+        if (email.trim() !== '' && email.includes('@')) {
+          params.receipt_email = email;
+        }
+      }
+      
+      if (phone) {
+        params.metadata.customer_phone = phone;
+      }
+      
+      // Add shipping information if possible
+      if (firstName && address) {
+        params.shipping = {
           name: `${firstName} ${lastName || ''}`.trim(),
           address: {
             line1: address || '',
@@ -508,29 +542,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             state: state || '',
             postal_code: zipCode || '',
             country: 'US',
-          },
-          phone: phone || '',
-        } : undefined,
-        metadata: {
-          session_id: sessionId,
-          shipping_method: shipping_method || req.body.shipping_method || 'standard',
-          customer_name: firstName && lastName ? `${firstName} ${lastName}` : '',
-          customer_email: email || '',
-          customer_phone: phone || '',
-          products: JSON.stringify(cartItems.map(item => ({
-            id: item.product.id,
-            name: item.product.name,
-            weight: item.selectedWeight || '',
-            quantity: item.quantity,
-            price: getPriceByWeight(item.product, item.selectedWeight)
-          })))
-        },
-      });
+          }
+        };
+        
+        if (phone) {
+          params.shipping.phone = phone;
+        }
+      }
+      
+      // Create the payment intent
+      const paymentIntent = await stripe.paymentIntents.create(params);
       
       // Save the payment intent ID to the session
       req.session.paymentIntentId = paymentIntent.id;
       
-      // Send publishable key and PaymentIntent details to client
+      // Send details to client
       res.json({
         clientSecret: paymentIntent.client_secret,
         amount: amount,
@@ -588,8 +614,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
-      // Add receipt email if provided
-      if (email) {
+      // Only add receipt_email for valid emails
+      if (email && email.trim() !== '' && email.includes('@')) {
         updateOptions.receipt_email = email;
       }
       
