@@ -2,31 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import Layout from '../../components/Layout';
 import { Button } from '../../components/ui/button';
-import { useStripe, Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { PaymentIntent as StripePaymentIntent } from '@stripe/stripe-js';
 import { useCart } from '../../hooks/useCart';
 
-// Extended PaymentIntent type that includes metadata
-interface PaymentIntent extends StripePaymentIntent {
-  metadata?: {
-    [key: string]: string;
-  };
-}
-
-// Load Stripe outside of component to avoid re-creating Stripe object on each render
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-
-// Inner component that uses Stripe hooks
-const SuccessPageContent = () => {
-  const stripe = useStripe();
+/**
+ * Order success page for multi-step checkout
+ * No longer uses Stripe, gets order info from session
+ */
+const SuccessPage = () => {
   // wouter's useLocation returns [location, navigate]
   const [, navigate] = useLocation();
   const { clearCart } = useCart();
-  const [paymentStatus, setPaymentStatus] = useState<'success' | 'processing' | 'error'>('processing');
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'processing' | 'error'>('success');
+  
   type PaymentDetails = {
     id: string;
     paymentId: string;
@@ -42,75 +29,57 @@ const SuccessPageContent = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
 
   useEffect(() => {
-    if (!stripe) {
-      return;
-    }
-
-    // Attempt to clear the cart, but do it as an optimistic update
-    // This way, even if the API call fails, the UI will show an empty cart
-    // We don't need to await this - it can happen in the background
+    // Attempt to clear the cart 
     setTimeout(() => {
       try {
         clearCart();
       } catch (error) {
         console.error("Failed to clear cart:", error);
-        // Silently continue - we don't want to block the success page on cart clearing
       }
     }, 500); // Small delay to let the page load first
 
-    // Get the payment intent ID from the URL
-    const clientSecret = new URLSearchParams(window.location.search).get(
-      'payment_intent_client_secret'
-    );
-
-    if (clientSecret) {
-      stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
-        if (!paymentIntent) {
-          setPaymentStatus('error');
-          return;
-        }
-        
-        // Cast the paymentIntent to our extended type that includes metadata
-        const intent = paymentIntent as PaymentIntent;
-
-        switch (intent.status) {
-          case 'succeeded':
-            setPaymentStatus('success');
-            
-            // Generate a formatted "TA-" order ID that matches the format used in airtable-orders.ts
-            const timestamp = Math.floor(Date.now() / 1000);
-            const randomChars = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const formattedOrderId = `TA-${timestamp}-${randomChars}`;
-            
-            // Get shipping information if available
-            const shippingMethod = intent.metadata?.shipping_method || 'Standard';
-            
-            setPaymentDetails({
-              id: formattedOrderId,
-              paymentId: intent.id,
-              amount: intent.amount / 100, // Convert from cents
-              date: new Date().toLocaleDateString(),
-              shipping: {
-                method: shippingMethod,
-                name: intent.shipping?.name || '',
-                address: intent.shipping?.address ? `${intent.shipping.address.line1}, ${intent.shipping.address.city}, ${intent.shipping.address.state} ${intent.shipping.address.postal_code}` : '',
-              }
-            });
-            break;
-          case 'processing':
-            setPaymentStatus('processing');
-            break;
-          default:
-            setPaymentStatus('error');
-            break;
-        }
-      });
-    } else {
-      // No client secret in URL, might be a direct navigation
-      // Set success anyway if they came directly to this page
-      setPaymentStatus('success');
-    }
-  }, [stripe, clearCart]);
+    // Generate a formatted "TA-" order ID that matches the format used in airtable-orders.ts
+    const timestamp = Math.floor(Date.now() / 1000);
+    const randomChars = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const formattedOrderId = `TA-${timestamp}-${randomChars}`;
+    
+    const orderId = new URLSearchParams(window.location.search).get('order_id') || formattedOrderId;
+    const totalAmount = parseFloat(new URLSearchParams(window.location.search).get('amount') || '0');
+    const shippingMethod = new URLSearchParams(window.location.search).get('shipping_method') || 'Standard';
+    
+    // Retrieve session storage values for shipping info
+    const firstName = sessionStorage.getItem('checkout_first_name') || '';
+    const lastName = sessionStorage.getItem('checkout_last_name') || '';
+    const address = sessionStorage.getItem('checkout_address') || '';
+    const city = sessionStorage.getItem('checkout_city') || '';
+    const state = sessionStorage.getItem('checkout_state') || '';
+    const zip = sessionStorage.getItem('checkout_zip') || '';
+    
+    // Build the full name and address
+    const fullName = `${firstName} ${lastName}`.trim();
+    const fullAddress = address && city ? `${address}, ${city}, ${state} ${zip}` : '';
+    
+    setPaymentDetails({
+      id: orderId,
+      paymentId: `DIRECT-${timestamp}`,
+      amount: totalAmount,
+      date: new Date().toLocaleDateString(),
+      shipping: {
+        method: shippingMethod,
+        name: fullName,
+        address: fullAddress,
+      }
+    });
+    
+    // Clear checkout session storage after retrieving
+    sessionStorage.removeItem('checkout_first_name');
+    sessionStorage.removeItem('checkout_last_name');
+    sessionStorage.removeItem('checkout_address');
+    sessionStorage.removeItem('checkout_city');
+    sessionStorage.removeItem('checkout_state');
+    sessionStorage.removeItem('checkout_zip');
+    
+  }, [clearCart]);
 
   return (
     <Layout title="Order Confirmation - TrueAminos">
@@ -245,17 +214,5 @@ const SuccessPageContent = () => {
     </Layout>
   );
 };
-
-// Wrapper component to provide Stripe context
-const SuccessPageWrapper = () => {
-  return (
-    <Elements stripe={stripePromise}>
-      <SuccessPageContent />
-    </Elements>
-  );
-};
-
-// Use the wrapper as our exported component
-const SuccessPage = SuccessPageWrapper;
 
 export default SuccessPage;
