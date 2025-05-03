@@ -455,14 +455,27 @@ const CheckoutPage = () => {
           zipCode: zipCode
         };
         
-        const response = await fetch('/api/create-payment-intent', {
+        // Use absolute URL to avoid potential path resolution issues
+        const baseUrl = window.location.origin;
+        const absoluteUrl = `${baseUrl}/api/create-payment-intent`;
+        console.log('Creating payment intent at:', absoluteUrl);
+        
+        const response = await fetch(absoluteUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
           body: JSON.stringify(customerInfo),
-          credentials: 'include',
+          credentials: 'same-origin', // Send cookies if needed
+          mode: 'cors', // Enable CORS support
+        }).catch(fetchError => {
+          console.error('Network error in fetch:', fetchError);
+          throw new Error(`Network error: ${fetchError.message || 'Could not connect to server'}`);
         });
+        
+        console.log('Response received:', response.status, response.statusText);
+        console.log('Content-Type:', response.headers.get('content-type'));
         
         // Get detailed error message if present
         if (!response.ok) {
@@ -520,14 +533,26 @@ const CheckoutPage = () => {
         };
         
         // Update the payment intent with new amount and customer data
-        await fetch('/api/update-payment-intent', {
+        // Use absolute URL like we did for the payment intent creation
+        const baseUrl = window.location.origin;
+        const absoluteUrl = `${baseUrl}/api/update-payment-intent`;
+        console.log('Updating payment intent at:', absoluteUrl);
+        
+        const response = await fetch(absoluteUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
           body: JSON.stringify(updateData),
-          credentials: 'include',
+          credentials: 'same-origin',
+          mode: 'cors',
+        }).catch(fetchError => {
+          console.error('Network error in update fetch:', fetchError);
+          throw new Error(`Network error: ${fetchError.message || 'Could not connect to server'}`);
         });
+        
+        console.log('Update response received:', response.status, response.statusText);
         
         // No need to update client secret as we're just changing the amount
         console.log('Updated payment intent with new shipping: ', selectedShippingMethod);
