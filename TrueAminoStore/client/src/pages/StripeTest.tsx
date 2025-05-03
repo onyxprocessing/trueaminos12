@@ -94,6 +94,8 @@ const StripeTest = () => {
       setLoading(true);
       setError(null);
 
+      console.log('Sending request to create test payment intent...');
+      
       // Use our test endpoint instead of the regular one
       const response = await fetch('/api/test-payment-intent', {
         method: 'POST',
@@ -101,15 +103,31 @@ const StripeTest = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ amount: parseFloat(amount) }),
+      }).catch(fetchError => {
+        console.error('Network error in fetch:', fetchError);
+        throw new Error(`Network error: ${fetchError.message || 'Could not connect to server'}`);
       });
 
+      console.log('Response received:', response.status, response.statusText);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create test payment');
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        let errorMessage = 'Failed to create test payment';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If JSON parsing fails, use the raw text
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      console.log('Test payment intent created:', { success: data.success });
+      console.log('Test payment intent created successfully:', { success: data.success, hasClientSecret: !!data.clientSecret });
       setClientSecret(data.clientSecret);
     } catch (err: any) {
       console.error('Error creating test payment intent:', err);
@@ -124,15 +142,34 @@ const StripeTest = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/test-stripe-connection');
-      const data = await response.json();
+      console.log('Testing Stripe API connection...');
+      
+      const response = await fetch('/api/test-stripe-connection').catch(fetchError => {
+        console.error('Network error in fetch:', fetchError);
+        throw new Error(`Network error: ${fetchError.message || 'Could not connect to server'}`);
+      });
+      
+      console.log('Response received:', response.status, response.statusText);
 
-      if (response.ok) {
-        console.log('Stripe connection test result:', data);
-        setError('✅ Stripe API connection is working!');
-      } else {
-        throw new Error(data.error || 'Connection test failed');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+        let errorMessage = 'Connection test failed';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If JSON parsing fails, use the raw text
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
+      console.log('Stripe connection test result:', data);
+      setError('✅ Stripe API connection is working!');
     } catch (err: any) {
       console.error('Error testing Stripe connection:', err);
       setError('❌ ' + (err.message || 'Something went wrong'));
