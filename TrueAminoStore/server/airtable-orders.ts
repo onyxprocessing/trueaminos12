@@ -48,21 +48,21 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
     // Prepare the data for Airtable
     const airtableData = {
       fields: {
-        orderId: orderData.orderId,
-        firstName: orderData.firstName,
-        lastName: orderData.lastName,
-        address: orderData.address,
-        city: orderData.city,
-        state: orderData.state,
-        zip: orderData.zip,
-        mg: orderData.mg || '',
-        salesPrice: orderData.salesPrice,
-        quantity: orderData.quantity,
-        productId: orderData.productId,
-        shipping: orderData.shipping,
-        payment: orderData.payment,
-        email: orderData.email || '',
-        phone: orderData.phone || ''
+        "Order ID": orderData.orderId,
+        "First Name": orderData.firstName,
+        "Last Name": orderData.lastName,
+        "Address": orderData.address,
+        "City": orderData.city,
+        "State": orderData.state,
+        "Zip": orderData.zip,
+        "MG": orderData.mg || '',
+        "Sales Price": orderData.salesPrice,
+        "Quantity": orderData.quantity,
+        "Product ID": orderData.productId,
+        "Shipping": orderData.shipping,
+        "Payment Details": orderData.payment,
+        "Email": orderData.email || '',
+        "Phone": orderData.phone || ''
       }
     };
     
