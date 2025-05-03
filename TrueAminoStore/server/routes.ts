@@ -522,6 +522,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Order management endpoints
+  app.get("/api/orders", async (req: Request, res: Response) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+      const search = req.query.search as string;
+      
+      if (search) {
+        const orders = await searchOrders(search, limit, offset);
+        res.json(orders);
+      } else {
+        const orders = await getAllOrders(limit, offset);
+        res.json(orders);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+  
+  app.get("/api/orders/count", async (_req: Request, res: Response) => {
+    try {
+      const count = await countOrders();
+      res.json({ count });
+    } catch (error) {
+      console.error("Error counting orders:", error);
+      res.status(500).json({ message: "Failed to count orders" });
+    }
+  });
+  
+  app.get("/api/orders/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      
+      const order = await getOrderById(id);
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      res.json(order);
+    } catch (error) {
+      console.error(`Error fetching order ${req.params.id}:`, error);
+      res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+
   // Stripe Payment Endpoints
   
   // Create Payment Intent API
