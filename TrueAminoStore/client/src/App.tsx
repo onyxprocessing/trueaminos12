@@ -20,6 +20,8 @@ import CertificationsPage from "@/pages/CertificationsPage";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import ShippingPolicy from "@/pages/ShippingPolicy";
+import AdminOrdersPage from "@/pages/AdminOrdersPage";
+import AdminOrderDetailPage from "@/pages/AdminOrderDetailPage";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -43,6 +45,8 @@ function Router() {
           {React.createElement(React.lazy(() => import("./pages/StripeTest")))}
         </React.Suspense>
       </Route>
+      <Route path="/admin/orders" component={AdminOrdersPage} />
+      <Route path="/admin/orders/:id" component={AdminOrderDetailPage} />
       <Route component={NotFound} />
     </Switch>
   );
