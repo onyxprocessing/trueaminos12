@@ -105,8 +105,8 @@ const SuccessPageContent = () => {
 
   return (
     <Layout title="Order Confirmation - TrueAminos">
-      <div className="container max-w-3xl py-16">
-        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+      <div className="container max-w-3xl mx-auto px-4 py-16">
+        <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 max-w-2xl mx-auto">
           {paymentStatus === 'success' && (
             <>
               <div className="flex flex-col items-center mb-8">

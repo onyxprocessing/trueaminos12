@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, numeric, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -32,10 +32,34 @@ export const cartItems = pgTable("cart_items", {
   selectedWeight: text("selected_weight"),
 });
 
+// Orders table for storing checkout data
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  orderId: text("order_id").notNull().unique(), // TA-[timestamp]-[random]
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  zip: text("zip").notNull(),
+  productId: integer("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  quantity: integer("quantity").notNull(),
+  selectedWeight: text("selected_weight"),
+  salesPrice: numeric("sales_price").notNull(),
+  shipping: text("shipping").notNull(),
+  paymentIntentId: text("payment_intent_id").notNull(),
+  paymentDetails: text("payment_details"), // JSON string of payment info
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Zod schemas for validation
 export const insertCategorySchema = createInsertSchema(categories);
 export const insertProductSchema = createInsertSchema(products);
 export const insertCartItemSchema = createInsertSchema(cartItems);
+export const insertOrderSchema = createInsertSchema(orders);
 
 // Types for use in application
 export interface Category {
@@ -81,3 +105,6 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type CartItemWithProduct = CartItem & {
   product: Product;
 };
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
