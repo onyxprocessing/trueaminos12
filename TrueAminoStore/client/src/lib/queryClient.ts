@@ -60,6 +60,20 @@ export async function apiRequest<T>(
     
     console.log('Response received:', res.status, res.statusText);
     
+    // If the response content type is JSON and caller wants a parsed type, parse it
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      // Clone the response since we can only read the body once
+      const resClone = res.clone();
+      try {
+        const json = await resClone.json();
+        return json;
+      } catch (jsonError) {
+        console.warn('Failed to parse JSON response:', jsonError);
+        // Fall back to returning the response object
+      }
+    }
+    
     // Return the full response object for manual handling
     return res;
   } catch (error) {
