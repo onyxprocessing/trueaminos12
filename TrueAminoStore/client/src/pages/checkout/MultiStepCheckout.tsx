@@ -177,6 +177,37 @@ const MultiStepCheckout: React.FC = () => {
       return;
     }
     
+    // Import validation functions
+    const { validateAddress, validateZipCode, validateCity } = await import('../../lib/address-lookup');
+    
+    // Enhanced address validation
+    if (!validateAddress(address)) {
+      toast({
+        title: 'Invalid Address',
+        description: 'Please enter a valid street address including a street number',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!validateZipCode(zipCode)) {
+      toast({
+        title: 'Invalid ZIP Code',
+        description: 'Please enter a valid 5-digit ZIP code',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!validateCity(city)) {
+      toast({
+        title: 'Invalid City',
+        description: 'Please enter a valid city name',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       setIsLoading(true);
       
@@ -499,6 +530,25 @@ const MultiStepCheckout: React.FC = () => {
     </form>
   );
   
+  // Helpers for address validation and ZIP lookup
+  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newZip = e.target.value;
+    setZipCode(newZip);
+    
+    // Import is inside the function to avoid issues with server-side rendering
+    import('../../lib/address-lookup').then(({ lookupZipCode, validateZipCode }) => {
+      // Only lookup if the ZIP is valid
+      if (validateZipCode(newZip)) {
+        const zipResult = lookupZipCode(newZip);
+        if (zipResult) {
+          // Auto-fill city and state
+          setCity(zipResult.city);
+          setState(zipResult.state);
+        }
+      }
+    });
+  };
+  
   // Render shipping info form (Step 2)
   const renderShippingInfoForm = () => (
     <form onSubmit={handleShippingInfoSubmit} className="space-y-6">
@@ -511,11 +561,27 @@ const MultiStepCheckout: React.FC = () => {
             id="address" 
             value={address} 
             onChange={(e) => setAddress(e.target.value)} 
+            placeholder="123 Main Street, Apt #4"
             required 
           />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="zipCode">ZIP Code *</Label>
+            <Input 
+              id="zipCode" 
+              value={zipCode} 
+              onChange={handleZipCodeChange}
+              placeholder="Enter ZIP code first"
+              className="font-mono"
+              required 
+            />
+            <span className="text-xs text-muted-foreground">
+              Enter your ZIP code first for faster checkout
+            </span>
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="city">City *</Label>
             <Input 
@@ -540,16 +606,6 @@ const MultiStepCheckout: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="zipCode">ZIP Code *</Label>
-            <Input 
-              id="zipCode" 
-              value={zipCode} 
-              onChange={(e) => setZipCode(e.target.value)} 
-              required 
-            />
           </div>
         </div>
         
