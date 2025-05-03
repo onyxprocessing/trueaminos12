@@ -49,6 +49,8 @@ export function generateCheckoutId(): string {
 export async function createCheckoutInAirtable(sessionId: string): Promise<string> {
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
     console.error('Airtable credentials missing. Set AIRTABLE_API_KEY and AIRTABLE_BASE_ID');
+    console.error('AIRTABLE_API_KEY:', AIRTABLE_API_KEY ? 'Present (length: ' + AIRTABLE_API_KEY.length + ')' : 'Missing');
+    console.error('AIRTABLE_BASE_ID:', AIRTABLE_BASE_ID ? 'Present (value: ' + AIRTABLE_BASE_ID + ')' : 'Missing');
     return '';
   }
 
@@ -105,6 +107,8 @@ export async function createCheckoutInAirtable(sessionId: string): Promise<strin
 export async function updateCheckoutInAirtable(checkoutId: string, updateData: Partial<CheckoutData>): Promise<boolean> {
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
     console.error('Airtable credentials missing. Set AIRTABLE_API_KEY and AIRTABLE_BASE_ID');
+    console.error('AIRTABLE_API_KEY:', AIRTABLE_API_KEY ? 'Present (length: ' + AIRTABLE_API_KEY.length + ')' : 'Missing');
+    console.error('AIRTABLE_BASE_ID:', AIRTABLE_BASE_ID ? 'Present (value: ' + AIRTABLE_BASE_ID + ')' : 'Missing');
     return false;
   }
 
