@@ -96,19 +96,34 @@ const StripeTest = () => {
 
       console.log('Sending request to create test payment intent...');
       
+      // Log detailed request information for debugging
+      const requestUrl = '/api/test-payment-intent';
+      const requestBody = { amount: parseFloat(amount) };
+      console.log('Request URL:', requestUrl);
+      console.log('Request body:', JSON.stringify(requestBody));
+      
+      // Use absolute URL to avoid potential path resolution issues
+      const baseUrl = window.location.origin;
+      const absoluteUrl = `${baseUrl}/api/test-payment-intent`;
+      console.log('Absolute URL:', absoluteUrl);
+      
       // Use our test endpoint instead of the regular one
-      const response = await fetch('/api/test-payment-intent', {
+      const response = await fetch(absoluteUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ amount: parseFloat(amount) }),
+        body: JSON.stringify(requestBody),
+        credentials: 'same-origin', // Send cookies if needed for session
+        mode: 'cors', // Enable CORS support
       }).catch(fetchError => {
         console.error('Network error in fetch:', fetchError);
         throw new Error(`Network error: ${fetchError.message || 'Could not connect to server'}`);
       });
 
       console.log('Response received:', response.status, response.statusText);
+      console.log('Response headers:', [...response.headers.entries()].map(entry => `${entry[0]}: ${entry[1]}`).join(', '));
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -144,12 +159,25 @@ const StripeTest = () => {
 
       console.log('Testing Stripe API connection...');
       
-      const response = await fetch('/api/test-stripe-connection').catch(fetchError => {
+      // Use absolute URL to avoid potential path resolution issues
+      const baseUrl = window.location.origin;
+      const absoluteUrl = `${baseUrl}/api/test-stripe-connection`;
+      console.log('Absolute URL for connection test:', absoluteUrl);
+      
+      const response = await fetch(absoluteUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'same-origin', // Send cookies if needed
+        mode: 'cors', // Enable CORS support
+      }).catch(fetchError => {
         console.error('Network error in fetch:', fetchError);
         throw new Error(`Network error: ${fetchError.message || 'Could not connect to server'}`);
       });
       
       console.log('Response received:', response.status, response.statusText);
+      console.log('Response headers:', [...response.headers.entries()].map(entry => `${entry[0]}: ${entry[1]}`).join(', '));
 
       if (!response.ok) {
         const errorText = await response.text();

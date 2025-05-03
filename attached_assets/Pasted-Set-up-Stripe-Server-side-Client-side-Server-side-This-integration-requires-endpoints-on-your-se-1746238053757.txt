@@ -1,0 +1,349 @@
+Set up Stripe
+Server-side
+Client-side
+Server-side
+This integration requires endpoints on your server that talk to the Stripe API. Use the official libraries for access to the Stripe API from your server:
+
+Command Line
+Select a language
+
+
+# Available as a gem
+sudo gem install stripe
+Gemfile
+Select a language
+
+
+# If you use bundler, you can add this line to your Gemfile
+gem 'stripe'
+Client-side
+The React Native SDK is open source and fully documented. Internally, it uses the native iOS and Android SDKs. To install Stripe’s React Native SDK, run one of the following commands in your project’s directory (depending on which package manager you use):
+
+
+yarn
+
+npm
+Command Line
+
+
+yarn add @stripe/stripe-react-native
+Next, install some other necessary dependencies:
+
+For iOS, navigate to the ios directory and run pod install to ensure that you also install the required native dependencies.
+For Android, there are no more dependencies to install.
+Stripe initialization
+To initialize Stripe in your React Native app, either wrap your payment screen with the StripeProvider component, or use the initStripe initialization method. Only the API publishable key in publishableKey is required. The following example shows how to initialize Stripe using the StripeProvider component.
+
+
+
+import { StripeProvider } from '@stripe/stripe-react-native';
+
+function App() {
+  const [publishableKey, setPublishableKey] = useState('');
+
+  const fetchPublishableKey = async () => {
+    const key = await fetchKey(); // fetch key from your server here
+    setPublishableKey(key);
+  };
+
+  useEffect(() => {
+    fetchPublishableKey();
+  }, []);
+
+  return (
+    <StripeProvider
+      publishableKey={publishableKey}
+      merchantIdentifier="merchant.identifier" // required for Apple Pay
+      urlScheme="your-url-scheme" // required for 3D Secure and bank redirects
+    >
+      // Your app code here
+    </StripeProvider>
+  );
+}
+Note
+Use your API test keys while you test and develop, and your live mode keys when you publish your app.
+
+Enable payment methods
+View your payment methods settings and enable the payment methods you want to support. You need at least one payment method enabled to create a PaymentIntent.
+
+By default, Stripe enables cards and other prevalent payment methods that can help you reach more customers, but we recommend turning on additional payment methods that are relevant for your business and customers. See Payment method support for product and payment method support, and our pricing page for fees.
+
+Add an endpoint
+Server-side
+Note
+To display the PaymentSheet before you create a PaymentIntent, see Collect payment details before creating an Intent.
+
+This integration uses three Stripe API objects:
+
+PaymentIntent: Stripe uses this to represent your intent to collect payment from a customer, tracking your charge attempts and payment state changes throughout the process.
+
+(Optional) Customer: To set up a payment method for future payments, you must attach it to a Customer. Create a Customer object when your customer creates an account with your business. If your customer is making a payment as a guest, you can create a Customer object before payment and associate it with your own internal representation of the customer’s account later.
+
+(Optional) Customer Ephemeral Key: Information on the Customer object is sensitive, and can’t be retrieved directly from an app. An Ephemeral Key grants the SDK temporary access to the Customer.
+
+Note
+If you never save cards to a Customer and don’t allow returning Customers to reuse saved cards, you can omit the Customer and Customer Ephemeral Key objects from your integration.
+
+For security reasons, your app can’t create these objects. Instead, add an endpoint on your server that:
+
+Retrieves the Customer, or creates a new one.
+Creates an Ephemeral Key for the Customer.
+Creates a PaymentIntent with the amount, currency, and customer. You can also optionally include the automatic_payment_methods parameter. Stripe enables its functionality by default in the latest version of the API.
+Returns the Payment Intent’s client secret, the Ephemeral Key’s secret, the Customer’s id, and your publishable key to your app.
+The payment methods shown to customers during the checkout process are also included on the PaymentIntent. You can let Stripe pull payment methods from your Dashboard settings or you can list them manually. Regardless of the option you choose, know that the currency passed in the PaymentIntent filters the payment methods shown to the customer. For example, if you pass eur on the PaymentIntent and have OXXO enabled in the Dashboard, OXXO won’t be shown to the customer because OXXO doesn’t support eur payments.
+
+Unless your integration requires a code-based option for offering payment methods, Stripe recommends the automated option. This is because Stripe evaluates the currency, payment method restrictions, and other parameters to determine the list of supported payment methods. Payment methods that increase conversion and that are most relevant to the currency and customer’s location are prioritized.
+
+
+Manage payment methods from the Dashboard
+
+Listing payment methods manually
+Note
+Test a running implementation of this endpoint on Glitch.
+
+You can manage payment methods from the Dashboard. Stripe handles the return of eligible payment methods based on factors such as the transaction’s amount, currency, and payment flow. The PaymentIntent is created using the payment methods you configured in the Dashboard. If you don’t want to use the Dashboard or if you want to specify payment methods manually, you can list them using the payment_method_types attribute.
+
+Command Line
+Select a language
+
+
+# Create a Customer (use an existing Customer ID if this is a returning customer)
+curl https://api.stripe.com/v1/customers \
+  -u sk_test_51QNI3NEEAGH673hP7V3tPZDvHJKD46XNDVKs0f5YD3rooG49ncyEFIvdR9aaV38BvUGECvysDm9YNowoTFdE4m9c00lTVAyoLO: \
+  -X "POST"
+
+# Create an Ephemeral Key for the Customer
+curl https://api.stripe.com/v1/ephemeral_keys \
+  -u sk_test_51QNI3NEEAGH673hP7V3tPZDvHJKD46XNDVKs0f5YD3rooG49ncyEFIvdR9aaV38BvUGECvysDm9YNowoTFdE4m9c00lTVAyoLO: \
+  -H "Stripe-Version: 2024-10-28.acacia" \
+  -X "POST" \
+  -d "customer"="{{CUSTOMER_ID}}" \
+
+# Create a PaymentIntent
+curl https://api.stripe.com/v1/payment_intents \
+  -u sk_test_51QNI3NEEAGH673hP7V3tPZDvHJKD46XNDVKs0f5YD3rooG49ncyEFIvdR9aaV38BvUGECvysDm9YNowoTFdE4m9c00lTVAyoLO: \
+  -X "POST" \
+  -d "customer"="{{CUSTOMER_ID}}" \
+  -d "amount"=1099 \
+  -d "currency"="eur" \
+  # In the latest version of the API, specifying the `automatic_payment_methods` parameter
+  # is optional because Stripe enables its functionality by default.
+  -d "automatic_payment_methods[enabled]"=true \
+Collect payment details
+Client-side
+Before displaying the mobile Payment Element, your checkout page should:
+
+Show the products being purchased and the total amount
+Collect any required shipping information
+Include a checkout button to present Stripe’s UI
+In the checkout of your app, make a network request to the backend endpoint you created in the previous step and call initPaymentSheet from the useStripe hook.
+
+
+
+export default function CheckoutScreen() {
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const [loading, setLoading] = useState(false);
+
+  const fetchPaymentSheetParams = async () => {
+    const response = await fetch(`${API_URL}/payment-sheet`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const { paymentIntent, ephemeralKey, customer } = await response.json();
+
+    return {
+      paymentIntent,
+      ephemeralKey,
+      customer,
+    };
+  };
+
+  const initializePaymentSheet = async () => {
+    const {
+      paymentIntent,
+      ephemeralKey,
+      customer,
+    } = await fetchPaymentSheetParams();
+
+    const { error } = await initPaymentSheet({
+      merchantDisplayName: "Example, Inc.",
+      customerId: customer,
+      customerEphemeralKeySecret: ephemeralKey,
+      paymentIntentClientSecret: paymentIntent,
+      // Set `allowsDelayedPaymentMethods` to true if your business can handle payment
+      //methods that complete payment after a delay, like SEPA Debit and Sofort.
+      allowsDelayedPaymentMethods: true,
+      defaultBillingDetails: {
+        name: 'Jane Doe',
+      }
+    });
+    if (!error) {
+      setLoading(true);
+    }
+  };
+
+  const openPaymentSheet = async () => {
+    // see below
+  };
+
+  useEffect(() => {
+    initializePaymentSheet();
+  }, []);
+
+  return (
+    <Screen>
+      <Button
+        variant="primary"
+        disabled={!loading}
+        title="Checkout"
+        onPress={openPaymentSheet}
+      />
+    </Screen>
+  );
+}
+When your customer taps the Checkout button, call presentPaymentSheet() to open the sheet. After the customer completes the payment, the sheet is dismissed and the promise resolves with an optional StripeError<PaymentSheetError>.
+
+
+
+export default function CheckoutScreen() {
+  // continued from above
+
+  const openPaymentSheet = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      Alert.alert('Success', 'Your order is confirmed!');
+    }
+  };
+
+  return (
+    <Screen>
+      <Button
+        variant="primary"
+        disabled={!loading}
+        title="Checkout"
+        onPress={openPaymentSheet}
+      />
+    </Screen>
+  );
+}
+If there is no error, inform the user they’re done (for example, by displaying an order confirmation screen).
+
+Setting allowsDelayedPaymentMethods to true allows delayed notification payment methods like US bank accounts. For these payment methods, the final payment status isn’t known when the PaymentSheet completes, and instead succeeds or fails later. If you support these types of payment methods, inform the customer their order is confirmed and only fulfill their order (for example, ship their product) when the payment is successful.
+
+Set up a return URL (iOS only)
+Client-side
+When a customer exits your app, for example to authenticate in Safari or their banking app, provide a way for them to automatically return to your app afterward. Many payment method types require a return URL, so if you fail to provide it, we can’t present those payment methods to your user, even if you’ve enabled them.
+
+To provide a return URL:
+
+Register a custom URL. Universal links aren’t supported.
+Configure your custom URL.
+Set up your root component to forward the URL to the Stripe SDK as shown below.
+Note
+If you’re using Expo, set your scheme in the app.json file.
+
+App.tsx
+
+
+import React, { useEffect, useCallback } from 'react';
+import { Linking } from 'react-native';
+import { useStripe } from '@stripe/stripe-react-native';
+
+export default function MyApp() {
+  const { handleURLCallback } = useStripe();
+
+  const handleDeepLink = useCallback(
+    async (url: string | null) => {
+      if (url) {
+        const stripeHandled = await handleURLCallback(url);
+        if (stripeHandled) {
+          // This was a Stripe URL - you can return or add extra handling here as you see fit
+        } else {
+          // This was NOT a Stripe URL – handle as you normally would
+        }
+      }
+    },
+    [handleURLCallback]
+  );
+
+  useEffect(() => {
+    const getUrlAsync = async () => {
+      const initialUrl = await Linking.getInitialURL();
+      handleDeepLink(initialUrl);
+    };
+
+    getUrlAsync();
+
+    const deepLinkListener = Linking.addEventListener(
+      'url',
+      (event: { url: string }) => {
+        handleDeepLink(event.url);
+      }
+    );
+
+    return () => deepLinkListener.remove();
+  }, [handleDeepLink]);
+
+  return (
+    <View>
+      <AwesomeAppComponent />
+    </View>
+  );
+}
+Additionally, set the returnURL when you call the initPaymentSheet method:
+
+
+
+await initPaymentSheet({
+  ...
+  returnURL: 'your-app://stripe-redirect',
+  ...
+});
+For more information on native URL schemes, refer to the Android and iOS docs.
+
+Handle post-payment events
+Stripe sends a payment_intent.succeeded event when the payment completes. Use the Dashboard webhook tool or follow the webhook guide to receive these events and run actions, such as sending an order confirmation email to your customer, logging the sale in a database, or starting a shipping workflow.
+
+Listen for these events rather than waiting on a callback from the client. On the client, the customer could close the browser window or quit the app before the callback executes, and malicious clients could manipulate the response. Setting up your integration to listen for asynchronous events is what enables you to accept different types of payment methods with a single integration.
+
+In addition to handling the payment_intent.succeeded event, we recommend handling these other events when collecting payments with the Payment Element:
+
+Event	Description	Action
+payment_intent.succeeded	Sent when a customer successfully completes a payment.	Send the customer an order confirmation and fulfill their order.
+payment_intent.processing	Sent when a customer successfully initiates a payment, but the payment has yet to complete. This event is most commonly sent when the customer initiates a bank debit. It’s followed by either a payment_intent.succeeded or payment_intent.payment_failed event in the future.	Send the customer an order confirmation that indicates their payment is pending. For digital goods, you might want to fulfill the order before waiting for payment to complete.
+payment_intent.payment_failed	Sent when a customer attempts a payment, but the payment fails.	If a payment transitions from processing to payment_failed, offer the customer another attempt to pay.
+Test the integration
+
+Cards
+
+Bank redirects
+
+Bank debits
+Card number	Scenario	How to test
+4242424242424242	The card payment succeeds and doesn’t require authentication.	Fill out the credit card form using the credit card number with any expiration, CVC, and postal code.
+4000002500003155	The card payment requires authentication.	Fill out the credit card form using the credit card number with any expiration, CVC, and postal code.
+4000000000009995	The card is declined with a decline code like insufficient_funds.	Fill out the credit card form using the credit card number with any expiration, CVC, and postal code.
+6205500000000000004	The UnionPay card has a variable length of 13-19 digits.	Fill out the credit card form using the credit card number with any expiration, CVC, and postal code.
+See Testing for additional information to test your integration.
+
+Optional
+Enable Link
+Optional
+Enable Apple Pay
+Optional
+Enable Google Pay
+Optional
+Enable card scanning (iOS only)
+Client-side
+Optional
+Customize the sheet
+Client-side
+Optional
+Handle user logout
+Optional
+Complete payment in your UI

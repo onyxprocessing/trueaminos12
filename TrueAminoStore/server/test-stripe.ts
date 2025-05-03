@@ -4,8 +4,21 @@ import bodyParser from 'body-parser';
 
 // Create a simple test endpoint to verify Stripe integration
 export function setupStripeTest(app: express.Express) {
+  // Add CORS preflight handling for the test endpoint
+  app.options('/api/test-payment-intent', (req, res) => {
+    console.log('Received OPTIONS preflight request for /api/test-payment-intent');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+    res.status(200).end();
+  });
   // Test endpoint for creating a minimal payment intent
   app.post('/api/test-payment-intent', async (req, res) => {
+    console.log('🧪 TEST ENDPOINT: Received request to /api/test-payment-intent');
+    console.log('Request headers:', JSON.stringify(req.headers));
+    console.log('Request body:', JSON.stringify(req.body));
+    
     try {
       console.log('🧪 Testing minimal payment intent creation');
       
@@ -16,7 +29,7 @@ export function setupStripeTest(app: express.Express) {
       }
       
       // Simple amount from request or default to $10
-      const amount = req.body.amount ? parseFloat(req.body.amount) : 10.00;
+      const amount = req.body && req.body.amount ? parseFloat(req.body.amount) : 10.00;
       console.log(`Creating test payment intent for $${amount.toFixed(2)}`);
       
       // Create a minimal Stripe instance
@@ -34,6 +47,12 @@ export function setupStripeTest(app: express.Express) {
       });
       
       console.log(`✅ Test payment intent created successfully: ${paymentIntent.id}`);
+      
+      // Send the response with CORS headers to ensure browser compatibility
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      
       res.json({
         success: true,
         clientSecret: paymentIntent.client_secret,
