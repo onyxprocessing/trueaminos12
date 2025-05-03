@@ -6,6 +6,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { loadStripe } from '@stripe/stripe-js';
 import { formatPrice } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
+import { useToast } from '../../hooks/use-toast';
 
 // Make sure to call loadStripe outside of a component's render to avoid
 // recreating the Stripe object on every render.
@@ -397,6 +398,7 @@ const OrderSummary = ({
 const CheckoutPage = () => {
   const cart = useCart();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
   const [clientSecret, setClientSecret] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -437,8 +439,22 @@ const CheckoutPage = () => {
     const createPaymentIntent = async () => {
       try {
         setIsLoading(true);
+        
+        // Check if cart is empty before attempting to create payment intent
+        if (cart.items.length === 0) {
+          toast({
+            title: 'Empty Cart',
+            description: "Your cart is empty. Please add items before checkout.",
+            variant: 'destructive',
+          });
+          navigate('/cart');
+          return;
+        }
+        
         // Get initial total with shipping
         const totalAmount = calculateTotal();
+        
+        console.log('Creating payment intent with cart items:', cart.items.length);
         
         // Include customer information if available in the form
         const customerInfo = {

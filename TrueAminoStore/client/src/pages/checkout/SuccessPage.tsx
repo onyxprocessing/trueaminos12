@@ -43,20 +43,25 @@ const SuccessPageContent = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [hasClearedCart, setHasClearedCart] = useState(hasCartBeenCleared());
 
+  // One-time cart clearing effect with no dependencies to prevent re-runs
+  useEffect(() => {
+    // Skip clearing if already cleared
+    if (!hasClearedCart) {
+      console.log('Clearing cart from success page - one time only');
+      markCartCleared(); // Mark as cleared before API call to prevent duplicates
+      setHasClearedCart(true);
+      
+      // Clear the cart via API
+      clearCart().catch(err => {
+        console.error('Error clearing cart:', err);
+      });
+    }
+  }, []);
+
   // Process the payment intent only once
   useEffect(() => {
     if (!stripe) {
       return;
-    }
-
-    // Clear cart only once regardless of payment status
-    // Skip clearing if already cleared
-    if (!hasClearedCart) {
-      console.log('Clearing cart from success page - first time');
-      clearCart().then(() => {
-        markCartCleared();
-        setHasClearedCart(true);
-      });
     }
 
     // Get the payment intent ID from the URL
@@ -133,7 +138,7 @@ const SuccessPageContent = () => {
       // Set success anyway if they came directly to this page
       setPaymentStatus('success');
     }
-  }, [stripe, clearCart]);
+  }, [stripe]);
 
   return (
     <Layout title="Order Confirmation - TrueAminos">
