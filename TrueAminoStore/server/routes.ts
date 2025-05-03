@@ -645,31 +645,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // FedEx shipping rates API endpoint
+  // Flat rate shipping API endpoint
   app.post('/api/shipping-rates', async (req: Request, res: Response) => {
     try {
-      const { getShippingRates, formatAddressForFedEx, estimatePackageSize } = await import('./fedex-shipping-rates');
-      
-      const { 
-        street, 
-        city, 
-        state, 
-        zipCode, 
-        country = 'US'
-      } = req.body;
-      
-      console.log('Shipping rates requested for:', { street, city, state, zipCode, country });
-      
-      // Validate required fields
-      if (!street || !city || !state || !zipCode) {
-        console.warn('Missing address fields in shipping rate request');
-        return res.status(400).json({ 
-          success: false,
-          message: 'Missing required address fields'
-        });
-      }
-      
-      // Get cart items to estimate package size
+      // Get cart items to determine the shipping rate
       const sessionId = req.session.id;
       const cartItems = await storage.getCartItems(sessionId);
       console.log(`Found ${cartItems?.length || 0} cart items for session ${sessionId}`);
@@ -682,38 +661,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Format address for FedEx API
-      const recipientAddress = formatAddressForFedEx(street, city, state, zipCode, country);
+      // Calculate total item quantity
+      const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+      console.log(`Total item quantity: ${totalQuantity}`);
       
-      // Estimate package size based on cart items
-      const packageSize = estimatePackageSize(cartItems);
-      console.log('Estimated package size:', packageSize);
+      // Determine flat rate shipping based on item quantity
+      // $15 for 1-5 items, $25 for more than 5 items
+      const shippingPrice = totalQuantity > 5 ? 25.00 : 15.00;
       
-      // Get shipping rates from FedEx API
-      console.log('Requesting FedEx shipping rates with:', {
-        recipientAddress,
-        packageSize
-      });
+      // Create a single flat rate shipping option
+      const flatRateShipping = {
+        serviceType: 'USPS_FLAT_RATE',
+        serviceName: 'Standard Shipping via USPS',
+        transitTime: '1-2 business days',
+        price: shippingPrice,
+        currency: 'USD',
+        isFlatRate: true
+      };
       
-      const shippingRates = await getShippingRates({
-        recipientAddress,
-        packageSize
-      });
-      
-      console.log(`Received ${shippingRates.length} shipping rate options`);
-      
-      // Check if rates are mock data
-      const hasMockRates = shippingRates.some(rate => rate.isMockData);
-      if (hasMockRates) {
-        console.log('⚠️ Returning MOCK shipping rates due to FedEx API issues');
-      } else {
-        console.log('✅ Returning REAL shipping rates from FedEx API');
-      }
+      console.log(`Using flat rate shipping: $${shippingPrice.toFixed(2)}`);
       
       res.json({
         success: true,
-        rates: shippingRates,
-        isMockData: hasMockRates
+        rates: [flatRateShipping],
+        isFlatRate: true
       });
     } catch (error: any) {
       console.error('Error getting shipping rates:', error);

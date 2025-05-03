@@ -684,7 +684,7 @@ const MultiStepCheckout: React.FC = () => {
     }
   };
   
-  // Function to fetch shipping rates based on the validated address
+  // Function to fetch flat rate shipping based on cart quantity
   const fetchShippingRates = async () => {
     if (!address || !city || !state || !zipCode) {
       return;
@@ -693,79 +693,82 @@ const MultiStepCheckout: React.FC = () => {
     try {
       setIsLoadingRates(true);
       
-      // Import the getShippingRates function
+      // Import the getShippingRates function (which now returns flat rates)
       const { getShippingRates } = await import('../../lib/shipping-rates');
       
       // Log the request
-      console.log(`Fetching shipping rates for address: ${address}, ${city}, ${state} ${zipCode}`);
+      console.log(`Calculating flat rate shipping based on cart for: ${address}, ${city}, ${state} ${zipCode}`);
       
-      // Get shipping rates from FedEx API
+      // Get flat rate shipping based on cart items
       const ratesResult = await getShippingRates(address, city, state, zipCode);
       
-      // Log the rates result
-      console.log('Shipping rate response:', ratesResult);
+      // Log the result
+      console.log('Flat rate shipping response:', ratesResult);
       
       if (ratesResult.success && ratesResult.rates && ratesResult.rates.length > 0) {
-        // Sort rates by price (lowest to highest)
-        const sortedRates = [...ratesResult.rates].sort((a, b) => a.price - b.price);
-        setShippingRates(sortedRates);
+        const flatRateOption = ratesResult.rates[0];
         
-        // Create dynamic shipping options based on FedEx rates
-        const newShippingOptions = sortedRates.map(rate => ({
-          id: rate.serviceType.toLowerCase().replace(/_/g, '-'),
-          name: rate.serviceName,
-          price: rate.price,
-          days: rate.transitTime,
-          isMockData: rate.isMockData || false
-        }));
+        // Create simplified shipping option with flat rate
+        const newShippingOptions = [{
+          id: flatRateOption.serviceType.toLowerCase().replace(/_/g, '-'),
+          name: flatRateOption.serviceName,
+          price: flatRateOption.price,
+          days: flatRateOption.transitTime,
+          isFlatRate: flatRateOption.isFlatRate || true
+        }];
         
-        // Update shipping options with real FedEx rates
+        // Update shipping options with flat rate
         setDynamicShippingOptions(newShippingOptions);
         
-        // Set shipping method to the lowest priced option by default
-        if (sortedRates.length > 0) {
-          const lowestPriceOption = sortedRates[0].serviceType.toLowerCase().replace(/_/g, '-');
-          console.log(`Setting shipping method to lowest price option: ${lowestPriceOption}`);
-          setShippingMethod(lowestPriceOption);
-        }
+        // Automatically set the shipping method (no selection needed)
+        const shippingMethodId = flatRateOption.serviceType.toLowerCase().replace(/_/g, '-');
+        console.log(`Setting flat rate shipping ($${flatRateOption.price.toFixed(2)}) to method: ${shippingMethodId}`);
+        setShippingMethod(shippingMethodId);
         
-        // Check if we're showing mock data
-        const hasMockData = sortedRates.some(rate => rate.isMockData);
+        console.log('Flat rate shipping applied:', JSON.stringify(newShippingOptions, null, 2));
         
-        if (hasMockData) {
-          console.log('⚠️ Using mock shipping rates');
-          toast({
-            title: 'Using Standard Shipping Rates',
-            description: 'Using standard shipping rates as real-time rates are unavailable',
-            variant: 'default'
-          });
-        } else {
-          console.log('✅ Using real shipping rates from FedEx API');
-          toast({
-            title: 'Shipping Rates Updated',
-            description: `${sortedRates.length} shipping options available for your location`,
-            variant: 'default' 
-          });
-        }
-        
-        console.log('Shipping rates updated:', JSON.stringify(newShippingOptions, null, 2));
-      } else {
-        console.log('❌ Failed to get shipping rates, using default options');
-        // If we failed to get shipping rates, fall back to the default options
-        setDynamicShippingOptions(SHIPPING_OPTIONS);
         toast({
-          title: 'Using Standard Shipping Rates',
-          description: ratesResult.message || 'Could not retrieve location-based shipping rates',
+          title: 'Shipping Calculated',
+          description: `${flatRateOption.serviceName} - $${flatRateOption.price.toFixed(2)}`,
+          variant: 'default' 
+        });
+      } else {
+        console.log('❌ Failed to get flat rate shipping, using default');
+        // Fall back to default flat rate
+        const defaultFlatRate = {
+          id: 'usps-flat-rate',
+          name: 'Standard Shipping via USPS',
+          price: 15.00,
+          days: '1-2 business days',
+          isFlatRate: true
+        };
+        
+        setDynamicShippingOptions([defaultFlatRate]);
+        setShippingMethod('usps-flat-rate');
+        
+        toast({
+          title: 'Standard Shipping Applied',
+          description: 'Standard shipping rate of $15.00 applied',
           variant: 'default'
         });
       }
     } catch (err: any) {
-      console.error('Error fetching shipping rates:', err);
-      // Fall back to default shipping options
-      setDynamicShippingOptions(SHIPPING_OPTIONS);
+      console.error('Error calculating shipping:', err);
+      // Fall back to default flat rate
+      const defaultFlatRate = {
+        id: 'usps-flat-rate',
+        name: 'Standard Shipping via USPS',
+        price: 15.00,
+        days: '1-2 business days',
+        isFlatRate: true
+      };
+      
+      setDynamicShippingOptions([defaultFlatRate]);
+      setShippingMethod('usps-flat-rate');
+      
       toast({
-        title: 'Using Standard Shipping Rates',
-        description: 'An error occurred while getting shipping rates',
+        title: 'Standard Shipping Applied',
+        description: 'Standard shipping rate of $15.00 applied',
         variant: 'default'
       });
     } finally {
@@ -915,36 +918,31 @@ const MultiStepCheckout: React.FC = () => {
         </div>
         
         <div className="mt-6">
-          <h3 className="font-medium mb-3">Shipping Method *</h3>
-          <RadioGroup 
-            value={shippingMethod} 
-            onValueChange={setShippingMethod}
-            className="space-y-3"
-          >
-            {isLoadingRates && (
-              <div className="flex justify-center py-4">
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  <span>Loading shipping rates...</span>
+          <h3 className="font-medium mb-3">Shipping</h3>
+          
+          {isLoadingRates && (
+            <div className="flex justify-center py-4">
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <span>Calculating shipping...</span>
+              </div>
+            </div>
+          )}
+          
+          {!isLoadingRates && dynamicShippingOptions.length > 0 && (
+            <div className="border p-4 rounded bg-gray-50">
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="font-medium">{dynamicShippingOptions[0].name}</span>
+                  <p className="text-sm text-gray-500">{dynamicShippingOptions[0].days}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    You'll receive an email with tracking information once your order ships.
+                  </p>
                 </div>
+                <span className="font-medium">${dynamicShippingOptions[0].price.toFixed(2)}</span>
               </div>
-            )}
-            
-            {!isLoadingRates && dynamicShippingOptions.map((option) => (
-              <div key={option.id} className="flex items-center space-x-2 border p-3 rounded">
-                <RadioGroupItem value={option.id} id={`shipping-${option.id}`} />
-                <Label htmlFor={`shipping-${option.id}`} className="flex-grow">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className="font-medium">{option.name}</span>
-                      <p className="text-sm text-gray-500">{option.days}</p>
-                    </div>
-                    <span>${option.price.toFixed(2)}</span>
-                  </div>
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
+            </div>
+          )}
           
           {cart.subtotal >= 175 && (
             <p className="text-green-600 mt-2 text-sm">

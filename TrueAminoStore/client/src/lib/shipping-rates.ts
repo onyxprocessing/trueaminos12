@@ -1,6 +1,7 @@
 /**
  * Shipping rates API client
- * This module provides functions for getting shipping rates from the FedEx API
+ * This module provides functions for getting flat rate shipping based on cart quantity
+ * Standard rates: $15 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
  */
 
 import { apiRequest } from './queryClient';
@@ -16,16 +17,18 @@ export interface ShippingRateOption {
   currency: string;
   deliveryDate?: string;
   isMockData?: boolean;
+  isFlatRate?: boolean;
 }
 
 /**
- * Get shipping rates from FedEx API
- * @param address Street address
- * @param city City
- * @param state State/province
- * @param zipCode ZIP/postal code
+ * Get flat rate shipping based on cart quantity
+ * Standard rates: $15 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
+ * @param address Street address (needed for order processing)
+ * @param city City (needed for order processing)
+ * @param state State/province (needed for order processing)
+ * @param zipCode ZIP/postal code (needed for order processing)
  * @param country Country code (default: US)
- * @returns Array of shipping rate options or null if request fails
+ * @returns Flat rate shipping option based on cart quantity
  */
 export async function getShippingRates(
   address: string,
