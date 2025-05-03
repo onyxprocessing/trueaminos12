@@ -6,6 +6,7 @@ import { useStripe, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentIntent as StripePaymentIntent } from '@stripe/stripe-js';
 import { useCart } from '../../hooks/useCart';
+import { hasCartBeenCleared, markCartCleared } from '../../utils/cartManager';
 
 // Extended PaymentIntent type that includes metadata
 interface PaymentIntent extends StripePaymentIntent {
@@ -40,20 +41,22 @@ const SuccessPageContent = () => {
   };
   
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [hasClearedCart, setHasClearedCart] = useState(hasCartBeenCleared());
 
-  // Add a ref to track if we've already cleared the cart
-  const cartCleared = React.useRef(false);
-
+  // Process the payment intent only once
   useEffect(() => {
     if (!stripe) {
       return;
     }
 
     // Clear cart only once regardless of payment status
-    if (!cartCleared.current) {
-      console.log('Clearing cart from success page');
-      clearCart();
-      cartCleared.current = true;
+    // Skip clearing if already cleared
+    if (!hasClearedCart) {
+      console.log('Clearing cart from success page - first time');
+      clearCart().then(() => {
+        markCartCleared();
+        setHasClearedCart(true);
+      });
     }
 
     // Get the payment intent ID from the URL

@@ -8,6 +8,7 @@ import createMemoryStore from 'memorystore';
 import fetch from 'node-fetch';
 import Stripe from 'stripe';
 import { recordPaymentToAirtable } from './airtable-orders';
+import { shouldThrottle } from './throttle';
 import { recordPaymentToDatabase } from './db-orders';
 
 declare module 'express-session' {
@@ -366,10 +367,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Use our throttling utility
+  
   app.delete("/api/cart", async (req: Request, res: Response) => {
     try {
+      if (!req.session || !req.session.id) {
+        return res.status(400).json({ message: "Invalid session" });
+      }
+      
+      const sessionId = req.session.id;
+      const throttleKey = `cart_clear_${sessionId}`;
+      
+      // Throttle cart clearing requests to once per second per session
+      if (shouldThrottle(throttleKey, 1000)) {
+        console.log(`Throttling cart clear request for session ${sessionId}`);
+        return res.json({ 
+          success: true, 
+          throttled: true,
+          cart: {
+            items: [],
+            itemCount: 0,
+            subtotal: 0
+          }
+        });
+      }
+      
+      console.log(`Processing cart clear request for session ${sessionId}`);
+      
       // Clear cart
-      await storage.clearCart(req.session.id);
+      await storage.clearCart(sessionId);
       
       res.json({
         success: true,
