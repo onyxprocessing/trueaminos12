@@ -32,6 +32,23 @@ export const cartItems = pgTable("cart_items", {
   selectedWeight: text("selected_weight"),
 });
 
+// Customer information table
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  zip: text("zip").notNull(),
+  shipping: text("shipping").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Orders table for storing checkout data
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
@@ -50,8 +67,10 @@ export const orders = pgTable("orders", {
   selectedWeight: text("selected_weight"),
   salesPrice: numeric("sales_price").notNull(),
   shipping: text("shipping").notNull(),
-  paymentIntentId: text("payment_intent_id").notNull(),
+  paymentMethod: text("payment_method").notNull().default("card"), // card, bank, crypto
+  paymentIntentId: text("payment_intent_id"), // Only needed for card payments
   paymentDetails: text("payment_details"), // JSON string of payment info
+  paymentStatus: text("payment_status").notNull().default("pending"), // pending, completed, failed
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -59,6 +78,7 @@ export const orders = pgTable("orders", {
 export const insertCategorySchema = createInsertSchema(categories);
 export const insertProductSchema = createInsertSchema(products);
 export const insertCartItemSchema = createInsertSchema(cartItems);
+export const insertCustomerSchema = createInsertSchema(customers);
 export const insertOrderSchema = createInsertSchema(orders);
 
 // Types for use in application
@@ -105,6 +125,9 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type CartItemWithProduct = CartItem & {
   product: Product;
 };
+
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
