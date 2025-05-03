@@ -1039,7 +1039,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const results = {
       airtable: false,
       database: false,
-      cartCleared: false
+      cartCleared: false,
+      syncCompleted: false
     };
     
     // 1. Record the order in Airtable and Database
@@ -1052,6 +1053,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         results.airtable = true;
       } else {
         console.error(`❌ Failed to record order in Airtable for payment: ${paymentIntent.id}`);
+      }
+      
+      // Always do a Stripe sync for every successful payment to make sure all orders are recorded
+      // This ensures we get the order in Airtable even if the direct recording failed
+      console.log(`🔄 Performing Stripe sync for payment: ${paymentIntent.id}`);
+      
+      try {
+        // Import dynamically to avoid circular dependencies
+        const { syncOrdersFromStripe } = await import('./stripe-sync');
+        
+        // Sync orders from the last hour to make sure we get this one
+        const oneHourAgo = Math.floor(Date.now() / 1000) - (60 * 60);
+        
+        const syncResult = await syncOrdersFromStripe(oneHourAgo);
+        console.log(`🔄 Immediate Stripe sync completed for new order: ${syncResult.savedToAirtable} orders saved to Airtable`);
+        results.syncCompleted = syncResult.success;
+      } catch (syncError) {
+        console.error(`❌ Failed to run immediate Stripe sync for new order:`, syncError);
       }
       
       // Store in Database with extended debugging
