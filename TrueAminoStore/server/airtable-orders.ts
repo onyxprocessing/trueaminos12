@@ -9,6 +9,7 @@ const ORDERS_TABLE_ID = "tblI5N0Xn65DB5L5s";
 // Define interface for order data to be stored in Airtable
 interface OrderData {
   orderId: string;
+  product?: string;
   firstName: string;
   lastName: string;
   address: string;
@@ -48,21 +49,21 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
     // Prepare the data for Airtable
     const airtableData = {
       fields: {
-        "Order ID": orderData.orderId,
-        "First Name": orderData.firstName,
-        "Last Name": orderData.lastName,
-        "Address": orderData.address,
-        "City": orderData.city,
-        "State": orderData.state,
-        "Zip": orderData.zip,
-        "MG": orderData.mg || '',
-        "Sales Price": orderData.salesPrice,
-        "Quantity": orderData.quantity,
-        "Product ID": orderData.productId,
-        "Shipping": orderData.shipping,
-        "Payment Details": orderData.payment,
-        "Email": orderData.email || '',
-        "Phone": orderData.phone || ''
+        "order id": orderData.orderId,
+        "product": orderData.product || '',
+        "saleprice": orderData.salesPrice,
+        "productid": orderData.productId,
+        "first name": orderData.firstName,
+        "last name": orderData.lastName,
+        "address": orderData.address,
+        "city": orderData.city,
+        "zip": orderData.zip,
+        "mg": orderData.mg || '',
+        "quantity": orderData.quantity,
+        "shipping": orderData.shipping,
+        "payment": orderData.payment,
+        "affiliatecode": '',
+        "state": orderData.state
       }
     };
     
@@ -122,6 +123,7 @@ export async function createOrdersFromCart(
     try {
       const orderData: OrderData = {
         orderId,
+        product: item.product.name,
         firstName: customerInfo.firstName,
         lastName: customerInfo.lastName,
         address: customerInfo.address,
@@ -286,6 +288,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
         for (const product of products) {
           const orderData: OrderData = {
             orderId,
+            product: product.name || '',
             firstName: customerData.firstName,
             lastName: customerData.lastName,
             address: customerData.address,
@@ -309,6 +312,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
         // Create at least one record even if we don't have detailed product data
         const orderData: OrderData = {
           orderId,
+          product: 'Unknown Product',
           firstName: customerData.firstName,
           lastName: customerData.lastName,
           address: customerData.address,
