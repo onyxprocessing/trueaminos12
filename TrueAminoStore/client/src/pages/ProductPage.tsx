@@ -84,10 +84,31 @@ const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
             src={displayedImage}
             alt={imageObjects[activeImageIndex]?.label || product.name}
             className="max-h-full max-w-full object-contain"
+            onError={(e) => {
+              console.error("Product detail image failed to load:", displayedImage);
+              const imgElement = e.target as HTMLImageElement;
+              
+              // Create a placeholder for the failed image
+              const placeholderDiv = document.createElement('div');
+              placeholderDiv.className = 'bg-gray-100 w-full h-full flex items-center justify-center text-gray-600 flex-col';
+              placeholderDiv.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>${imageObjects[activeImageIndex]?.label || "Image"} unavailable</span>
+              `;
+              
+              // Replace the image with the placeholder
+              imgElement.style.display = 'none';
+              imgElement.parentNode?.appendChild(placeholderDiv);
+            }}
           />
         ) : (
-          <div className="bg-gray-100 w-full h-full flex items-center justify-center text-gray-500">
-            No image available
+          <div className="bg-gray-100 w-full h-full flex items-center justify-center text-gray-600 flex-col">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>No image available</span>
           </div>
         )}
       </div>
@@ -109,6 +130,23 @@ const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
                   src={image.url} 
                   alt={image.label} 
                   className="max-h-full max-w-full object-contain"
+                  onError={(e) => {
+                    console.error("Thumbnail image failed to load:", image.url);
+                    const imgElement = e.target as HTMLImageElement;
+                    imgElement.style.display = 'none';
+                    
+                    // Create placeholder for thumbnail
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'w-full h-full flex items-center justify-center bg-gray-100';
+                    placeholder.innerHTML = `
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    `;
+                    
+                    // Replace the image with the placeholder
+                    imgElement.parentNode?.appendChild(placeholder);
+                  }}
                 />
               ) : (
                 <div className="text-xs text-center text-gray-400 p-2">
