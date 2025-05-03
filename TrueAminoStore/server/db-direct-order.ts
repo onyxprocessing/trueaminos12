@@ -58,12 +58,14 @@ export async function createOrderWithPaymentMethod(
         quantity: item.quantity,
         selectedWeight: item.selectedWeight || '',
         // Convert price to number for database storage
-        salesPrice: parseFloat(getPriceByWeight(item.product, item.selectedWeight) as string),
+        salesPrice: parseFloat(getPriceByWeight(item.product, item.selectedWeight).toString()),
         shipping: customer.shipping,
         paymentMethod,
         paymentIntentId: paymentDetails?.id || '',
         paymentDetails: paymentDetailsString,
-        paymentStatus: 'completed'
+        paymentStatus: 'completed',
+        id: 0, // Placeholder, will be set by database
+        createdAt: new Date()
       };
 
       // Save to database
@@ -80,13 +82,13 @@ export async function createOrderWithPaymentMethod(
         state: customer.state,
         zip: customer.zip,
         mg: item.selectedWeight || '',
-        salesPrice: parseFloat(getPriceByWeight(item.product, item.selectedWeight) as string),
+        salesPrice: parseFloat(getPriceByWeight(item.product, item.selectedWeight).toString()),
         quantity: item.quantity,
         productId: item.productId,
         shipping: customer.shipping,
         payment: paymentDetailsString,
-        email: customer.email,
-        phone: customer.phone,
+        email: customer.email || '',
+        phone: customer.phone || '',
         product: item.product.name
       });
     }
