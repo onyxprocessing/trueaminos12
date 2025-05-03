@@ -11,11 +11,6 @@ import { useCart } from '../../hooks/useCart';
 interface PaymentIntent extends StripePaymentIntent {
   metadata?: {
     [key: string]: string;
-    shipping_method?: string;
-    customer_name?: string;
-    customer_email?: string;
-    customer_phone?: string;
-    products?: string;
   };
 }
 
