@@ -173,7 +173,7 @@ export async function validateAddressWithFedEx(
   state: string,
   zipCode: string,
   country: string = 'US'
-): Promise<FedExAddressValidationResponse | null> {
+): Promise<any> {
   try {
     // Split address into lines (basic implementation)
     const addressLines = address.split(',').map(line => line.trim());
@@ -181,16 +181,33 @@ export async function validateAddressWithFedEx(
     const streetLine2 = addressLines.length > 1 ? addressLines[1] : undefined;
 
     // Call the API
-    const response = await apiRequest('POST', '/api/validate-address', {
-      streetLine1,
-      streetLine2,
-      city,
-      state,
-      zipCode,
-      country
+    const response = await fetch('/api/validate-address', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        streetLine1,
+        streetLine2,
+        city,
+        state,
+        zipCode,
+        country
+      })
     });
 
-    return response as FedExAddressValidationResponse;
+    if (!response.ok) {
+      return {
+        success: false,
+        message: `API error: ${response.status} ${response.statusText}`
+      };
+    }
+    
+    // Parse the JSON response
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Error validating address with FedEx API:', error);
     return null;
