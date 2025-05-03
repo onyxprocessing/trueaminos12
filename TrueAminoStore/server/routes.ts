@@ -811,42 +811,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Endpoint for manually triggering payment processing from the client
-  // This is used when the success page loads to ensure orders are recorded
-  app.post('/api/process-payment', async (req: Request, res: Response) => {
-    try {
-      const { paymentIntentId } = req.body;
-      
-      if (!paymentIntentId) {
-        console.error('❌ Missing payment intent ID in request');
-        return res.status(400).json({ success: false, error: 'Missing payment intent ID' });
-      }
-      
-      console.log(`🔄 Manual payment processing request for payment intent: ${paymentIntentId}`);
-      
-      // Retrieve the payment intent from Stripe
-      try {
-        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        console.log(`✅ Retrieved payment intent from Stripe: ${paymentIntent.id}`);
-        
-        // Process the payment success
-        const success = await processPaymentSuccess(paymentIntent);
-        
-        if (success) {
-          return res.json({ success: true, message: 'Payment processed successfully' });
-        } else {
-          return res.status(500).json({ success: false, error: 'Failed to process payment' });
-        }
-      } catch (error: any) {
-        console.error(`❌ Error retrieving payment intent from Stripe: ${error.message}`);
-        return res.status(500).json({ success: false, error: `Stripe error: ${error.message}` });
-      }
-    } catch (error: any) {
-      console.error(`❌ Error processing payment: ${error.message}`);
-      return res.status(500).json({ success: false, error: error.message });
-    }
-  });
-  
   // Stripe webhook handling for completed payments
   app.post('/api/webhook', async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;

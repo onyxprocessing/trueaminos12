@@ -5,7 +5,6 @@ import Layout from '../../components/Layout';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { formatPrice } from '../../lib/utils';
-import { apiRequest } from '../../lib/queryClient';
 import { Button } from '../../components/ui/button';
 
 // Make sure to call loadStripe outside of a component's render to avoid
@@ -471,22 +470,47 @@ const CheckoutPage = () => {
           zipCode: zipCode
         };
         
-        console.log('Creating payment intent with', payload.cartItems.length, 'items');
+        // Use absolute URL to avoid potential path resolution issues
+        const baseUrl = window.location.origin;
+        const absoluteUrl = `${baseUrl}/api/create-payment-intent`;
+        console.log('Creating payment intent at:', absoluteUrl);
+        console.log('Sending cart items:', payload.cartItems.length);
         
-        // Use our updated apiRequest function with typed response
-        interface PaymentIntentResponse {
-          clientSecret: string;
-          amount: number;
-        }
-        
-        const data = await apiRequest<PaymentIntentResponse>('POST', '/api/create-payment-intent', payload);
-        
-        // The response is already parsed JSON with our updated apiRequest function
-        console.log('Payment intent created successfully:', { 
-          clientSecret: !!data.clientSecret, 
-          amount: data.amount 
+        const response = await fetch(absoluteUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          credentials: 'include', // Send cookies
+          mode: 'cors', // Enable CORS support
+        }).catch(fetchError => {
+          console.error('Network error in fetch:', fetchError);
+          throw new Error(`Network error: ${fetchError.message || 'Could not connect to server'}`);
         });
         
+        console.log('Response received:', response.status, response.statusText);
+        console.log('Content-Type:', response.headers.get('content-type'));
+        
+        // Get detailed error message if present
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          console.error('Server response error:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorData
+          });
+          
+          if (errorData && errorData.error) {
+            throw new Error(`Failed to create payment intent: ${errorData.error}`);
+          } else {
+            throw new Error('Failed to create payment intent');
+          }
+        }
+        
+        const data = await response.json();
+        console.log('Payment intent created successfully:', { clientSecret: !!data.clientSecret, amount: data.amount });
         setClientSecret(data.clientSecret);
       } catch (err: any) {
         console.error('Error creating payment intent:', err);
@@ -539,21 +563,26 @@ const CheckoutPage = () => {
         };
         
         // Update the payment intent with new amount and customer data
-        console.log('Updating payment intent with new shipping method:', selectedShippingMethod);
+        // Use absolute URL like we did for the payment intent creation
+        const baseUrl = window.location.origin;
+        const absoluteUrl = `${baseUrl}/api/update-payment-intent`;
+        console.log('Updating payment intent at:', absoluteUrl);
         
-        // Use our apiRequest function with specific response type
-        try {
-          interface UpdateResponse {
-            success: boolean;
-            amount: number;
-          }
-          
-          const response = await apiRequest<UpdateResponse>('POST', '/api/update-payment-intent', updateData);
-          console.log('Update response received:', response);
-        } catch (updateErr) {
-          console.error('Error updating payment intent:', updateErr);
-          // Continue on update errors - we'll just use the original amount
-        }
+        const response = await fetch(absoluteUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(updateData),
+          credentials: 'include', // Send cookies
+          mode: 'cors',
+        }).catch(fetchError => {
+          console.error('Network error in update fetch:', fetchError);
+          throw new Error(`Network error: ${fetchError.message || 'Could not connect to server'}`);
+        });
+        
+        console.log('Update response received:', response.status, response.statusText);
         
         // No need to update client secret as we're just changing the amount
         console.log('Updated payment intent with new shipping: ', selectedShippingMethod);
