@@ -47,8 +47,14 @@ export async function syncOrdersFromStripe(startDate?: number): Promise<{
     
     result.totalProcessed = paymentIntents.length;
     
-    // Process each payment intent
+    // Process each payment intent (only those with status 'succeeded')
     for (const paymentIntent of paymentIntents) {
+      // Only process successful payments
+      if (paymentIntent.status !== 'succeeded') {
+        console.log(`⏭️ Skipping payment ${paymentIntent.id} with status: ${paymentIntent.status}`);
+        continue;
+      }
+      
       try {
         console.log(`💰 Processing payment: ${paymentIntent.id} (${formatCurrency(paymentIntent.amount, paymentIntent.currency)})`);
         
@@ -113,8 +119,7 @@ async function fetchAllSuccessfulPayments(startTimestamp: number): Promise<Strip
   while (hasMore) {
     const params: Stripe.PaymentIntentListParams = {
       limit: 100,
-      created: { gte: startTimestamp },
-      status: 'succeeded'
+      created: { gte: startTimestamp }
     };
     
     if (startingAfter) {
