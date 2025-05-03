@@ -225,25 +225,21 @@ export async function handleShippingInfo(req: Request, res: Response) {
       console.log('Suggested address:', addressValidationDetails.suggestedAddress);
     }
     
-    // Define shipping options with prices
-    const shippingOptions = {
-      'standard': { price: 5.99, estimatedDelivery: '5-7 business days' },
-      'express': { price: 12.99, estimatedDelivery: '2-3 business days' },
-      'priority': { price: 19.99, estimatedDelivery: '1-2 business days' },
-      'international': { price: 24.99, estimatedDelivery: '7-14 business days' },
-      'free': { price: 0, estimatedDelivery: '7-10 business days' }
-    };
+    // Use our flat rate shipping pricing model
+    // Standard rates: $15 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
+    const cartItems = await storage.getCartItems(req.session.id);
+    const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     
-    // Get the shipping details based on selected method
-    const selectedShipping = shippingOptions[shippingMethod as keyof typeof shippingOptions] || 
-                            { price: 5.99, estimatedDelivery: '5-7 business days' };
+    // Use flat rate shipping: $15 for 1-5 items, $25 for 6+ items
+    const shippingPrice = itemCount <= 5 ? 15 : 25;
+    const deliveryTime = '1-2 business days';
     
-    // Use provided shipping details from FedEx API if available, otherwise use fallback
-    const finalShippingDetails = shippingDetails || {
-      method: shippingMethod,
-      price: selectedShipping.price,
-      estimatedDelivery: selectedShipping.estimatedDelivery,
-      notes: `Shipping to ${address}, ${city}, ${state} ${zipCode}`,
+    // Create shipping details
+    const finalShippingDetails = {
+      method: 'USPS',
+      price: shippingPrice,
+      estimatedDelivery: deliveryTime,
+      notes: `Flat rate shipping to ${address}, ${city}, ${state} ${zipCode}`,
       addressValidated: isAddressValidated || false,
       addressClassification: addressValidationDetails?.classification || 'unknown'
     };
@@ -300,9 +296,6 @@ export async function handleShippingInfo(req: Request, res: Response) {
       console.error('Error updating customer shipping info in database:', dbError);
       // Continue anyway since we have the info in session
     }
-    
-    // Get cart items for updating Airtable
-    const cartItems = await storage.getCartItems(req.session.id);
     
     // Create formatted cart item string (e.g., "BPC 157 10mg x2")
     const formattedCartItems = cartItems.map(item => {
