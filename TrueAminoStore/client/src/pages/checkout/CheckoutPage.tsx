@@ -473,8 +473,13 @@ const CheckoutPage = () => {
         
         console.log('Creating payment intent with', payload.cartItems.length, 'items');
         
-        // Use our updated apiRequest function
-        const data = await apiRequest('POST', '/api/create-payment-intent', payload);
+        // Use our updated apiRequest function with typed response
+        interface PaymentIntentResponse {
+          clientSecret: string;
+          amount: number;
+        }
+        
+        const data = await apiRequest<PaymentIntentResponse>('POST', '/api/create-payment-intent', payload);
         
         // The response is already parsed JSON with our updated apiRequest function
         console.log('Payment intent created successfully:', { 
@@ -536,15 +541,15 @@ const CheckoutPage = () => {
         // Update the payment intent with new amount and customer data
         console.log('Updating payment intent with new shipping method:', selectedShippingMethod);
         
-        // Use our apiRequest function instead of direct fetch
+        // Use our apiRequest function with specific response type
         try {
-          const response = await apiRequest<Response>('POST', '/api/update-payment-intent', updateData);
-          
-          if (response instanceof Response) {
-            console.log('Update response received:', response.status, response.statusText);
-          } else {
-            console.log('Update response received as JSON');
+          interface UpdateResponse {
+            success: boolean;
+            amount: number;
           }
+          
+          const response = await apiRequest<UpdateResponse>('POST', '/api/update-payment-intent', updateData);
+          console.log('Update response received:', response);
         } catch (updateErr) {
           console.error('Error updating payment intent:', updateErr);
           // Continue on update errors - we'll just use the original amount

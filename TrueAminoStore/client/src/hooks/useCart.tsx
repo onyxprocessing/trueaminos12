@@ -52,7 +52,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchCart = async () => {
     try {
       setIsLoading(true)
-      const data = await apiRequest('/api/cart')
+      // Define the expected response type
+      interface CartResponse {
+        items: CartItemWithProduct[];
+        itemCount: number;
+        subtotal: number;
+      }
+      
+      const data = await apiRequest<CartResponse>('/api/cart')
       
       setItems(data.items || [])
       setItemCount(data.itemCount || 0)
