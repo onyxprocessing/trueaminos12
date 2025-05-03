@@ -46,8 +46,15 @@ const SuccessPageContent = () => {
       return;
     }
 
-    // Clear cart regardless of payment status
-    clearCart();
+    // Clear cart regardless of payment status, but catch any errors to prevent page from breaking
+    try {
+      clearCart().catch(err => {
+        console.error("Error clearing cart:", err);
+        // Silently continue - don't block the success page on cart clearing errors
+      });
+    } catch (error) {
+      console.error("Failed to clear cart:", error);
+    }
 
     // Get the payment intent ID from the URL
     const clientSecret = new URLSearchParams(window.location.search).get(

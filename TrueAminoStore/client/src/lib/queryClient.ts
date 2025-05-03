@@ -34,7 +34,7 @@ export async function apiRequest<T>(
         "Accept": "application/json",
       },
       body: data ? JSON.stringify(data) : undefined,
-      credentials: "same-origin",
+      credentials: "include",
       mode: "cors",
     });
     
@@ -66,7 +66,7 @@ export const getQueryFn: <T>(options: {
     
     try {
       const res = await fetch(absoluteUrl, {
-        credentials: "same-origin",
+        credentials: "include",
         mode: "cors",
         headers: {
           "Accept": "application/json"
