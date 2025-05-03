@@ -61,9 +61,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
   }
   
+  console.log('Initializing Stripe with key starting with:', stripeSecretKey.substring(0, 8) + '...');
+  
   const stripe = new Stripe(stripeSecretKey, {
     apiVersion: '2023-10-16' as any,
   });
+  
+  // Test Stripe connection
+  try {
+    // Make a test API call to verify the API key is working
+    stripe.paymentMethods.list({ limit: 1 })
+      .then(() => {
+        console.log('✅ Stripe API key is valid and working!');
+      })
+      .catch(err => {
+        console.error('❌ Stripe API key validation failed:', err.message);
+      });
+  } catch (err: any) {
+    console.error('Error testing Stripe connection:', err.message);
+  }
   // Set up session middleware for cart management
   const MemoryStoreSession = MemoryStore(session);
   app.use(session({
@@ -455,10 +471,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create Payment Intent API
   app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
     try {
+      console.log('💳 Creating payment intent - request received');
+      
       const sessionId = req.session.id;
+      console.log('  Session ID:', sessionId);
+      
       const cartItems = await storage.getCartItems(sessionId);
+      console.log(`  Cart has ${cartItems.length} items`);
       
       if (cartItems.length === 0) {
+        console.log('❌ Cannot create payment intent: Cart is empty');
         return res.status(400).json({ message: "Your cart is empty" });
       }
       
@@ -466,9 +488,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let amount = cartItems.reduce((sum, item) => 
         sum + getPriceByWeight(item.product, item.selectedWeight) * item.quantity, 0);
       
+      console.log(`  Calculated cart amount: $${amount.toFixed(2)}`);
+      
       // Allow override of amount from client (e.g., when shipping is included)
       if (req.body && req.body.amount) {
-        console.log('Using client-provided amount:', req.body.amount);
+        console.log('  Using client-provided amount:', req.body.amount);
         amount = parseFloat(req.body.amount);
       }
       
@@ -477,7 +501,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `${item.product.name} (${item.selectedWeight || ''}) x${item.quantity}`
       ).join(', ')}`;
       
-      console.log('Creating payment intent for amount:', amount);
+      console.log(`  Creating payment intent for amount: $${amount.toFixed(2)}`);
+      console.log(`  Description: ${description.substring(0, 50)}${description.length > 50 ? '...' : ''}`);
       
       // Extract customer data from request body if available
       const {
@@ -491,6 +516,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         zipCode,
         shipping_method
       } = req.body;
+      
+      if (firstName || lastName || email) {
+        console.log(`  Customer: ${firstName || ''} ${lastName || ''} (${email || 'no email'})`);
+      }
       
       // Create a payment intent creation params object
       const params: any = {
@@ -558,11 +587,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Log the parameters we're sending to Stripe (with sensitive data redacted)
+      const paramsForLogging = { ...params };
+      if (paramsForLogging.receipt_email) paramsForLogging.receipt_email = '[REDACTED]';
+      if (paramsForLogging.shipping?.phone) paramsForLogging.shipping.phone = '[REDACTED]';
+      console.log('  Payment intent params:', JSON.stringify(paramsForLogging, null, 2));
+      
+      console.log('  Calling stripe.paymentIntents.create()...');
       // Create the payment intent
       const paymentIntent = await stripe.paymentIntents.create(params);
+      console.log(`  ✅ Payment intent created: ${paymentIntent.id}`);
       
       // Save the payment intent ID to the session
       req.session.paymentIntentId = paymentIntent.id;
+      console.log(`  Payment intent ID saved to session: ${paymentIntent.id}`);
       
       // Send details to client
       res.json({
@@ -570,11 +608,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: amount,
         itemCount: cartItems.length
       });
+      console.log(`  Response sent to client with client_secret: ${paymentIntent.client_secret ? 'present' : 'missing!'}`);
+      console.log('💳 Payment intent creation completed successfully');
     } catch (error: any) {
       console.error('Error creating payment intent:', error);
+      // Log more detailed error information
+      if (error.type) {
+        console.error('Stripe error type:', error.type);
+      }
+      if (error.raw) {
+        console.error('Stripe raw error:', error.raw);
+      }
+      
       res.status(500).json({ 
         message: "Error creating payment intent", 
-        error: error.message 
+        error: error.message,
+        details: error.type || 'Unknown error type'
       });
     }
   });
