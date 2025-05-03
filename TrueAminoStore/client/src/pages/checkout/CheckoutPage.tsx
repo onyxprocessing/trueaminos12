@@ -440,10 +440,25 @@ const CheckoutPage = () => {
         // Get initial total with shipping
         const totalAmount = calculateTotal();
         
-        // Include customer information if available in the form
-        const customerInfo = {
+        // Include both customer information and cart items directly in the request
+        // This ensures the server has access to the cart even if the session cookie isn't working
+        const payload = {
           amount: totalAmount,
           shipping_method: selectedShippingMethod,
+          // Include cart items directly in the request as a fallback
+          cartItems: cart.items.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            selectedWeight: item.selectedWeight,
+            sessionId: item.sessionId,
+            product: item.product,
+            price: item.product ? 
+              (item.selectedWeight && item.product[`price${item.selectedWeight}`] 
+                ? parseFloat(item.product[`price${item.selectedWeight}`]) 
+                : parseFloat(item.product.price)) 
+              : 0
+          })),
           // Include any customer data that might be filled in already
           firstName: firstName,
           lastName: lastName,
@@ -459,6 +474,7 @@ const CheckoutPage = () => {
         const baseUrl = window.location.origin;
         const absoluteUrl = `${baseUrl}/api/create-payment-intent`;
         console.log('Creating payment intent at:', absoluteUrl);
+        console.log('Sending cart items:', payload.cartItems.length);
         
         const response = await fetch(absoluteUrl, {
           method: 'POST',
@@ -466,8 +482,8 @@ const CheckoutPage = () => {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
-          body: JSON.stringify(customerInfo),
-          credentials: 'same-origin', // Send cookies if needed
+          body: JSON.stringify(payload),
+          credentials: 'include', // Send cookies
           mode: 'cors', // Enable CORS support
         }).catch(fetchError => {
           console.error('Network error in fetch:', fetchError);
@@ -517,10 +533,24 @@ const CheckoutPage = () => {
       try {
         const totalAmount = calculateTotal();
         
-        // Include customer information in the update as well
+        // Include customer information and cart items directly in the update as well
         const updateData = {
           amount: totalAmount,
           shipping_method: selectedShippingMethod,
+          // Include cart items directly in the request as a fallback
+          cartItems: cart.items.map(item => ({
+            id: item.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            selectedWeight: item.selectedWeight,
+            sessionId: item.sessionId,
+            product: item.product,
+            price: item.product ? 
+              (item.selectedWeight && item.product[`price${item.selectedWeight}`] 
+                ? parseFloat(item.product[`price${item.selectedWeight}`]) 
+                : parseFloat(item.product.price)) 
+              : 0
+          })),
           // Include customer data that might have been filled in
           firstName: firstName,
           lastName: lastName,
@@ -545,7 +575,7 @@ const CheckoutPage = () => {
             'Accept': 'application/json',
           },
           body: JSON.stringify(updateData),
-          credentials: 'same-origin',
+          credentials: 'include', // Send cookies
           mode: 'cors',
         }).catch(fetchError => {
           console.error('Network error in update fetch:', fetchError);
