@@ -650,12 +650,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         zipCode: zipCode || ''
       };
       
-      // Store the complete order details in metadata for webhook processing
-      updateOptions.metadata.orderDetails = JSON.stringify({
-        customerInfo: customerInfo,
-        cartItems: JSON.stringify(cartItems),
+      // Store minimal order details in metadata (Stripe has a 500 character limit)
+      // Save only essential information for order processing
+      const orderSummary = {
+        customer: `${firstName || ''} ${lastName || ''}`.trim(),
+        email: email || '',
+        items: cartItems.map(item => ({
+          id: item.productId,
+          name: item.product.name.substring(0, 20), // Limit length
+          qty: item.quantity,
+          weight: item.selectedWeight || null
+        })),
         shipping: shipping_method || 'standard'
-      });
+      };
+      
+      // Store this compact order summary
+      updateOptions.metadata.orderSummary = JSON.stringify(orderSummary);
       
       // Add customer metadata if provided
       if (firstName || lastName || email || phone) {

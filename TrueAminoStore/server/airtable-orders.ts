@@ -200,10 +200,30 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
       
       // Try to extract product information from metadata if available
       let products = [];
-      if (paymentIntent.metadata.products) {
+      
+      // First check for new compact orderSummary format
+      if (paymentIntent.metadata.orderSummary) {
+        try {
+          const orderSummary = JSON.parse(paymentIntent.metadata.orderSummary);
+          if (orderSummary && orderSummary.items) {
+            products = orderSummary.items.map((item: { id: number; name: string; qty: number; weight: string | null }) => ({
+              id: item.id,
+              name: item.name,
+              quantity: item.qty,
+              weight: item.weight,
+              price: 0 // We'll need to set this from the payment amount
+            }));
+            console.log('Found product details in orderSummary metadata:', products.length);
+          }
+        } catch (e) {
+          console.warn('Failed to parse orderSummary JSON from metadata:', e);
+        }
+      } 
+      // Fall back to legacy products format
+      else if (paymentIntent.metadata.products) {
         try {
           products = JSON.parse(paymentIntent.metadata.products);
-          console.log('Found product details in payment intent metadata:', products.length);
+          console.log('Found product details in products metadata:', products.length);
         } catch (e) {
           console.warn('Failed to parse products JSON from metadata:', e);
         }

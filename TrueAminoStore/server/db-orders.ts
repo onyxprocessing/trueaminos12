@@ -107,23 +107,168 @@ export async function recordPaymentToDatabase(paymentIntent: any): Promise<boole
       return false;
     }
 
-    const { customerInfo, cartItems, shipping } = JSON.parse(paymentIntent.metadata.orderDetails || '{}');
+    console.log('Processing payment for database storage:', paymentIntent.id);
     
-    if (!customerInfo || !cartItems || !shipping) {
-      console.error('Missing required data in payment intent metadata');
-      return false;
+    // Check if we have the new orderSummary format
+    if (paymentIntent.metadata.orderSummary) {
+      try {
+        const orderSummary = JSON.parse(paymentIntent.metadata.orderSummary);
+        const shipping = orderSummary.shipping || 'standard';
+        
+        // Create a unique order ID
+        const orderUniqueId = generateUniqueOrderId();
+        const orderIds: number[] = [];
+        
+        // Extract customer data from the payment intent
+        const customerData = {
+          firstName: paymentIntent.shipping?.name?.split(' ')[0] || orderSummary.customer?.split(' ')[0] || 'Unknown',
+          lastName: (paymentIntent.shipping?.name?.split(' ').slice(1).join(' ') || 
+                     orderSummary.customer?.split(' ').slice(1).join(' ') || 'Customer'),
+          email: orderSummary.email || paymentIntent.receipt_email || '',
+          phone: paymentIntent.shipping?.phone || paymentIntent.metadata?.customer_phone || '',
+          address: paymentIntent.shipping?.address?.line1 || '',
+          city: paymentIntent.shipping?.address?.city || '',
+          state: paymentIntent.shipping?.address?.state || '',
+          zipCode: paymentIntent.shipping?.address?.postal_code || ''
+        };
+        
+        // Format payment details as JSON
+        const paymentDetails = JSON.stringify({
+          id: paymentIntent.id,
+          amount: paymentIntent.amount / 100, // Convert from cents
+          currency: paymentIntent.currency,
+          status: paymentIntent.status,
+          created: new Date(paymentIntent.created * 1000).toISOString()
+        });
+        
+        // Calculate total items to distribute price
+        let totalItems = 0;
+        orderSummary.items.forEach((item: any) => {
+          totalItems += item.qty || 1;
+        });
+        
+        // Calculate per-item price (approximate)
+        const perItemPrice = (paymentIntent.amount / 100) / Math.max(totalItems, 1);
+        
+        // Process each item in the order
+        for (const item of orderSummary.items) {
+          const orderData: InsertOrder = {
+            orderId: orderUniqueId,
+            firstName: customerData.firstName,
+            lastName: customerData.lastName,
+            email: customerData.email,
+            phone: customerData.phone,
+            address: customerData.address,
+            city: customerData.city,
+            state: customerData.state,
+            zip: customerData.zipCode,
+            productId: item.id,
+            productName: item.name,
+            quantity: item.qty || 1,
+            selectedWeight: item.weight,
+            salesPrice: perItemPrice.toFixed(2),
+            shipping,
+            paymentIntentId: paymentIntent.id,
+            paymentDetails
+          };
+          
+          const newOrderId = await createOrderInDatabase(orderData);
+          if (newOrderId) {
+            orderIds.push(newOrderId);
+            console.log(`DB order record created for product ${item.name} (${item.id})`);
+          }
+        }
+        
+        return orderIds.length > 0;
+      } catch (error) {
+        console.error('Error processing orderSummary from metadata:', error);
+      }
     }
     
-    const parsedCartItems = JSON.parse(cartItems);
-    
-    const orderIds = await createOrdersFromCart(
-      parsedCartItems,
-      customerInfo,
-      shipping,
-      paymentIntent.id
-    );
-    
-    return orderIds.length > 0;
+    // Fall back to legacy format if the new format isn't available
+    try {
+      // Try with products format
+      if (paymentIntent.metadata.products) {
+        const products = JSON.parse(paymentIntent.metadata.products || '[]');
+        const shipping = paymentIntent.metadata.shipping_method || 'standard';
+        
+        if (products.length > 0) {
+          // Create a unique order ID
+          const orderUniqueId = generateUniqueOrderId();
+          const orderIds: number[] = [];
+          
+          // Extract customer data from the payment intent
+          const customerData = {
+            firstName: paymentIntent.shipping?.name?.split(' ')[0] || 'Unknown',
+            lastName: paymentIntent.shipping?.name?.split(' ').slice(1).join(' ') || 'Customer',
+            email: paymentIntent.receipt_email || '',
+            phone: paymentIntent.shipping?.phone || paymentIntent.metadata?.customer_phone || '',
+            address: paymentIntent.shipping?.address?.line1 || '',
+            city: paymentIntent.shipping?.address?.city || '',
+            state: paymentIntent.shipping?.address?.state || '',
+            zipCode: paymentIntent.shipping?.address?.postal_code || ''
+          };
+          
+          // Process each product
+          for (const product of products) {
+            const orderData: InsertOrder = {
+              orderId: orderUniqueId,
+              firstName: customerData.firstName,
+              lastName: customerData.lastName,
+              email: customerData.email,
+              phone: customerData.phone,
+              address: customerData.address,
+              city: customerData.city,
+              state: customerData.state,
+              zip: customerData.zipCode,
+              productId: product.id,
+              productName: product.name,
+              quantity: product.quantity || 1,
+              selectedWeight: product.weight,
+              salesPrice: product.price.toString(),
+              shipping,
+              paymentIntentId: paymentIntent.id,
+              paymentDetails: JSON.stringify({
+                id: paymentIntent.id,
+                amount: product.price * (product.quantity || 1),
+                currency: paymentIntent.currency,
+                status: paymentIntent.status,
+                created: new Date(paymentIntent.created * 1000).toISOString()
+              })
+            };
+            
+            const newOrderId = await createOrderInDatabase(orderData);
+            if (newOrderId) {
+              orderIds.push(newOrderId);
+            }
+          }
+          
+          return orderIds.length > 0;
+        }
+      }
+      
+      // If all else fails, try the orderDetails (very old format, may not be available)
+      const { customerInfo, cartItems, shipping } = JSON.parse(paymentIntent.metadata.orderDetails || '{}');
+      
+      if (!customerInfo || !cartItems || !shipping) {
+        console.error('Missing required data in all metadata formats');
+        return false;
+      }
+      
+      const parsedCartItems = JSON.parse(cartItems);
+      
+      const orderIds = await createOrdersFromCart(
+        parsedCartItems,
+        customerInfo,
+        shipping,
+        paymentIntent.id
+      );
+      
+      return orderIds.length > 0;
+    } catch (error) {
+      console.error('Error processing payment intent metadata:', error);
+      return false;
+    }
   } catch (error) {
     console.error('Error recording payment to database:', error);
     return false;
