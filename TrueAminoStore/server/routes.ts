@@ -606,6 +606,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shipping_method
       } = req.body;
       
+      // Get the cart items for this session
+      const cartItems = await storage.getCartItems(sessionId);
+      
       // Build the update options
       const updateOptions: any = {
         amount: Math.round(amount * 100), // Stripe requires amount in cents
@@ -634,6 +637,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           phone: phone || '',
         };
       }
+      
+      // Create customer info object for order processing
+      const customerInfo = {
+        firstName: firstName || '',
+        lastName: lastName || '',
+        email: email || '',
+        phone: phone || '',
+        address: address || '',
+        city: city || '',
+        state: state || '',
+        zipCode: zipCode || ''
+      };
+      
+      // Store the complete order details in metadata for webhook processing
+      updateOptions.metadata.orderDetails = JSON.stringify({
+        customerInfo: customerInfo,
+        cartItems: JSON.stringify(cartItems),
+        shipping: shipping_method || 'standard'
+      });
       
       // Add customer metadata if provided
       if (firstName || lastName || email || phone) {
@@ -681,16 +703,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const paymentIntent = event.data.object;
         console.log(`💰 Payment succeeded: ${paymentIntent.id}`);
         
-        // 1. Record the order in Airtable
+        // 1. Record the order in Airtable and Database
         try {
-          const success = await recordPaymentToAirtable(paymentIntent);
-          if (success) {
+          // Store in Airtable
+          const successAirtable = await recordPaymentToAirtable(paymentIntent);
+          if (successAirtable) {
             console.log(`✅ Order recorded in Airtable for payment: ${paymentIntent.id}`);
           } else {
             console.error(`❌ Failed to record order in Airtable for payment: ${paymentIntent.id}`);
           }
+          
+          // Store in Database
+          const successDatabase = await recordPaymentToDatabase(paymentIntent);
+          if (successDatabase) {
+            console.log(`✅ Order recorded in Database for payment: ${paymentIntent.id}`);
+          } else {
+            console.error(`❌ Failed to record order in Database for payment: ${paymentIntent.id}`);
+          }
         } catch (error) {
-          console.error('Error recording order in Airtable:', error);
+          console.error('Error recording order:', error);
         }
         
         // 2. Clear the user's cart

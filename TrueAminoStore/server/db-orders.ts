@@ -39,7 +39,7 @@ export async function createOrdersFromCart(
   paymentIntentId: string
 ): Promise<number[]> {
   const orderIds: number[] = [];
-  const orderId = generateUniqueOrderId();
+  const orderUniqueId = generateUniqueOrderId();
   
   try {
     for (const item of cartItems) {
@@ -58,7 +58,7 @@ export async function createOrdersFromCart(
       }
       
       const orderData: InsertOrder = {
-        orderId,
+        orderId: orderUniqueId,
         firstName: customerInfo.firstName,
         lastName: customerInfo.lastName,
         email: customerInfo.email,
@@ -71,7 +71,7 @@ export async function createOrdersFromCart(
         productName: product.name,
         quantity: item.quantity,
         selectedWeight,
-        salesPrice: price,
+        salesPrice: price.toString(),
         shipping,
         paymentIntentId,
         paymentDetails: JSON.stringify({
@@ -82,9 +82,9 @@ export async function createOrdersFromCart(
         })
       };
       
-      const orderId = await createOrderInDatabase(orderData);
-      if (orderId) {
-        orderIds.push(orderId);
+      const newOrderId = await createOrderInDatabase(orderData);
+      if (newOrderId) {
+        orderIds.push(newOrderId);
       }
     }
     
