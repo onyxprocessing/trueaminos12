@@ -34,8 +34,7 @@ function Router() {
       <Route path="/category/:slug" component={CategoryPage} />
       <Route path="/cart" component={Cart} />
       <Route path="/checkout/multi-step" component={MultiStepCheckout} />
-      <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/checkout/success" component={SuccessPage} />
+      <Route path="/checkout" component={MultiStepCheckout} />
       <Route path="/checkout/confirmation" component={SuccessPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/contact" component={ContactPage} />

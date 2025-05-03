@@ -190,7 +190,7 @@ const Cart: React.FC = () => {
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-2 pt-0">
                   <Button className="w-full" size="lg" asChild>
-                    <Link href="/checkout">Proceed to Checkout</Link>
+                    <Link href="/checkout/multi-step">Proceed to Checkout</Link>
                   </Button>
                   <div className="bg-yellow-50 p-3 rounded-md mt-4 flex items-start">
                     <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
