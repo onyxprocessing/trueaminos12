@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/hooks/useCart';
@@ -17,12 +15,8 @@ import {
 } from '@/components/ui/select';
 import { apiRequest } from '@/lib/api-client';
 import { Separator } from '@/components/ui/separator';
-import PaymentForm from './PaymentForm';
 import { US_STATES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
@@ -652,34 +646,143 @@ const MultiStepCheckout: React.FC = () => {
   );
   
   // Render card payment form (Step 4 for cards)
+  // State for card information
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+
+  // Render card payment form (Step 4 for card payments)
   const renderCardPaymentForm = () => {
-    if (!clientSecret) {
-      return (
-        <div className="py-8 text-center">
-          <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p>Preparing payment form...</p>
-        </div>
-      );
-    }
-    
     return (
       <div className="space-y-6">
         <h2 className="text-xl font-bold">Card Payment</h2>
         
         <div className="bg-white p-6 border rounded-lg">
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <PaymentForm 
-              amount={paymentAmount} 
-              onSuccess={() => {
-                setCurrentStep('confirmation');
-                cart.clearCart();
-              }}
-              onBack={() => setCurrentStep('payment_method')}
-            />
-          </Elements>
+          <form onSubmit={handleCardPaymentSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cardName">Cardholder Name</Label>
+              <Input 
+                id="cardName" 
+                value={cardName} 
+                onChange={(e) => setCardName(e.target.value)} 
+                placeholder="Name on card"
+                required 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cardNumber">Card Number</Label>
+              <Input 
+                id="cardNumber" 
+                value={cardNumber}
+                onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                placeholder="0000 0000 0000 0000"
+                required 
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="expiryDate">Expiry Date</Label>
+                <Input 
+                  id="expiryDate" 
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)} 
+                  placeholder="MM/YY"
+                  required 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="cvv">CVV</Label>
+                <Input 
+                  id="cvv" 
+                  value={cvv}
+                  onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 3))} 
+                  placeholder="123"
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <p className="text-base font-medium">Amount: ${paymentAmount.toFixed(2)}</p>
+            </div>
+            
+            <div className="flex justify-between mt-6">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setCurrentStep('payment_method')}
+              >
+                Back
+              </Button>
+              
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Processing...' : `Pay $${paymentAmount.toFixed(2)}`}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     );
+  };
+  
+  // Handle card payment form submission
+  const handleCardPaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate card details
+    if (!cardNumber || !cardName || !expiryDate || !cvv) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in all card details',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Process the payment directly without Stripe
+      const response = await apiRequest('POST', '/api/checkout/confirm-payment', {
+        paymentMethod: 'card',
+        cardDetails: {
+          name: cardName,
+          number: cardNumber,
+          expiry: expiryDate,
+          cvv: cvv
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setOrderIds(data.orderIds || []);
+        setCurrentStep('confirmation');
+        cart.clearCart();
+        toast({
+          title: 'Payment Successful',
+          description: 'Your order has been placed successfully',
+        });
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: 'Payment Failed',
+          description: errorData.message || 'Could not process payment',
+          variant: 'destructive',
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Network Error',
+        description: err.message || 'Could not connect to server',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   // Render bank transfer instructions (Step 4 for bank transfers)

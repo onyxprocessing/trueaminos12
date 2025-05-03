@@ -213,78 +213,11 @@ export async function handlePaymentMethod(req: Request, res: Response) {
     
     const amount = calculateCartTotal(cartItems);
     
-    // Return different responses based on payment method
+    // For card payments, just return the amount and next step
     if (paymentMethod === 'card') {
-      // For card payments, create a payment intent with Stripe
-      const params: Stripe.PaymentIntentCreateParams = {
-        amount: Math.round(amount * 100), // Stripe requires amount in cents
-        currency: 'usd',
-        automatic_payment_methods: { enabled: true },
-        metadata: {
-          session_id: req.session.id,
-          checkout_id: req.session.checkoutId || '',
-          shipping_method: req.session.shippingInfo.shippingMethod
-        }
-      };
-      
-      // Create a compact order summary
-      const orderSummary = {
-        customer: `${req.session.personalInfo.firstName} ${req.session.personalInfo.lastName}`,
-        email: req.session.personalInfo.email || '',
-        items: cartItems.map(item => ({
-          id: item.productId,
-          name: item.product.name.substring(0, 20), // Limit length
-          qty: item.quantity,
-          weight: item.selectedWeight || null
-        })),
-        shipping: req.session.shippingInfo.shippingMethod
-      };
-      
-      // Store order summary in metadata
-      if (params.metadata) {
-        params.metadata.orderSummary = JSON.stringify(orderSummary);
-        
-        // Add customer info to metadata
-        params.metadata.customer_name = `${req.session.personalInfo.firstName} ${req.session.personalInfo.lastName}`;
-        params.metadata.customer_email = req.session.personalInfo.email || '';
-        params.metadata.customer_phone = req.session.personalInfo.phone || '';
-      }
-      
-      // Only add receipt_email for valid emails
-      if (req.session.personalInfo.email && 
-          req.session.personalInfo.email.trim() !== '' && 
-          req.session.personalInfo.email.includes('@')) {
-        params.receipt_email = req.session.personalInfo.email;
-      }
-      
-      // Add shipping information
-      params.shipping = {
-        name: `${req.session.personalInfo.firstName} ${req.session.personalInfo.lastName}`,
-        address: {
-          line1: req.session.shippingInfo.address,
-          city: req.session.shippingInfo.city,
-          state: req.session.shippingInfo.state,
-          postal_code: req.session.shippingInfo.zip,
-          country: 'US',
-        }
-      };
-      
-      if (req.session.personalInfo.phone) {
-        params.shipping.phone = req.session.personalInfo.phone;
-      }
-      
-      // Create payment intent
-      const paymentIntent = await stripe.paymentIntents.create(params);
-      
-      // Save to session
-      req.session.paymentIntentId = paymentIntent.id;
-      await req.session.save();
-      
-      // Return client secret for Stripe integration
       res.json({
-        clientSecret: paymentIntent.client_secret,
-        amount: amount,
         paymentMethod: 'card',
+        amount: amount,
         nextStep: 'card_payment'
       });
     } else if (paymentMethod === 'bank') {
