@@ -148,17 +148,52 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
     const fields: any = {};
     
     // Only include fields that are present in updateData
-    if (updateData.firstName) fields["first name"] = updateData.firstName;
-    if (updateData.lastName) fields["last name"] = updateData.lastName;
-    if (updateData.email) fields["email"] = updateData.email;
-    if (updateData.phone) fields["phone"] = updateData.phone;
-    if (updateData.address) fields["address"] = updateData.address;
-    if (updateData.city) fields["city"] = updateData.city;
-    if (updateData.state) fields["state"] = updateData.state;
-    if (updateData.zip) fields["zip"] = updateData.zip;
-    if (updateData.shippingMethod) fields["shippingmethod"] = updateData.shippingMethod;
-    if (updateData.status) fields["status"] = updateData.status;
-    if (updateData.totalAmount) fields["totalamount"] = updateData.totalAmount;
+    console.log('Updating checkout with data:', JSON.stringify(updateData, null, 2));
+    
+    if (updateData.firstName) {
+      fields["firstname"] = updateData.firstName;
+      console.log('Setting firstName:', updateData.firstName);
+    }
+    if (updateData.lastName) {
+      fields["lastname"] = updateData.lastName;
+      console.log('Setting lastName:', updateData.lastName);
+    }
+    if (updateData.email) {
+      fields["email"] = updateData.email;
+      console.log('Setting email:', updateData.email);
+    }
+    if (updateData.phone) {
+      fields["phone"] = updateData.phone;
+      console.log('Setting phone:', updateData.phone);
+    }
+    if (updateData.address) {
+      fields["address"] = updateData.address;
+      console.log('Setting address:', updateData.address);
+    }
+    if (updateData.city) {
+      fields["city"] = updateData.city;
+      console.log('Setting city:', updateData.city);
+    }
+    if (updateData.state) {
+      fields["state"] = updateData.state;
+      console.log('Setting state:', updateData.state);
+    }
+    if (updateData.zip) {
+      fields["zip"] = updateData.zip;
+      console.log('Setting zip:', updateData.zip);
+    }
+    if (updateData.shippingMethod) {
+      fields["shippingmethod"] = updateData.shippingMethod;
+      console.log('Setting shippingMethod:', updateData.shippingMethod);
+    }
+    if (updateData.status) {
+      fields["status"] = updateData.status;
+      console.log('Setting status:', updateData.status);
+    }
+    if (updateData.totalAmount) {
+      fields["totalamount"] = updateData.totalAmount;
+      console.log('Setting totalAmount:', updateData.totalAmount);
+    }
     
     // Always update updatedAt
     fields["updatedat"] = new Date().toISOString();
@@ -168,6 +203,10 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
       fields["cartitems"] = JSON.stringify(updateData.cartItems);
     }
 
+    // Log the request data
+    console.log('Sending update to Airtable URL:', updateUrl);
+    console.log('Update fields:', JSON.stringify(fields, null, 2));
+    
     const updateResponse = await fetch(updateUrl, {
       method: 'PATCH',
       headers: {
@@ -180,9 +219,16 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
     });
 
     if (!updateResponse.ok) {
-      console.error('Failed to update checkout in Airtable:', await updateResponse.text());
+      const errorText = await updateResponse.text();
+      console.error('Failed to update checkout in Airtable:', errorText);
+      console.error('Status code:', updateResponse.status);
+      console.error('Status text:', updateResponse.statusText);
       return false;
     }
+    
+    // Log the response
+    const responseData = await updateResponse.json();
+    console.log('Airtable update response:', JSON.stringify(responseData, null, 2));
 
     console.log('✅ Checkout updated in Airtable:', checkoutId);
     return true;
