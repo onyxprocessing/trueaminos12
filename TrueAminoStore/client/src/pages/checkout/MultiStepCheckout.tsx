@@ -24,9 +24,8 @@ import { ShippingRateOption, getShippingRates, formatShippingPrice } from '@/lib
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
-  { id: 'standard', name: 'Standard Shipping', price: 9.95, days: '3-5 business days' },
-  { id: 'express', name: 'Express Shipping', price: 14.95, days: '1-2 business days' },
-  { id: 'overnight', name: 'Overnight', price: 29.95, days: 'Next business day' },
+  { id: 'standard', name: 'Standard Shipping via USPS', price: 15.00, days: '1-2 business days' },
+  { id: 'express', name: 'Express Shipping', price: 25.00, days: '1-2 business days' },
 ];
 
 // Steps in the checkout process
