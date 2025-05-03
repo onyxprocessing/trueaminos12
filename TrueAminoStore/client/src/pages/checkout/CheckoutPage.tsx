@@ -145,8 +145,8 @@ const CheckoutForm = ({
       setIsProcessing(false);
     } else {
       // Payment succeeded, no redirect was needed
-      // Clear the cart and redirect to success page
-      await clearCart();
+      // Don't clear the cart here - clear it on the success page instead
+      // Just navigate to success
       navigate('/checkout/success');
     }
   };
