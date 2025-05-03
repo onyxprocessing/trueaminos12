@@ -2,24 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import Layout from '../../components/Layout';
-import { Button } from '../../components/ui/button';
-import { useCart } from '../../hooks/use-cart';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
+import Layout from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { useCart } from '@/hooks/useCart';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
-import { apiRequest } from '../../lib/api-client';
-import { Separator } from '../../components/ui/separator';
+} from '@/components/ui/select';
+import { apiRequest } from '@/lib/api-client';
+import { Separator } from '@/components/ui/separator';
 import PaymentForm from './PaymentForm';
-import { US_STATES } from '../../lib/constants';
-import { toast } from '../../hooks/use-toast';
+import { US_STATES } from '@/lib/constants';
+import { useToast } from '@/hooks/use-toast';
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
