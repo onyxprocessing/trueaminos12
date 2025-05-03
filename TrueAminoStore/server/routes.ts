@@ -113,11 +113,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageUrl = req.query.url as string;
       
       if (!imageUrl) {
+        console.error("Image proxy error: Missing URL parameter");
         return res.status(400).json({ message: "Missing image URL parameter" });
       }
       
       // Validate URL to ensure it's from Airtable (security measure)
       if (!imageUrl.includes('airtableusercontent.com')) {
+        console.error("Image proxy error: Invalid source - not from Airtable");
         return res.status(403).json({ message: "Invalid image source" });
       }
       
@@ -125,24 +127,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Use node-fetch directly for more control
+        console.log("Sending fetch request to Airtable for image...");
         const fetchResponse = await fetch(imageUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'image/jpeg,image/png,image/webp,image/*,*/*'
           },
         });
         
         if (!fetchResponse.ok) {
-          console.error(`Image fetch failed with status: ${fetchResponse.status}`);
+          console.error(`Image fetch failed with status: ${fetchResponse.status} - ${fetchResponse.statusText}`);
           return res.status(fetchResponse.status).json({ 
             message: `Failed to fetch image: ${fetchResponse.statusText}` 
           });
         }
         
         // Get the image data
+        console.log("Fetch response received, getting image data...");
         const imageBuffer = await fetchResponse.arrayBuffer();
+        console.log(`Image data received: ${imageBuffer.byteLength} bytes`);
         
         // Get content type from response or use a default
         const contentType = fetchResponse.headers.get('content-type') || 'image/jpeg';
+        console.log(`Content-Type: ${contentType}`);
         
         // Set appropriate headers
         res.set({
@@ -151,7 +158,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Send the image data
+        console.log("Sending image data to client...");
         res.send(Buffer.from(imageBuffer));
+        console.log("Image data sent successfully");
       } catch (fetchError) {
         console.error("Error fetching image:", fetchError);
         return res.status(500).json({ message: "Failed to fetch image from source" });
