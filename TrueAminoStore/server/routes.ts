@@ -905,6 +905,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       console.log('📡 Received webhook from Stripe', { hasSignature: !!sig });
+      console.log('📄 Webhook body excerpt:', 
+        typeof req.body === 'object' 
+          ? JSON.stringify(req.body).substring(0, 200) + '...' 
+          : 'Not an object');
       
       if (endpointSecret && sig) {
         // Verify webhook signature
@@ -942,6 +946,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Return a response to acknowledge receipt of the event
         return res.json({ received: true, processed: true });
+      } else if (event.type === 'checkout.session.completed') {
+        // This handles Stripe Checkout session completions
+        const session = event.data.object;
+        console.log(`🛒 Checkout session completed: ${session.id}`);
+        console.log(`   Payment status: ${session.payment_status}`);
+        
+        if (session.payment_status === 'paid') {
+          console.log(`   Payment intent: ${session.payment_intent}`);
+          
+          try {
+            // Get the payment intent from the session
+            const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
+            console.log(`💰 Retrieved payment intent: ${paymentIntent.id}`);
+            
+            // Process the payment success
+            await processPaymentSuccess(paymentIntent);
+            
+            return res.json({ received: true, processed: true });
+          } catch (error) {
+            console.error(`Error retrieving payment intent for session ${session.id}:`, error);
+            
+            // Even if we can't retrieve the payment intent, try to process with session data
+            const fakePaymentIntent = {
+              id: session.payment_intent || session.id,
+              amount: session.amount_total,
+              currency: session.currency,
+              status: 'succeeded',
+              created: Math.floor(Date.now() / 1000),
+              metadata: session.metadata || {},
+              shipping: session.shipping,
+              customer: session.customer,
+              receipt_email: session.customer_details?.email
+            };
+            
+            await processPaymentSuccess(fakePaymentIntent);
+            return res.json({ received: true, processed: true });
+          }
+        }
       } else if (event.type === 'payment_intent.payment_failed') {
         const paymentIntent = event.data.object;
         const error = paymentIntent.last_payment_error;
@@ -986,6 +1028,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Function to process successful payments
   async function processPaymentSuccess(paymentIntent: any) {
     console.log(`🔄 Processing payment success: ${paymentIntent.id}`);
+    console.log(`🔍 Payment intent data:`, JSON.stringify({
+      id: paymentIntent.id,
+      status: paymentIntent.status,
+      amount: paymentIntent.amount,
+      metadata: paymentIntent.metadata,
+      shipping: paymentIntent.shipping || null
+    }, null, 2));
+    
+    const results = {
+      airtable: false,
+      database: false,
+      cartCleared: false
+    };
     
     // 1. Record the order in Airtable and Database
     try {
@@ -994,17 +1049,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const successAirtable = await recordPaymentToAirtable(paymentIntent);
       if (successAirtable) {
         console.log(`✅ Order recorded in Airtable for payment: ${paymentIntent.id}`);
+        results.airtable = true;
       } else {
         console.error(`❌ Failed to record order in Airtable for payment: ${paymentIntent.id}`);
       }
       
-      // Store in Database
+      // Store in Database with extended debugging
       console.log(`📝 Storing order in Database for payment: ${paymentIntent.id}`);
-      const successDatabase = await recordPaymentToDatabase(paymentIntent);
-      if (successDatabase) {
-        console.log(`✅ Order recorded in Database for payment: ${paymentIntent.id}`);
-      } else {
-        console.error(`❌ Failed to record order in Database for payment: ${paymentIntent.id}`);
+      try {
+        const successDatabase = await recordPaymentToDatabase(paymentIntent);
+        if (successDatabase) {
+          console.log(`✅ Order recorded in Database for payment: ${paymentIntent.id}`);
+          results.database = true;
+        } else {
+          console.error(`❌ Failed to record order in Database for payment: ${paymentIntent.id}`);
+          
+          // Add extra debugging for database storage failures
+          if (paymentIntent.metadata) {
+            console.log(`🔬 Metadata for failed DB order: ${JSON.stringify(paymentIntent.metadata)}`);
+            
+            if (paymentIntent.metadata.orderSummary) {
+              console.log(`📦 Order summary exists, attempting to parse...`);
+              try {
+                const summary = JSON.parse(paymentIntent.metadata.orderSummary);
+                console.log(`📦 Parsed order summary:`, JSON.stringify(summary, null, 2));
+              } catch (parseErr) {
+                console.error(`Error parsing order summary:`, parseErr);
+              }
+            } else {
+              console.log(`⚠️ No orderSummary in metadata, checking for old formats...`);
+              
+              if (paymentIntent.metadata.products) {
+                console.log(`📦 Products format exists, attempting to parse...`);
+                try {
+                  const products = JSON.parse(paymentIntent.metadata.products);
+                  console.log(`📦 Parsed products:`, JSON.stringify(products, null, 2));
+                } catch (parseErr) {
+                  console.error(`Error parsing products:`, parseErr);
+                }
+              }
+            }
+          }
+        }
+      } catch (dbError) {
+        console.error(`❌ Exception in Database order recording:`, dbError);
       }
     } catch (error) {
       console.error(`Error recording order for payment ${paymentIntent.id}:`, error);
@@ -1017,6 +1105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`🧹 Clearing cart for session: ${sessionId}`);
         await storage.clearCart(sessionId);
         console.log(`✅ Cart cleared for session: ${sessionId}`);
+        results.cartCleared = true;
       } catch (error) {
         console.error(`Error clearing cart for session ${sessionId}:`, error);
       }
@@ -1024,7 +1113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`⚠️ No session ID found in payment intent metadata`);
     }
     
-    return true;
+    return results;
   }
 
   // Register test Stripe endpoints for debugging

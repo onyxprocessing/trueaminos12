@@ -102,86 +102,60 @@ export async function createOrdersFromCart(
  */
 export async function recordPaymentToDatabase(paymentIntent: any): Promise<boolean> {
   try {
-    if (!paymentIntent || !paymentIntent.metadata) {
-      console.error('Invalid payment intent received');
+    if (!paymentIntent) {
+      console.error('Invalid payment intent received - payment intent is null or undefined');
       return false;
     }
 
-    console.log('Processing payment for database storage:', paymentIntent.id);
+    if (!paymentIntent.id) {
+      console.error('Invalid payment intent received - missing ID');
+      return false;
+    }
+
+    console.log(`🛢️ Processing payment ${paymentIntent.id} for database storage`);
+    console.log(`🛢️ Payment amount: ${paymentIntent.amount ? (paymentIntent.amount / 100) : 'unknown'} ${paymentIntent.currency || 'unknown'}`);
     
-    // Check if we have the new orderSummary format
-    if (paymentIntent.metadata.orderSummary) {
+    // Create a unique order ID that will be shared by all items in this order
+    const orderUniqueId = generateUniqueOrderId();
+    console.log(`🛢️ Generated unique order ID: ${orderUniqueId}`);
+    
+    // Extract and normalize customer data
+    const customerData = extractCustomerData(paymentIntent);
+    console.log(`🛢️ Extracted customer data:`, JSON.stringify(customerData, null, 2));
+    
+    // Format payment details as JSON
+    const paymentDetails = JSON.stringify({
+      id: paymentIntent.id,
+      amount: paymentIntent.amount ? (paymentIntent.amount / 100) : 0, // Convert from cents
+      currency: paymentIntent.currency || 'usd',
+      status: paymentIntent.status || 'succeeded',
+      created: new Date().toISOString()
+    });
+    
+    // Default shipping method
+    let shipping = 'standard';
+    
+    // Try to get shipping method from metadata
+    if (paymentIntent.metadata) {
+      if (paymentIntent.metadata.shipping_method) {
+        shipping = paymentIntent.metadata.shipping_method;
+      }
+    }
+    
+    // Array to collect all order IDs created
+    const orderIds: number[] = [];
+    
+    // Try all possible formats for order items, starting with the newest format
+    
+    // 1. First try with orderSummary format (newest)
+    if (paymentIntent.metadata?.orderSummary) {
       try {
-        console.log('🔵 Processing orderSummary in database storage:', paymentIntent.id);
-        console.log('Payment intent metadata:', JSON.stringify(paymentIntent.metadata, null, 2));
-        
+        console.log(`🛢️ Found orderSummary format`);
         const orderSummary = JSON.parse(paymentIntent.metadata.orderSummary);
-        console.log('Parsed orderSummary:', JSON.stringify(orderSummary, null, 2));
         
-        const shipping = orderSummary.shipping || 'standard';
-        
-        // Create a unique order ID
-        const orderUniqueId = generateUniqueOrderId();
-        console.log('Generated order ID for database:', orderUniqueId);
-        
-        const orderIds: number[] = [];
-        
-        // Extract customer name from various sources
-        let firstName = '';
-        let lastName = '';
-        let customerEmail = '';
-        
-        // Try to get customer info from orderSummary first
-        if (orderSummary.customer) {
-          const nameParts = orderSummary.customer.split(' ');
-          firstName = nameParts[0] || '';
-          lastName = nameParts.slice(1).join(' ') || '';
-          customerEmail = orderSummary.email || '';
+        if (orderSummary.shipping) {
+          shipping = orderSummary.shipping;
         }
-        
-        // Fall back to other metadata fields if needed
-        if (!firstName && paymentIntent.metadata.customer_name) {
-          const nameParts = paymentIntent.metadata.customer_name.split(' ');
-          firstName = nameParts[0] || '';
-          lastName = nameParts.slice(1).join(' ') || '';
-        } else if (!firstName && paymentIntent.shipping?.name) {
-          const nameParts = paymentIntent.shipping.name.split(' ');
-          firstName = nameParts[0] || '';
-          lastName = nameParts.slice(1).join(' ') || '';
-        }
-        
-        // If still no name, use defaults
-        if (!firstName) firstName = 'Unknown';
-        if (!lastName) lastName = 'Customer';
-        
-        // Get email from various possible sources if not already set
-        if (!customerEmail) {
-          customerEmail = paymentIntent.metadata.customer_email || 
-                          paymentIntent.receipt_email || '';
-        }
-        
-        // Build complete customer data
-        const customerData = {
-          firstName,
-          lastName,
-          email: customerEmail,
-          phone: paymentIntent.shipping?.phone || paymentIntent.metadata?.customer_phone || '',
-          address: paymentIntent.shipping?.address?.line1 || '',
-          city: paymentIntent.shipping?.address?.city || '',
-          state: paymentIntent.shipping?.address?.state || '',
-          zipCode: paymentIntent.shipping?.address?.postal_code || ''
-        };
-        
-        console.log('Customer data for DB order:', JSON.stringify(customerData, null, 2));
-        
-        // Format payment details as JSON
-        const paymentDetails = JSON.stringify({
-          id: paymentIntent.id,
-          amount: paymentIntent.amount / 100, // Convert from cents
-          currency: paymentIntent.currency,
-          status: paymentIntent.status,
-          created: new Date(paymentIntent.created * 1000).toISOString()
-        });
         
         // Calculate total items to distribute price
         let totalItems = 0;
@@ -204,10 +178,10 @@ export async function recordPaymentToDatabase(paymentIntent: any): Promise<boole
             city: customerData.city,
             state: customerData.state,
             zip: customerData.zipCode,
-            productId: item.id,
-            productName: item.name,
+            productId: item.id || 0,
+            productName: item.name || 'Unknown Product',
             quantity: item.qty || 1,
-            selectedWeight: item.weight,
+            selectedWeight: item.weight || null,
             salesPrice: perItemPrice.toFixed(2),
             shipping,
             paymentIntentId: paymentIntent.id,
@@ -217,102 +191,204 @@ export async function recordPaymentToDatabase(paymentIntent: any): Promise<boole
           const newOrderId = await createOrderInDatabase(orderData);
           if (newOrderId) {
             orderIds.push(newOrderId);
-            console.log(`DB order record created for product ${item.name} (${item.id})`);
+            console.log(`🛢️ DB order record created for product ${item.name} (${item.id})`);
           }
         }
         
-        return orderIds.length > 0;
+        if (orderIds.length > 0) {
+          console.log(`🛢️ Successfully created ${orderIds.length} order records using orderSummary format`);
+          return true;
+        }
       } catch (error) {
-        console.error('Error processing orderSummary from metadata:', error);
+        console.error(`❌ Error processing orderSummary format:`, error);
       }
     }
     
-    // Fall back to legacy format if the new format isn't available
-    try {
-      // Try with products format
-      if (paymentIntent.metadata.products) {
-        const products = JSON.parse(paymentIntent.metadata.products || '[]');
-        const shipping = paymentIntent.metadata.shipping_method || 'standard';
+    // 2. Next, try with products format (older format)
+    if (paymentIntent.metadata?.products) {
+      try {
+        console.log(`🛢️ Found products format`);
+        const products = JSON.parse(paymentIntent.metadata.products);
         
-        if (products.length > 0) {
-          // Create a unique order ID
-          const orderUniqueId = generateUniqueOrderId();
-          const orderIds: number[] = [];
-          
-          // Extract customer data from the payment intent
-          const customerData = {
-            firstName: paymentIntent.shipping?.name?.split(' ')[0] || 'Unknown',
-            lastName: paymentIntent.shipping?.name?.split(' ').slice(1).join(' ') || 'Customer',
-            email: paymentIntent.receipt_email || '',
-            phone: paymentIntent.shipping?.phone || paymentIntent.metadata?.customer_phone || '',
-            address: paymentIntent.shipping?.address?.line1 || '',
-            city: paymentIntent.shipping?.address?.city || '',
-            state: paymentIntent.shipping?.address?.state || '',
-            zipCode: paymentIntent.shipping?.address?.postal_code || ''
+        if (paymentIntent.metadata.shipping_method) {
+          shipping = paymentIntent.metadata.shipping_method;
+        }
+        
+        for (const product of products) {
+          const orderData: InsertOrder = {
+            orderId: orderUniqueId,
+            firstName: customerData.firstName,
+            lastName: customerData.lastName,
+            email: customerData.email,
+            phone: customerData.phone,
+            address: customerData.address,
+            city: customerData.city,
+            state: customerData.state,
+            zip: customerData.zipCode,
+            productId: product.id || 0,
+            productName: product.name || 'Unknown Product',
+            quantity: product.quantity || 1,
+            selectedWeight: product.weight || null,
+            salesPrice: (product.price || 0).toString(),
+            shipping,
+            paymentIntentId: paymentIntent.id,
+            paymentDetails
           };
           
-          // Process each product
-          for (const product of products) {
-            const orderData: InsertOrder = {
-              orderId: orderUniqueId,
-              firstName: customerData.firstName,
-              lastName: customerData.lastName,
-              email: customerData.email,
-              phone: customerData.phone,
-              address: customerData.address,
-              city: customerData.city,
-              state: customerData.state,
-              zip: customerData.zipCode,
-              productId: product.id,
-              productName: product.name,
-              quantity: product.quantity || 1,
-              selectedWeight: product.weight,
-              salesPrice: product.price.toString(),
-              shipping,
-              paymentIntentId: paymentIntent.id,
-              paymentDetails: JSON.stringify({
-                id: paymentIntent.id,
-                amount: product.price * (product.quantity || 1),
-                currency: paymentIntent.currency,
-                status: paymentIntent.status,
-                created: new Date(paymentIntent.created * 1000).toISOString()
-              })
-            };
-            
-            const newOrderId = await createOrderInDatabase(orderData);
-            if (newOrderId) {
-              orderIds.push(newOrderId);
-            }
+          const newOrderId = await createOrderInDatabase(orderData);
+          if (newOrderId) {
+            orderIds.push(newOrderId);
+            console.log(`🛢️ DB order record created for product ${product.name} (${product.id})`);
           }
-          
-          return orderIds.length > 0;
         }
+        
+        if (orderIds.length > 0) {
+          console.log(`🛢️ Successfully created ${orderIds.length} order records using products format`);
+          return true;
+        }
+      } catch (error) {
+        console.error(`❌ Error processing products format:`, error);
       }
-      
-      // If all else fails, try the orderDetails (very old format, may not be available)
-      const { customerInfo, cartItems, shipping } = JSON.parse(paymentIntent.metadata.orderDetails || '{}');
-      
-      if (!customerInfo || !cartItems || !shipping) {
-        console.error('Missing required data in all metadata formats');
-        return false;
-      }
-      
-      const parsedCartItems = JSON.parse(cartItems);
-      
-      const orderIds = await createOrdersFromCart(
-        parsedCartItems,
-        customerInfo,
-        shipping,
-        paymentIntent.id
-      );
-      
-      return orderIds.length > 0;
-    } catch (error) {
-      console.error('Error processing payment intent metadata:', error);
-      return false;
     }
+    
+    // 3. Last resort: For real Stripe payments without proper metadata, create a minimal order record
+    // This ensures real orders are always captured in the database
+    if (paymentIntent.status === 'succeeded' && !orderIds.length) {
+      try {
+        console.log(`🛢️ Creating minimal order record for payment ${paymentIntent.id}`);
+        
+        // Get a timestamp for the order
+        const orderDate = paymentIntent.created 
+          ? new Date(paymentIntent.created * 1000).toISOString() 
+          : new Date().toISOString();
+        
+        const orderData: InsertOrder = {
+          orderId: orderUniqueId,
+          firstName: customerData.firstName,
+          lastName: customerData.lastName,
+          email: customerData.email,
+          phone: customerData.phone,
+          address: customerData.address,
+          city: customerData.city,
+          state: customerData.state,
+          zip: customerData.zipCode,
+          productId: 0, // Unknown product
+          productName: `Order from ${orderDate}`,
+          quantity: 1,
+          selectedWeight: null,
+          salesPrice: (paymentIntent.amount ? (paymentIntent.amount / 100).toString() : "0"),
+          shipping,
+          paymentIntentId: paymentIntent.id,
+          paymentDetails
+        };
+        
+        const newOrderId = await createOrderInDatabase(orderData);
+        if (newOrderId) {
+          console.log(`🛢️ Created minimal order record with ID ${newOrderId}`);
+          return true;
+        }
+      } catch (error) {
+        console.error(`❌ Error creating minimal order record:`, error);
+      }
+    }
+    
+    console.error(`❌ Failed to create any order records for payment ${paymentIntent.id}`);
+    return false;
   } catch (error) {
-    console.error('Error recording payment to database:', error);
+    console.error(`❌ Error recording payment to database:`, error);
     return false;
   }
+}
+
+/**
+ * Extract and normalize customer data from payment intent
+ */
+function extractCustomerData(paymentIntent: any): any {
+  // Default empty customer data
+  const customerData = {
+    firstName: 'Unknown',
+    lastName: 'Customer',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: ''
+  };
+  
+  try {
+    // Try to get customer data from orderSummary if available
+    if (paymentIntent.metadata?.orderSummary) {
+      try {
+        const orderSummary = JSON.parse(paymentIntent.metadata.orderSummary);
+        
+        // Extract customer name from orderSummary
+        if (orderSummary.customer) {
+          const nameParts = orderSummary.customer.split(' ');
+          customerData.firstName = nameParts[0] || 'Unknown';
+          customerData.lastName = nameParts.slice(1).join(' ') || 'Customer';
+        }
+        
+        // Extract email from orderSummary
+        if (orderSummary.email) {
+          customerData.email = orderSummary.email;
+        }
+      } catch (error) {
+        console.error('Error parsing orderSummary:', error);
+      }
+    }
+    
+    // If name wasn't extracted from orderSummary, try other sources
+    if (customerData.firstName === 'Unknown') {
+      // Try customer_name in metadata
+      if (paymentIntent.metadata?.customer_name) {
+        const nameParts = paymentIntent.metadata.customer_name.split(' ');
+        customerData.firstName = nameParts[0] || 'Unknown';
+        customerData.lastName = nameParts.slice(1).join(' ') || 'Customer';
+      }
+      // Try shipping name
+      else if (paymentIntent.shipping?.name) {
+        const nameParts = paymentIntent.shipping.name.split(' ');
+        customerData.firstName = nameParts[0] || 'Unknown';
+        customerData.lastName = nameParts.slice(1).join(' ') || 'Customer';
+      }
+      // Try customer details from checkout session
+      else if (paymentIntent.customer_details?.name) {
+        const nameParts = paymentIntent.customer_details.name.split(' ');
+        customerData.firstName = nameParts[0] || 'Unknown';
+        customerData.lastName = nameParts.slice(1).join(' ') || 'Customer';
+      }
+    }
+    
+    // Get email from various possible sources if not already set
+    if (!customerData.email) {
+      customerData.email = paymentIntent.metadata?.customer_email || 
+                          paymentIntent.receipt_email || 
+                          paymentIntent.customer_details?.email || '';
+    }
+    
+    // Get phone from various possible sources
+    customerData.phone = paymentIntent.shipping?.phone || 
+                        paymentIntent.metadata?.customer_phone || 
+                        paymentIntent.customer_details?.phone || '';
+    
+    // Get address from shipping info
+    if (paymentIntent.shipping?.address) {
+      customerData.address = paymentIntent.shipping.address.line1 || '';
+      customerData.city = paymentIntent.shipping.address.city || '';
+      customerData.state = paymentIntent.shipping.address.state || '';
+      customerData.zipCode = paymentIntent.shipping.address.postal_code || '';
+    }
+    // Try customer_details address if shipping isn't available
+    else if (paymentIntent.customer_details?.address) {
+      customerData.address = paymentIntent.customer_details.address.line1 || '';
+      customerData.city = paymentIntent.customer_details.address.city || '';
+      customerData.state = paymentIntent.customer_details.address.state || '';
+      customerData.zipCode = paymentIntent.customer_details.address.postal_code || '';
+    }
+  } catch (error) {
+    console.error('Error extracting customer data:', error);
+  }
+  
+  return customerData;
 }
