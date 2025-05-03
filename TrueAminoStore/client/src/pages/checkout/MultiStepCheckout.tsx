@@ -626,6 +626,9 @@ const MultiStepCheckout: React.FC = () => {
             title: 'Address Validated',
             description: 'Your address has been validated successfully.',
           });
+          
+          // After successfully validating an address, fetch shipping rates
+          fetchShippingRates();
         }
       } else {
         toast({
@@ -659,6 +662,66 @@ const MultiStepCheckout: React.FC = () => {
         title: 'Address Updated',
         description: 'The suggested address has been applied.',
       });
+      
+      // After applying the validated address, fetch shipping rates
+      fetchShippingRates();
+    }
+  };
+  
+  // Function to fetch shipping rates based on the validated address
+  const fetchShippingRates = async () => {
+    if (!address || !city || !state || !zipCode) {
+      return;
+    }
+    
+    try {
+      setIsLoadingRates(true);
+      
+      // Import the getShippingRates function
+      const { getShippingRates } = await import('../../lib/shipping-rates');
+      
+      // Get shipping rates from FedEx API
+      const ratesResult = await getShippingRates(address, city, state, zipCode);
+      
+      if (ratesResult.success && ratesResult.rates && ratesResult.rates.length > 0) {
+        // Sort rates by price (lowest to highest)
+        const sortedRates = [...ratesResult.rates].sort((a, b) => a.price - b.price);
+        setShippingRates(sortedRates);
+        
+        // Create dynamic shipping options based on FedEx rates
+        const newShippingOptions = sortedRates.map(rate => ({
+          id: rate.serviceType.toLowerCase().replace(/_/g, '-'),
+          name: rate.serviceName,
+          price: rate.price,
+          days: rate.transitTime
+        }));
+        
+        // Update shipping options with real FedEx rates
+        setDynamicShippingOptions(newShippingOptions);
+        
+        // Set shipping method to the lowest priced option by default
+        if (sortedRates.length > 0) {
+          setShippingMethod(sortedRates[0].serviceType.toLowerCase().replace(/_/g, '-'));
+        }
+        
+        toast({
+          title: 'Shipping Rates Updated',
+          description: `${sortedRates.length} shipping options available`,
+        });
+      } else {
+        // If we failed to get shipping rates, fall back to the default options
+        setDynamicShippingOptions(SHIPPING_OPTIONS);
+        toast({
+          title: 'Using Standard Shipping Rates',
+          description: ratesResult.message || 'Could not retrieve real-time shipping rates',
+        });
+      }
+    } catch (err: any) {
+      console.error('Error fetching shipping rates:', err);
+      // Fall back to default shipping options
+      setDynamicShippingOptions(SHIPPING_OPTIONS);
+    } finally {
+      setIsLoadingRates(false);
     }
   };
   
@@ -810,7 +873,16 @@ const MultiStepCheckout: React.FC = () => {
             onValueChange={setShippingMethod}
             className="space-y-3"
           >
-            {SHIPPING_OPTIONS.map((option) => (
+            {isLoadingRates && (
+              <div className="flex justify-center py-4">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span>Loading shipping rates...</span>
+                </div>
+              </div>
+            )}
+            
+            {!isLoadingRates && dynamicShippingOptions.map((option) => (
               <div key={option.id} className="flex items-center space-x-2 border p-3 rounded">
                 <RadioGroupItem value={option.id} id={`shipping-${option.id}`} />
                 <Label htmlFor={`shipping-${option.id}`} className="flex-grow">
