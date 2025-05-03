@@ -320,6 +320,18 @@ const MultiStepCheckout: React.FC = () => {
     }
   };
   
+  // Helper function to get product price based on weight selection
+  const getProductPrice = (product: any, selectedWeight: string | null): number => {
+    if (!selectedWeight) {
+      return parseFloat(product.price || '0');
+    }
+    
+    // Create a dynamic key for the price field based on weight
+    const priceKey = `price${selectedWeight.toLowerCase()}`;
+    const price = product[priceKey] || product.price || '0';
+    return typeof price === 'string' ? parseFloat(price) : price;
+  };
+
   // Helper function to get shipping cost
   const getShippingCost = () => {
     if (cart.subtotal >= 175) return 0; // Free shipping for orders over $175
