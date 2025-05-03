@@ -216,17 +216,11 @@ const MultiStepCheckout: React.FC = () => {
       return;
     }
     
-    // Optional warning if address hasn't been validated with FedEx
-    if (!useValidatedAddress && !isValidatingAddress) {
-      const confirmContinue = window.confirm(
-        'Your address has not been validated with FedEx. Validating your address helps ensure accurate delivery. Do you want to continue without validation?'
-      );
-      
-      if (!confirmContinue) {
-        // User chose to validate first
-        validateAddressWithFedEx();
-        return;
-      }
+    // Attempt to validate the address one more time if it hasn't been validated yet
+    if (!useValidatedAddress && !isValidatingAddress && address && city && state && zipCode) {
+      // Automatically try to validate before proceeding
+      validateAddressWithFedEx();
+      // But still continue with submission - don't block the user
     }
     
     try {
@@ -677,7 +671,7 @@ const MultiStepCheckout: React.FC = () => {
               </Badge>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="relative">
             <Input 
               id="address" 
               value={address} 
@@ -689,22 +683,18 @@ const MultiStepCheckout: React.FC = () => {
               placeholder="123 Main Street, Apt #4"
               required 
               className={useValidatedAddress ? "border-green-500" : ""}
+              onBlur={() => {
+                // Auto-validate when user finishes typing and moves to next field
+                if (address && city && state && zipCode && !isValidatingAddress) {
+                  validateAddressWithFedEx();
+                }
+              }}
             />
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={validateAddressWithFedEx}
-              disabled={isValidatingAddress || !address || !city || !state || !zipCode}
-            >
-              {isValidatingAddress ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Validating...
-                </>
-              ) : (
-                'Validate'
-              )}
-            </Button>
+            {isValidatingAddress && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
           </div>
         </div>
         
@@ -739,6 +729,12 @@ const MultiStepCheckout: React.FC = () => {
               id="zipCode" 
               value={zipCode} 
               onChange={handleZipCodeChange}
+              onBlur={() => {
+                // Auto-validate when user finishes typing and moves to next field
+                if (address && city && state && zipCode && !isValidatingAddress) {
+                  validateAddressWithFedEx();
+                }
+              }}
               placeholder="Enter ZIP code first"
               className={`font-mono ${useValidatedAddress ? "border-green-500" : ""}`}
               required 
@@ -757,7 +753,13 @@ const MultiStepCheckout: React.FC = () => {
                 setCity(e.target.value);
                 setAddressValidation(null);
                 setUseValidatedAddress(false);
-              }} 
+              }}
+              onBlur={() => {
+                // Auto-validate when user finishes typing and moves to next field
+                if (address && city && state && zipCode && !isValidatingAddress) {
+                  validateAddressWithFedEx();
+                }
+              }}
               className={useValidatedAddress ? "border-green-500" : ""}
               required 
             />
@@ -771,6 +773,13 @@ const MultiStepCheckout: React.FC = () => {
                 setState(val);
                 setAddressValidation(null);
                 setUseValidatedAddress(false);
+                
+                // Try to validate the address after state is selected
+                setTimeout(() => {
+                  if (address && city && val && zipCode && !isValidatingAddress) {
+                    validateAddressWithFedEx();
+                  }
+                }, 100);
               }}
               required
             >
