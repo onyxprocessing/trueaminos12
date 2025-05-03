@@ -53,13 +53,21 @@ export default function SuccessOrderPage() {
 
   // Effect to clear checkout session storage
   useEffect(() => {
-    // Clear checkout session storage
-    sessionStorage.removeItem('checkout_first_name');
-    sessionStorage.removeItem('checkout_last_name');
-    sessionStorage.removeItem('checkout_address');
-    sessionStorage.removeItem('checkout_city');
-    sessionStorage.removeItem('checkout_state');
-    sessionStorage.removeItem('checkout_zip');
+    // Instead of immediate clearing, we'll delay clearing session storage
+    // This ensures we can use the data for display first
+    const timer = setTimeout(() => {
+      // Clear checkout session storage after the page is rendered
+      sessionStorage.removeItem('checkout_first_name');
+      sessionStorage.removeItem('checkout_last_name');
+      sessionStorage.removeItem('checkout_email');
+      sessionStorage.removeItem('checkout_phone');
+      sessionStorage.removeItem('checkout_address');
+      sessionStorage.removeItem('checkout_city');
+      sessionStorage.removeItem('checkout_state');
+      sessionStorage.removeItem('checkout_zip');
+    }, 10000); // Clear after 10 seconds
+    
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
