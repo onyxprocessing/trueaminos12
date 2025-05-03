@@ -177,7 +177,8 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
       city: paymentIntent.shipping?.address?.city || '',
       state: paymentIntent.shipping?.address?.state || '',
       zip: paymentIntent.shipping?.address?.postal_code || '',
-      email: paymentIntent.receipt_email || ''
+      email: paymentIntent.receipt_email || '',
+      phone: paymentIntent.shipping?.phone || paymentIntent.metadata?.customer_phone || ''
     };
     
     // Format payment details as JSON
@@ -207,6 +208,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
         state: customerData.state,
         zip: customerData.zip,
         email: customerData.email,
+        phone: customerData.phone,
         salesPrice: paymentIntent.amount / 100, // Convert from cents
         quantity: 1,
         productId: 0, // Unknown product

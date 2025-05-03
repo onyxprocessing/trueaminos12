@@ -445,14 +445,14 @@ const CheckoutPage = () => {
           amount: totalAmount,
           shipping_method: selectedShippingMethod,
           // Include any customer data that might be filled in already
-          firstName,
-          lastName,
-          email,
-          phone,
-          address,
-          city,
-          state,
-          zipCode
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          phone: phone,
+          address: address,
+          city: city,
+          state: state,
+          zipCode: zipCode
         };
         
         const response = await fetch('/api/create-payment-intent', {
@@ -496,14 +496,14 @@ const CheckoutPage = () => {
           amount: totalAmount,
           shipping_method: selectedShippingMethod,
           // Include customer data that might have been filled in
-          firstName,
-          lastName,
-          email,
-          phone,
-          address,
-          city,
-          state,
-          zipCode
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          phone: phone,
+          address: address,
+          city: city,
+          state: state,
+          zipCode: zipCode
         };
         
         // Update the payment intent with new amount and customer data

@@ -566,14 +566,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Updating payment intent amount:', amount);
       
-      // Update the existing payment intent with the new amount
-      await stripe.paymentIntents.update(paymentIntentId, {
+      // Extract customer data from request body if available
+      const {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zipCode,
+        shipping_method
+      } = req.body;
+      
+      // Build the update options
+      const updateOptions: any = {
         amount: Math.round(amount * 100), // Stripe requires amount in cents
         metadata: {
           session_id: sessionId,
-          shipping_method: req.body.shipping_method || 'standard'
+          shipping_method: shipping_method || req.body.shipping_method || 'standard'
         }
-      });
+      };
+      
+      // Add receipt email if provided
+      if (email) {
+        updateOptions.receipt_email = email;
+      }
+      
+      // Add shipping information if provided
+      if (firstName && address) {
+        updateOptions.shipping = {
+          name: `${firstName} ${lastName || ''}`.trim(),
+          address: {
+            line1: address || '',
+            city: city || '',
+            state: state || '',
+            postal_code: zipCode || '',
+            country: 'US',
+          },
+          phone: phone || '',
+        };
+      }
+      
+      // Add customer metadata if provided
+      if (firstName || lastName || email || phone) {
+        updateOptions.metadata.customer_name = firstName && lastName ? `${firstName} ${lastName}` : '';
+        updateOptions.metadata.customer_email = email || '';
+        updateOptions.metadata.customer_phone = phone || '';
+      }
+      
+      // Update the existing payment intent with the new data
+      await stripe.paymentIntents.update(paymentIntentId, updateOptions);
       
       res.json({ success: true, amount });
     } catch (error: any) {
