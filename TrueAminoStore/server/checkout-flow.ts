@@ -8,7 +8,6 @@
  */
 
 import { Request, Response } from 'express';
-import Stripe from 'stripe';
 import { storage } from './storage';
 import { 
   createCheckoutInAirtable, 
@@ -16,10 +15,6 @@ import {
   markCheckoutCompleted 
 } from './airtable-checkout';
 import { createOrderWithPaymentMethod } from './db-direct-order';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-});
 
 export async function initializeCheckout(req: Request): Promise<string> {
   // Create a checkout ID if one doesn't exist

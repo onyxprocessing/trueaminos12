@@ -84,7 +84,7 @@ export async function createOrderWithPaymentMethod(
         state: customer.state,
         zip: customer.zip,
         mg: item.selectedWeight || '',
-        salesPrice: String(getPriceByWeight(item.product, item.selectedWeight)),
+        salesPrice: getPriceByWeight(item.product, item.selectedWeight),
         quantity: item.quantity,
         productId: item.productId,
         shipping: customer.shipping,
