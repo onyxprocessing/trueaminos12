@@ -46,15 +46,17 @@ const SuccessPageContent = () => {
       return;
     }
 
-    // Clear cart regardless of payment status, but catch any errors to prevent page from breaking
-    try {
-      clearCart().catch(err => {
-        console.error("Error clearing cart:", err);
-        // Silently continue - don't block the success page on cart clearing errors
-      });
-    } catch (error) {
-      console.error("Failed to clear cart:", error);
-    }
+    // Attempt to clear the cart, but do it as an optimistic update
+    // This way, even if the API call fails, the UI will show an empty cart
+    // We don't need to await this - it can happen in the background
+    setTimeout(() => {
+      try {
+        clearCart();
+      } catch (error) {
+        console.error("Failed to clear cart:", error);
+        // Silently continue - we don't want to block the success page on cart clearing
+      }
+    }, 500); // Small delay to let the page load first
 
     // Get the payment intent ID from the URL
     const clientSecret = new URLSearchParams(window.location.search).get(

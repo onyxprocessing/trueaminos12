@@ -167,15 +167,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCart = async () => {
     try {
       setIsLoading(true)
-      await apiRequest<{
-        success: boolean;
-      }>('/api/cart', {
-        method: 'DELETE'
-      })
       
+      // Optimistically update UI state first
       setItems([])
       setItemCount(0)
       setSubtotal(0)
+      
+      // Then try to clear the cart on the server
+      try {
+        await apiRequest<{
+          success: boolean;
+        }>('/api/cart', {
+          method: 'DELETE'
+        })
+      } catch (error) {
+        console.error('Error clearing cart on server:', error);
+        // Silently continue even if the API call fails
+        // The UI is already cleared, which is the most important part
+      }
       
       // Invalidate queries that might be affected
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] })
