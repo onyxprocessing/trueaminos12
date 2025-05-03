@@ -7,9 +7,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Create a router to mount the webhook endpoints
 const router = express.Router();
@@ -100,7 +98,7 @@ async function processPaymentForAirtable(paymentIntent: Stripe.PaymentIntent) {
   let zip = '';
   
   // Get names and shipping details from Stripe data
-  if (shipping) {
+  if (shipping && shipping.name) {
     // Split the name into first and last
     const nameParts = shipping.name.split(' ');
     firstName = nameParts[0] || '';
@@ -121,7 +119,7 @@ async function processPaymentForAirtable(paymentIntent: Stripe.PaymentIntent) {
   }
   
   // If we have order metadata, try to extract product info
-  let productId = "0";
+  let productId = 0; // Convert to number for Airtable
   let productName = "Unknown Product";
   let quantity = 1;
   let selectedWeight = "";
@@ -134,7 +132,7 @@ async function processPaymentForAirtable(paymentIntent: Stripe.PaymentIntent) {
       
       if (orderSummary.items && orderSummary.items.length > 0) {
         const firstItem = orderSummary.items[0];
-        productId = String(firstItem.id || 0);
+        productId = Number(firstItem.id || 0); // Convert to number for Airtable
         productName = firstItem.name || "Unknown Product";
         quantity = firstItem.qty || 1;
         selectedWeight = firstItem.weight || "";
