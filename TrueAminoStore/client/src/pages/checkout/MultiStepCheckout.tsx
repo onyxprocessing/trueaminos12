@@ -89,11 +89,17 @@ const MultiStepCheckout: React.FC = () => {
     try {
       setIsLoading(true);
       
+      console.log('Initializing checkout and creating Airtable entry...');
       const response = await apiRequest('POST', '/api/checkout/initialize', {});
       if (response.ok) {
         const data = await response.json();
+        console.log('Checkout initialized with ID:', data.checkoutId);
         setCheckoutId(data.checkoutId);
         setCurrentStep('personal_info');
+        toast({
+          title: 'Checkout Started',
+          description: 'Please fill in your personal information to continue.',
+        });
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Could not initialize checkout');
@@ -222,6 +228,8 @@ const MultiStepCheckout: React.FC = () => {
     try {
       setIsLoading(true);
       
+      console.log(`Selected payment method: ${paymentMethod}`);
+      
       const response = await apiRequest('POST', '/api/checkout/payment-method', {
         paymentMethod,
       });
@@ -231,23 +239,34 @@ const MultiStepCheckout: React.FC = () => {
         
         if (paymentMethod === 'card') {
           // For card payments, get client secret for Stripe
+          console.log('Card payment selected, preparing Stripe elements');
           setClientSecret(data.clientSecret);
           setCurrentStep('card_payment');
+          toast({
+            title: 'Credit Card Payment',
+            description: 'Please enter your card details to complete your payment',
+          });
         } else if (paymentMethod === 'bank') {
           // For bank payments, show instructions
+          console.log('Bank transfer selected, showing bank details');
           setBankInfo(data.bankInfo);
           setCurrentStep('confirm_payment');
+          toast({
+            title: 'Bank Transfer Selected',
+            description: 'Please complete the bank transfer and confirm your payment',
+          });
         } else if (paymentMethod === 'crypto') {
           // For crypto payments, show wallet addresses
+          console.log('Crypto payment selected, showing wallet addresses');
           setCryptoInfo(data.cryptoInfo);
           setCurrentStep('confirm_payment');
+          toast({
+            title: 'Cryptocurrency Payment',
+            description: 'Please send cryptocurrency to the provided wallet address',
+          });
         }
         
         setPaymentAmount(data.amount);
-        toast({
-          title: 'Payment Method Selected',
-          description: `Please complete your ${paymentMethod} payment`,
-        });
       } else {
         const errorData = await response.json();
         toast({
