@@ -16,7 +16,7 @@ import {
 import { apiRequest } from '@/lib/api-client';
 import { Separator } from '@/components/ui/separator';
 import { US_STATES } from '@/lib/constants';
-import { useToast } from '@/hooks/use-toast';
+// Removed toast import to disable notifications
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
@@ -36,6 +36,12 @@ const CHECKOUT_STEPS = [
 const MultiStepCheckout: React.FC = () => {
   const [, navigate] = useLocation();
   const cart = useCart();
+  // Toast notifications disabled
+  const useToast = () => {
+    return {
+      toast: () => {}, // Empty function to replace toast functionality
+    };
+  };
   const { toast } = useToast();
   
   // State for checkout steps
