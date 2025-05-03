@@ -77,7 +77,7 @@ export async function createCheckoutInAirtable(sessionId: string): Promise<strin
           "checkoutid": checkoutData.checkoutId,
           "session id": checkoutData.sessionId,  // Correct field name with space
           "status": checkoutData.status,
-          "created at": checkoutData.createdAt
+          "createdat": checkoutData.createdAt  // Removed space in field name
         }
       })
     });
@@ -152,7 +152,7 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
     if (updateData.totalAmount) fields["totalamount"] = updateData.totalAmount;
     
     // Always update updatedAt
-    fields["updated at"] = new Date().toISOString();
+    fields["updatedat"] = new Date().toISOString();
     
     // If cart items are provided, stringify them
     if (updateData.cartItems) {

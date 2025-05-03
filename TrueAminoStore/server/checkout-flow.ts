@@ -19,8 +19,21 @@ import { createOrderWithPaymentMethod } from './db-direct-order';
 export async function initializeCheckout(req: Request): Promise<string> {
   // Create a checkout ID if one doesn't exist
   if (!req.session.checkoutId) {
+    // Get the cart items and convert to a string representation
+    const cartItems = await storage.getCartItems(req.session.id);
+    
+    // Create initial checkout entry with cart information
     const checkoutId = await createCheckoutInAirtable(req.session.id);
+    
     if (checkoutId) {
+      // Update with cart items right away
+      await updateCheckoutInAirtable(checkoutId, {
+        cartItems: cartItems,
+        totalAmount: calculateCartTotal(cartItems),
+        status: 'started',
+        updatedAt: new Date().toISOString()
+      });
+      
       req.session.checkoutId = checkoutId;
       req.session.checkoutStep = 'started';
       await req.session.save();
@@ -66,18 +79,27 @@ export async function handlePersonalInfo(req: Request, res: Response) {
     req.session.checkoutStep = 'personal_info';
     await req.session.save();
     
-    // Update in Airtable
+    // Get cart items for updating Airtable
+    const cartItems = await storage.getCartItems(req.session.id);
+    
+    // Create formatted cart item string (e.g., "BPC 157 10mg x2")
+    const formattedCartItems = cartItems.map(item => {
+      const productName = item.product.name;
+      const weight = item.selectedWeight || '';
+      const quantity = item.quantity;
+      return `${productName} ${weight} x${quantity}`;
+    });
+    
+    // Update in Airtable with all customer info and cart data
     await updateCheckoutInAirtable(checkoutId, {
       firstName,
       lastName,
       email: email || '',
       phone: phone || '',
       status: 'personal_info',
+      cartItems: cartItems,
       updatedAt: new Date().toISOString()
     });
-    
-    // Get cart items for cart summary
-    const cartItems = await storage.getCartItems(req.session.id);
     
     res.json({
       success: true,
@@ -132,7 +154,21 @@ export async function handleShippingInfo(req: Request, res: Response) {
     req.session.checkoutStep = 'shipping_info';
     await req.session.save();
     
-    // Update in Airtable
+    // Get cart items for updating Airtable
+    const cartItems = await storage.getCartItems(req.session.id);
+    
+    // Create formatted cart item string (e.g., "BPC 157 10mg x2")
+    const formattedCartItems = cartItems.map(item => {
+      const productName = item.product.name;
+      const weight = item.selectedWeight || '';
+      const quantity = item.quantity;
+      return `${productName} ${weight} x${quantity}`;
+    });
+    
+    // Calculate total
+    const cartTotal = calculateCartTotal(cartItems);
+    
+    // Update in Airtable with all customer info and cart data
     if (req.session.checkoutId) {
       await updateCheckoutInAirtable(req.session.checkoutId, {
         address,
@@ -141,15 +177,13 @@ export async function handleShippingInfo(req: Request, res: Response) {
         zip: zipCode,
         shippingMethod,
         status: 'shipping_info',
+        cartItems: cartItems,
+        totalAmount: cartTotal,
         updatedAt: new Date().toISOString()
       });
     }
     
-    // Calculate cart total for next step
-    const cartItems = await storage.getCartItems(req.session.id);
-    
-    // Calculate total amount using the helper function
-    const cartTotal = calculateCartTotal(cartItems);
+    // We already have the cart items and total from above
     
     res.json({
       success: true,
