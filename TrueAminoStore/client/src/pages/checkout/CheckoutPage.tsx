@@ -473,37 +473,16 @@ const CheckoutPage = () => {
         
         console.log('Creating payment intent with', payload.cartItems.length, 'items');
         
-        // Use our apiRequest function instead of direct fetch
-        const response = await apiRequest<Response>('POST', '/api/create-payment-intent', payload);
+        // Use our updated apiRequest function
+        const data = await apiRequest('POST', '/api/create-payment-intent', payload);
         
-        if (response instanceof Response) {
-          console.log('Response received:', response.status, response.statusText);
-          console.log('Content-Type:', response.headers.get('content-type'));
-          
-          // Get detailed error message if present
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
-            console.error('Server response error:', {
-              status: response.status,
-              statusText: response.statusText,
-              errorData
-            });
-            
-            if (errorData && errorData.error) {
-              throw new Error(`Failed to create payment intent: ${errorData.error}`);
-            } else {
-              throw new Error('Failed to create payment intent');
-            }
-          }
-          
-          const data = await response.json();
-          console.log('Payment intent created successfully:', { clientSecret: !!data.clientSecret, amount: data.amount });
-          setClientSecret(data.clientSecret);
-        } else {
-          // Response is already parsed JSON
-          console.log('Payment intent created successfully:', { clientSecret: !!response.clientSecret, amount: response.amount });
-          setClientSecret(response.clientSecret);
-        }
+        // The response is already parsed JSON with our updated apiRequest function
+        console.log('Payment intent created successfully:', { 
+          clientSecret: !!data.clientSecret, 
+          amount: data.amount 
+        });
+        
+        setClientSecret(data.clientSecret);
       } catch (err: any) {
         console.error('Error creating payment intent:', err);
         setError(err.message || 'Something went wrong. Please try again.');
