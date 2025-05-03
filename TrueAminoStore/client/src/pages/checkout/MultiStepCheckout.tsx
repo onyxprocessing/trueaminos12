@@ -353,7 +353,12 @@ const MultiStepCheckout: React.FC = () => {
         
         // Navigate to the success page with the order data
         console.log('Redirecting to:', `/checkout/confirmation?${orderParams.toString()}`);
-        navigate(`/checkout/confirmation?${orderParams.toString()}`);
+        
+        // Add a small delay to ensure the redirect happens correctly
+        setTimeout(() => {
+          console.log('Performing redirect now');
+          window.location.href = `/checkout/confirmation?${orderParams.toString()}`;
+        }, 100);
       } else {
         const errorData = await response.json();
         toast({
@@ -870,7 +875,13 @@ const MultiStepCheckout: React.FC = () => {
         sessionStorage.setItem('checkout_zip', zipCode);
         
         // Navigate to the success page with the order data
-        navigate(`/checkout/confirmation?${orderParams.toString()}`);
+        console.log('Card payment successful, redirecting to:', `/checkout/confirmation?${orderParams.toString()}`);
+        
+        // Force a hard redirect for maximum compatibility
+        setTimeout(() => {
+          console.log('Performing card payment redirect now');
+          window.location.href = `/checkout/confirmation?${orderParams.toString()}`;
+        }, 100);
       } else {
         const errorData = await response.json();
         toast({
