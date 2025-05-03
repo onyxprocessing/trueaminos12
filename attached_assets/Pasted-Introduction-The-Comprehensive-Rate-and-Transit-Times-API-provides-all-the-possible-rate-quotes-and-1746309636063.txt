@@ -1,0 +1,1189 @@
+Introduction
+The Comprehensive Rate and Transit Times API provides all the possible rate quotes and transit times for the applicable services for your packaging type along with rate quotes for FedEx One Rate service in a single rate request. This enables you to choose the best possible option as per your shipping needs. For FedEx Express services, it compares account specific standard rates, including FedEx One Rate and returns the lower rate quote.
+
+Note:
+
+Your account should be enabled for FedEx One Rate and FedEx Ground Economy services to get the rate quotes for the respective services.
+FedEx One Rate service has certain dimensional and weight restrictions for shipments. Only the shipments that qualify the dimensional and weight conditions are eligible for FedEx One Rate.
+The Comprehensive Rate and Transit Times API does not provide the rate quotes for FedEx freight services. To know about the rate quotes of FedEx freight service, visit the Freight LTL API docs page.
+Benefits of Comprehensive Rate and Transit Times API
+Enables you to get rate quotes for both FedEx One Rate and FedEx standard services for your packaging shipments.
+Saves time by providing account-specific rates, FedEx One Rate, and rate quotes for all other applicable FedEx services including FedEx Ground and FedEx Express in a single rate request.
+Improves the overall customer experience by systemically calculating the most accurate FedEx One Rate packaging type, when dimensions are provided.
+Provides a more accurate rate quote and billing experience by reducing the number of unexpected additional shipping expenses.
+Provides you with more options to meet your business needs by returning a complete portfolio of FedEx services with their corresponding rates and transit times.
+Offers you the option to save money by comparing and choosing a less expensive service.
+Comprehensive Rate and Transit Times API Details
+This API provides you the flexibility to receive rate quotes for both FedEx One Rate services along with account specific discounted rates. Quotes can be for both FedEx packaging or for your packaging.
+
+For more information refer Package types.
+
+Note: FedEx Tube is not an accepted packaging type for this API.
+
+Following are the features associated with this API:
+
+Get all Rate Quotes in a Single Transaction
+Get all rates (FedEx Ground Economy outbound, FedEx Express, FedEx One Rate, account specific rates) in a single transaction.
+Transit time
+Get transit times for services between source and destination.
+Auto-Calculate Packaging Type
+The volumetric calculation provides accurate packaging type for the shipment based on your specified dimensions.
+Note:
+
+To receive FedEx One Rate in the response, you must either specify a valid FedEx Packaging Type (Envelope, Pak, Small Box, Medium Box, Large Box, or Extra-Large Box) or select Your_Packaging and provide FedEx One Rate qualifying dimensions otherwise the API will only return the account specific/discounted rate quotes.
+To receive a FedEx One Rate for an Envelope or Pak, you must specify the packaging type as Envelope or Pak respectively.
+How Comprehensive Rate and Transit Times API Works
+Comprehensive rate and transit times API works by performing a volumetric calculation based on the package dimensions provided for your packaging to the corresponding FedEx standard package types (Medium box, Large box etc.,), to determine if your package is eligible for One Rate services and provides the One Rate pricing along with the rate quotes for all the other applicable services.
+
+Disclaimer to compatible shippers or any shipper looking to use the Ship API to create FedEx One Rate labels: Users must pass a FedEx Packaging Type of FEDEX_ENVELOPE, FEDEX_PAK, FEDEX_SMALL_BOX, FEDEX_MEDIUM_BOX, FEDEX_LARGE_BOX, or FEDEX_EXTRA_LARGE_BOX along with a Special Service Flag of FEDEX_ONE_RATE to receive One Rate pricing. Note if the Ship API passes a Packaging Type of YOUR_PACKAGING, FedEx One Rate will NOT apply however the customer will receive account specific rates. For more information on how to Ship FedEx One Rate using the Ship API please see the Ship API documentation or contact your FedEx representative.
+
+Note:
+
+If Your_Packaging type is selected but the dimensions are not specified, then the API will return all possible rate quotes including FedEx Express, FedEx Ground and Ground Economy services but not FedEx One Rate.
+If Your_Packaging type is selected and dimensions and weight are specified, then the API will return all possible rate quotes including FedEx One Rate, FedEx Express, FedEx Ground and Ground Economy services.
+If your package is not One Rate eligible then also you will receive the account specific rate quotes for the other applicable services but not for FedEx One Rate.
+Below volumetric and weight conditions are checked to determine the eligibility of a package for FedEx One Rate.
+
+Packaging Type	
+Package Measurements Specified
+
+Auto calculated corresponding FedEx Packaging Type
+
+Rate Quotes for services returned in response
+
+Volume (Length X Width X Height)
+
+Thickness
+
+Weight
+
+Your Packaging
+
+Not Specified
+
+NA
+
+<= 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+<= 420 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Small Box
+
+One Rate for Small Box and other applicable services
+
+> 420 & <= 650 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Medium Box
+
+One Rate for Medium Box and other applicable services
+
+> 650 & <= 1,100 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Large Box
+
+One Rate for Large Box and other applicable services
+
+> 1,100 & <= 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Extra Large Box
+
+One Rate for Extra Large Box and other applicable services
+
+> 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+Not Specified
+
+NA
+
+> 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+FedEx Envelope
+
+Not Specified
+
+Not Specified
+
+< 10 lbs.
+
+FedEx Envelope
+
+One Rate for FedEx Envelope and other applicable services
+
+<= 300 cubic inches
+
+<= 3 inches
+
+<= 10 lbs.
+
+FedEx Envelope
+
+One Rate for FedEx Envelope and other applicable services
+
+<= 300 cubic inches
+
+> 3 & <= 5 inches
+
+<= 10 lbs.
+
+FedEx Pak
+
+One Rate for FedEx Pak and other applicable services
+
+<= 300 cubic inches
+
+<= 5 inches
+
+> 10 & <= 50 lbs.
+
+FedEx Pak
+
+One Rate for FedEx Pak and other applicable services
+
+> 300 & <= 650 cubic inches
+
+<= 5 inches
+
+<= 50 lbs.
+
+FedEx Pak
+
+One Rate for FedEx Pak and other applicable services
+
+<= 420 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+FedEx Small Box
+
+One Rate for FedEx Small Box and other applicable services
+
+> 420 & <= 650 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+FedEx Medium Box
+
+One Rate for FedEx Medium Box and other applicable services
+
+> 650 & <= 1,100 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+FedEx Large Box
+
+One Rate for FedEx Large Box and other applicable services
+
+> 1,100 & <= 2,200 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+FedEx Extra Large Box
+
+One Rate for FedEx Extra Large Box and other applicable services
+
+> 2,200 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+Not Specified
+
+Not Specified
+
+> 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+FedEx Pak
+
+<= 650 cubic inches
+
+<= 5 inches
+
+<= 50 lbs.
+
+FedEx Pak
+
+One Rate for FedEx Pak and other applicable services
+
+<= 420 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+FedEx Small Box
+
+One Rate for FedEx Small Box and other applicable services
+
+> 420 & <= 650 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+FedEx Medium Box
+
+One Rate for FedEx Medium Box and other applicable services
+
+> 650 & <= 1,100 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+FedEx Large Box
+
+One Rate for FedEx Large Box and other applicable services
+
+> 1,100 & <= 2,200 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+FedEx Extra Large Box
+
+One Rate for FedEx Extra Large Box and other applicable services
+
+> 2,200 cubic inches
+
+> 5 inches
+
+<= 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+Not Specified
+
+Not Specified
+
+> 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+FedEx Small Box
+
+Not Specified
+
+NA
+
+< 50 lbs.
+
+FedEx Small Box
+
+One Rate for FedEx Small Box and other applicable services
+
+<= 420 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Small Box
+
+One Rate for FedEx Small Box and other applicable services
+
+> 420 & <= 650 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Medium Box
+
+One Rate for FedEx Medium Box and other applicable services
+
+> 650 & <= 1,100 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Large Box
+
+One Rate for FedEx Large Box and other applicable services
+
+> 1,100 & <= 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Extra Large Box
+
+One Rate for FedEx Extra Large Box and other applicable services
+
+> 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+Not Specified
+
+NA
+
+> 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+FedEx Medium Box
+
+Not Specified
+
+NA
+
+< 50 lbs.
+
+FedEx Medium Box
+
+One Rate for FedEx Medium Box and other applicable services
+
+<= 420 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Small Box
+
+One Rate for FedEx Small Box and other applicable services
+
+> 420 & <= 650 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Medium Box
+
+One Rate for FedEx Medium Box and other applicable services
+
+> 650 & <= 1,100 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Large Box
+
+One Rate for FedEx Large Box and other applicable services
+
+> 1,100 & <= 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Extra Large Box
+
+One Rate for FedEx Extra Large Box and other applicable services
+
+> 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+Not Specified
+
+NA
+
+> 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+FedEx Large Box
+
+Not Specified
+
+NA
+
+<= 50 lbs.
+
+FedEx Large Box
+
+One Rate for FedEx Large Box and other applicable services
+
+<= 420 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Small Box
+
+One Rate for FedEx Small Box and other applicable services
+
+> 420 & <= 650 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Medium Box
+
+One Rate for FedEx Medium Box and other applicable services
+
+> 650 & <= 1,100 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Large Box
+
+One Rate for FedEx Large Box and other applicable services
+
+> 1,100 & <= 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Extra Large Box
+
+One Rate for FedEx Extra Large Box and other applicable services
+
+> 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+Not Specified
+
+NA
+
+> 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+FedEx Extra Large Box
+
+Not Specified
+
+NA
+
+< 50 lbs.
+
+FedEx Extra Large Box
+
+One Rate for FedEx Extra Large Box and other applicable services
+
+<= 420 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Small Box
+
+One Rate for FedEx Small Box and other applicable services
+
+> 420 & <= 650 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Medium Box
+
+One Rate for FedEx Medium Box and other applicable services
+
+> 650 & <= 1,100 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Large Box
+
+One Rate for FedEx Large Box and other applicable services
+
+> 1,100 & <= 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+FedEx Extra Large Box
+
+One Rate for FedEx Extra Large Box and other applicable services
+
+> 2,200 cubic inches
+
+NA
+
+<= 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+Not Specified
+
+NA
+
+> 50 lbs.
+
+Your Packaging
+
+All applicable services except FedEx One Rate
+
+Note: Thickness is defined as the shortest measurement of length, width, and height.
+
+
+Comprehensive Rate Quote
+
+Use this endpoint to request a list of all possible rate quotes and optional transit information based on the input details.
+
+The required input information associated with this request is:
+
+accountNumber: Specify your account information.
+returnTransitTimes: Specify if the transit time and the commit data are required in the response
+shipper: Specify the details of the shipper such as country code, postal code, etc.
+recipient: Specify the details of the recipient such as country code, postal code etc.
+pickupType: Specify the method by which the package is to be tendered to FedEx.
+Example: CONTACT_FEDEX_TO_SCHEDULE, USE_SCHEDULED_PICKUP.
+weight: Specify the weight of the package.
+Dimensions (optional): Specify the length, width, height, and unit of measure for the package.
+Note:
+
+To get rate quotes for FedEx One Rate service, you must specify the dimensions of your package otherwise the API will only return the account specific/discounted rate quotes for the other applicable services.
+The element packagingType is optional and its default value is YOUR_PACKAGING. You can change it to any standard packaging type as per your shipping needs.
+Result of this request will provide a list of all possible rate quotes and optional transit information for all applicable services with service code, service types, packaging types and commitment details such as days/time in transit and any specific day delivery (Saturday delivery).
+
+Business Rules
+Multiple piece shipments (MPS) are not eligible for FedEx One Rate.
+Package weight above 50 lbs. or volume above 2,200 cubic inches are not eligible for FedEx One Rate.
+To receive a FedEx One Rate quote for an Envelope or Pak, you must specify the packaging type as Envelope or Pak respectively.
+Package dimensions are required to get the rate quotes for FedEx One Rate for your own packaging type. If dimensions are not specified, only the rate quotes for other applicable services (except One Rate) will be returned in the response.
+If you specify the carrierCodes in the rate request, then rates will be returned only for those operating companies.
+The timeout limit is 6 seconds for any rate request.
+You will get the rate quotes for FedEx One Rate services even if you do not select FEDEX_ONE_RATE as specialServiceTypes in the rate request.
+JSON API Collection
+Explore our JSON API collection to see how we can deliver on your business needs. Test your integration with these sample requests.
+
+Learn more about sandbox virtualization guide
+
+Menu
+COMPREHENSIVE RATES AND TRANSIT TIMES V1
+Overview
+post
+ComprehensiveRateQuote V1
+Error Codes
+ComprehensiveRateQuote V1
+This endpoint provides the ability to retrieve comprehensive rate quotes and optional transit information along with converted package type [incase it qualifies for one]. The rate is calculated based on the origin and destination of the shipment. Additional information such as carrier code, service type, or service option can be used to filter the results.If carrier code is provided, the response includes the rate quotes for the specific transportation carrier.This endpoint provides the rates for FedEx Ground and FedEx Express and does not offer rates for FedEx Freight.
+
+
+EXPAND ALLCOLLAPSE ALL
+To learn more about how to get OAuth access token, refer to API Authorization documentation.
+
+header Parameters
+x-customer-transaction-id	
+string
+Example: 624deea6-b709-470c-8c39-4b5511281492
+This element allows you to assign a unique identifier to your transaction. This element is also returned in the reply and helps you match the request to the reply.
+
+content-type
+required
+string
+Example: application/json
+This is used to indicate the media type of the resource. The media type is a string sent along with the file indicating format of the file.
+
+x-locale	
+string
+Example: en_US
+This indicates the combination of language code and country code.
+
+x-clientid	
+string
+Example: WADM
+This indicates the Client who is consuming this endpoint.
+
+authorization
+required
+string
+Example: Bearer XXX
+This indicates the authorization token for the input request.
+
+Request Body schema: application/json
+accountNumber
+required
+object
+Specifies the FedEx customer account information of the responsible paty.
+
+rateRequestControlParameters
+required
+object
+Provides filtering and sorting capability on certain data elements in the response, such as transit time and commit data, rate sort order etc.
+
+requestedShipment
+required
+object
+Contains shipment data describing the shipment for which a rate quote (or rate-shopping comparison) is desired.
+
+carrierCodes	
+Array of strings
+Specify the four letter code of a FedEx operating company that meets your requirements.
+Example: FDXE
+
+FDXE - FedEx Express
+FDXG - FedEx Ground
+FXSP - FedEx SmartPost
+FXCC - FedEx Custom Critical.
+Responses
+200 Success
+400 Bad Request
+401 Unauthorized
+403 Forbidden
+404 Not Found
+500 Failure
+503 Service Unavailable
+Sandbox ConsoleTRY THIS API
+post
+/rate/v1/comprehensiverates/quotes
+Sandbox Server
+
+https://apis-sandbox.fedex.com/rate/v1/comprehensiverates/quotes
+Production Server
+
+https://apis.fedex.com/rate/v1/comprehensiverates/quotes
+Request samples - ComprehensiveRateQuote V1
+PayloadC#JAVAJAVASCRIPTPHPPYTHONRUSTSWIFT
+Content type
+application/json
+Example
+FullSchema1
+Copy
+Expand allCollapse all
+{
+"accountNumber": {
+"value": "123456789"
+},
+"rateRequestControlParameters": {
+"returnTransitTimes": false,
+"servicesNeededOnRateFailure": true,
+"variableOptions": "FREIGHT_GUARANTEE",
+"rateSortOrder": "SERVICENAMETRADITIONAL"
+},
+"requestedShipment": {
+"shipper": {},
+"recipient": {},
+"serviceType": "STANDARD_OVERNIGHT",
+"preferredCurrency": "USD",
+"rateRequestType": [],
+"shipDateStamp": "2019-09-05",
+"pickupType": "DROPOFF_AT_FEDEX_LOCATION",
+"shippingChargesPayment": {},
+"requestedPackageLineItems": [],
+"documentShipment": false,
+"variableHandlingChargeDetail": {},
+"packagingType": "YOUR_PACKAGING",
+"totalPackageCount": 3,
+"totalWeight": 87.5,
+"shipmentSpecialServices": {},
+"customsClearanceDetail": {},
+"smartPostInfoDetail": {}
+},
+"carrierCodes": [
+"FDXE",
+"FDXG"
+]
+}
+Response samples - ComprehensiveRateQuote V1
+200400401403404500503
+Content type
+application/json
+Copy
+Expand allCollapse all
+{
+"transactionId": "624deea6-b709-470c-8c39-4b5511281492",
+"customerTransactionId": "AnyCo_order123456789",
+"output": {
+"customerTransactionId": "AnyCo_order123456789",
+"rateReplyDetails": [],
+"quoteDate": "2019-12-18",
+"isEncoded": false,
+"alerts": []
+}
+}
+Error Codes
+COUNTRY.POSTALCODEORZIP.INVALID
+
+Invalid postal code/ZIP for the country selected. Please correct and try again.
+
+CURRENCY.TYPE.INVALID
+
+The currency type you selected is invalid. Please select another currency type.
+
+CURRENCYTYPE.CADORUSD.REQUIRED
+
+CAD or USD are the only currency types available. Please select CAD or USD as your currency type.
+
+CUSTOMVALUE.LIMITEXCEEDS.ERROR
+
+The total declared value for customs entered exceeds the limit for FedEx® international services.For additional information, including other services that may be available, please contact FedEx Customer Service.
+
+DIMENSIONS.EXCEEDS.LIMITS
+
+Dimensions exceeds the maximum dimensions for this service. Please refer to the FedEx Service Guide.
+
+POSTALCODE.ZIPCODE.REQUIRED
+
+Postal code/ZIP is required
+
+CURRENCY.TYPE.MISMATCH
+
+Declared value currency type must be equal to customs value currency type.
+
+ACCOUNT.NUMBER.INVALID
+
+Invalid account number.
+
+ACCOUNTNUMBER.ENROLLED.INVALID
+
+The shipping account number is not enrolled in FedEx Priority Alert(TM) service.
+
+ACCOUNTNUMBER.ONERATE.NOTAVBL
+
+FedEx One Rate® is not available for this account. Please use FedEx Standard Rate.
+
+CARRIAGE.VALUE.EXCEEDSMAXIMUM
+
+The declared value for carriage entered exceeds the maximum. Please verify and reenter
+
+CARRIAGEVALUE.CUSTOMVALUE.VALIDATION
+
+Rates and transit times are not available for the account number entered. For immediate assistance, please contact your local FedEx Customer Service.
+
+CITY.REQUIRED
+
+A valid city is required
+
+COUNTRY.POSTALCODE.INVALID
+
+Origin postal code is required or invalid.
+
+SHIPPER.POSTALSTATE.MISMATCH
+
+Shipper Postal-State Mismatch. Please correct and try again.
+
+CURRENCY.MISSMATCH.ERROR
+
+Package insured value currency {CURRENCY_TYPE_1} does not match the customs value currency {CURRENCY_TYPE_2}.
+
+CURRENCY.TYPE.SELECT
+
+Please enter Currency
+
+CURRENCYAMOUNT.CURRENCYTYPE.INVALID
+
+The maximum declared value is {CURRENCY_AMOUNT} {CURRENCY_TYPE}. Contact FedEx Customer Service for more information.
+
+CURRENCYTYPE.CADORUSD.ONLYAVAILABLEERROR
+
+Based on the information entered this shipment qualifies for FedEx Home Delivery®. Please resubmit your request as FedEx Home Delivery to continue with the shipment.
+
+DELIVERY.DAY.ERROR
+
+Please choose either Saturday Pickup or Saturday Delivery.
+
+DIMENSION.EXCEEDS.MAXMUM
+
+The dimensions entered exceed the maximum dimensions for this service. Please refer to the FedEx Service Guide.
+
+DIMENSION.TYPE.ERROR
+
+The dimensions you have entered exceed the limit for the origin and/or destination selected; please verify and reenter.
+
+DIMENSIONS.EXCEEDS.LIMIT
+
+The dimensions you have entered exceed the height limit allowed; please verify and reenter.
+
+ENTERED.ZIPCODE.NOTFOUND
+
+The state or province and ZIP or postal code entered was not found, or the state or province and ZIP or postal code are not served by FedEx in this country.
+
+SERVICE.PACKAGECOMBINATION.INVALID
+
+Invalid service and packaging combination.
+
+FEDEXHOMEDELIVERY.SERVICE.QUALIFICATIONERROR
+
+Based on the information entered this shipment qualifies for FedEx Home Delivery®. Please resubmit your request as FedEx Home Delivery to continue with the shipment.
+
+FEDEXSERVICE.NOT.AVAILABLE
+
+FedEx does not provide services to the destination country or from the origin country at this time. Contact FedEx Customer Service.
+
+FREIGHTGUARANTEE.TIMEVALUE.REQUIRED
+
+A valid Freight Guarantee time value is required.
+
+FREIGHTGUARANTEEE.TIME.REQUIRED
+
+{PACKAGING_TYPE} cannot exceed {weight}{weight_units}. Select another packaging type.
+
+DECLAREDVALUE.NOT.ALLOWED.FOR.SMARTPOST
+
+Declared Value is not allowed for SmartPost.
+
+LOCATION.PICKUP.NOTAVAILABLE
+
+Your location does not allow pickup. Select Drop-off to drop your package off at a FedEx location or contact FedEx Customer Service.
+
+MAXIMUMWEIGHT.TYPE.ERROR
+
+Maximum weight allowed for this application is 68kg/150lbs. Please re-enter weight or contact FedEx Customer Service.
+
+ORIGIN.COUNTRY.REQUIRED
+
+A valid origin country is required
+
+ORIGIN.PICKUP.ERROR
+
+The origin selected does not allow pickup for FedEx Express Freight services. You may contact your local FedEx Customer Service (U.S. and Canada, please dial 1.800.GoFedEx 1.800.463.3339) for other shipment collection options.
+
+ORIGIN.PICKUP.NOTALLOWED
+
+The declared value for carriage entered exceeds the maximum. Please verify and re-enter.
+
+PACKAGE.INVALID.TYPE
+
+Section II Lithium Batteries/Cells are not allowed with a document shipment.
+
+PACKAGE.WEIGHT.INVALID
+
+Package weight is missing or invalid.
+
+PACKAGEDIMENSION.TYPE.ERROR
+
+Package dimensions must be at least 1 cm/inch for length, width and height. If you''re not sure of the dimensions, you can leave these fields blank.
+
+RATE.SPECIALSERVICETYPE.NOTALLOWED
+
+Special Service {0} is not allowed.
+
+PICKUPTYPE.NOT.AVAILABLE
+
+Pickup is not available. Please change the service type, the ship date or select dropoff to complete the shipment.
+
+RATING.CARRIAGE.EXCEEDSLIMITS
+
+Declared value for carriage exceeds limit allowed based on the information entered.
+
+RATING.CARRIAGLIMITS.EXCEED
+
+Dimensions exceed the maximum dimensions for this service. Please refer to the FedEx Service Guide.
+
+RATING.DIMENSIONSEXCEEDS.LIMITS
+
+Customs Value exceeds limit of {CURRENCY_AMOUNT} {CURRENCY_TYPE}.
+
+RATING.DIMENSIONSTYPE.EXCEEDSLIMITS
+
+Dangerous Goods shipping has not been enabled for your account. Please call your local FedEx customer service for assistance.
+
+RATING.ZIPCODE.INVALID
+
+Information about rates and delivery times is not available. Try again later or contact FedEx Customer Service
+
+RATE.PACKAGES.WEIGHT.UNIT.MISMATCH
+
+Weight unit of measure must be the same for all packages.
+
+RESIDENTIAL.DELIVERY.NOTAVAILABLE
+
+Residential delivery is not available for the selected service.
+
+SERVICE.LOCATION.UNAVAILABLE
+
+FedEx service is not currently available to this origin / destination combination. Enter new information or contact FedEx Customer Service (U.S. and Canada, please dial 1.800.GoFedEx 1.800.463.3339).
+
+SERVICETYPE.FORPOSTALCODE.NOTALLOWED
+
+The declared value for carriage entered exceeds the maximum. Please verify and re-enter.
+
+SHIPMENT.DGDIVIOLATIONS.NOTALLOWED
+
+Your shipment is not allowed because of dangerous goods or dry ice violations that limit your shipping options. If you have any questions, please call your local FedEx customer service.
+
+SHIPMENT.DGVIOLATIONS.NOTALLOWED
+
+Your shipment is not allowed because of dangerous goods violations that limit your shipping options. If you have any questions, please call 1.800.463.339 and press "81" for the FedEx Dangerous Goods/Hazardous Materials hotline.
+
+WEIGHT.BELOWMINIMUMLIMIT.ERROR
+
+The weight entered is below the standard minimum for FedEx {package} Express services. Please enter a weight of at least {WEIGHT} {WEIGHT_UNITS}.
+
+SHIPMENTPROCESSING.ACCOUNTVIOLATIONS.ERROR
+
+There are no services returned due to dangerous goods, hazardous materials, or dry ice violations on your account.
+
+STATE.TYPE.INVALID
+
+A valid State/Province is required
+
+STATE.TYPE.REQUIRED
+
+State/Province is required
+
+SUBTYPE.SELECT.FORBATTERIES
+
+Section II Lithium Batteries/Cells and one of the sub-types must be selected.
+
+WEIGHT.TYPE.INVALID
+
+Please enter a valid weight.
+
+RATE.QUOTENO.NOTFOUND
+
+Rate quote number could not be found
+
+ACCOUNTNBR.MISSING.ORINVALID
+
+The condition type ACCOUNT_NUMBER value is missing or invalid
+
+SPECIAL.SERVICE.CONFLICT
+
+Special service conflict.Hold At Location is not valid with Residential Delivery.
+
+DRYICEWEIGHT.REQUIRED.INKGS
+
+Package {0} - Dry Ice weight (in kilograms) is required with Dry Ice special service.
+
+SERVICETYPE.PICKUPMETHOD.NOT.ALLOWED
+
+{0} is not allowed with the pickup method.
+
+FXSPRETURN.RATES.ERROR
+
+Rates for SmartPost return shipments are not currently available.
+
+RATE.SPECIALSERVICE.NOTALLOWED.ORIGIN
+
+{0} is not allowed for the origin.
+
+PACKAGINGTYPE.MISSING.OR.INVALID
+
+Packaging type missing or invalid.
+
+RATE.SPECIALSERVICE.NOT.ALLOWED
+
+Package {0} – Special Service {1} is not allowed.
+
+SMARTPOST.HUBID.INVALID
+
+SmartPost hub id is invalid.
+
+SPECIALSERVICE.NOT.ALLOWED.SHIPMENTORPACKAGE
+
+Special Service {0} not allowed at {1} level.
+
+SPECIALSERVICE.NOT.SUPPORTED.REQUESTED.SHIPDAY
+
+{0} is not supported for the requested ship day of the week. Please update and try again.
+
+CODDETAIL.EMPTY.ORNULL
+
+Package {0} - CodDetail object cannot be null.
+
+DESTINATION.POSTALCODE.MISSING.ORINVALID
+
+Destination postal code missing or invalid.
+
+TOTALCUSTOMSVALUE.CURRENCYTYPE.INVALID
+
+Invalid currency type for total customs value.
+
+RATE.PACKAGES.DIMENSION.UNIT.MISMATCH
+
+Dimension unit of measure must be the same for all packages.
+
+COMMODITY.NUMBEROFPIECES.REQUIRED
+
+Commodity {COMMODITY_INDEX} - Number of pieces is required and cannot be a negative value or exceed 9,999.
+
+PICKUPTYPE.REQUIRED
+
+PickupType element is required in input request.
+
+ORIGIN.COUNTRY.INVALID
+
+Origin country code is invalid or missing. Please refer to documentation for valid format.
+
+DESTINATION.COUNTRY.INVALID
+
+Destination country code is invalid or missing. Please refer to documentation for valid format.
+
+MAXIMUM.WEIGHT.EXCEEDED
+
+The package weight in the request is not supported. Maximum package weight across all services is 2200 lbs or 998 kgs.
+
+ACCOUNT.NUMBER.MISMATCH
+
+When payment Type is SENDER, ShippingChargesPayment Payor AccountNumber should match the shipper account number.
+
+SHIPDATESTAMP.FORMAT.INVALID
+
+Please provide a valid shipDatestamp format YYYY-MM-DD
+
+INTERNAL.SERVER.ERROR
+
+We encountered an unexpected error and are working to resolve the issue. We apologize for any inconvenience. Please check back at a later time.
+
+RATING.DESTINATIONSTATEPOSTAL.MISMATCH
+
+Destination state postal code mismatch.
+
+ACCOUNT.NUMBERORKEY.INVALID
+
+Invalid account information. Account number and/or key is invalid.
+
+RATING.QUOTE.NOTAVAILABLE
+
+Rates and transit times are not available for the account number entered. For immediate assistance, please contact your local FedEx Customer Service.
+
+SHIPPER.COUNTRY.INVALID
+
+Shipper country code is invalid or missing. Please update and try again.
+
+FREIGHTSERVICEORIGIN.FREIGHT.NOTALLOWED
+
+The origin is not served for Freight services.
+
+FREIGHTSERVICEORIGIN.PICKUP.NOTALLOWED
+
+The origin does not allow pickup for Freight services.
+
+REGIONAL.MAILPICKUP.NOTALLOWED
+
+Regional Mail Pickup is not allowed.
+
+REGIONAL.MAILDELIVERY.NOTALLOWED
+
+Regional Mail Delivery is not allowed.
+
+FREIGHT.GUARANTEE.NOTALLOWED
+
+Freight Guarantee is not allowed.
+
+SHIPMENT.CUSTOMSVALUE.REQUIRED
+
+Commodity {COMMODITY_INDEX} - Customs value is required.Please update and try again.
+
+ORIGINZIPCODE.SERVICE.ERROR
+
+This origin postal code is not serviced.
+
+SERVICETYPE.NOT.ALLOWED
+
+Selected Service Type is not allowed between origin and destination. Please update and try again.
+
+ACCOUNT.HAZARDOUSMATERIALS.NOTALLOWED
+
+Hazardous material shipping is not enabled for your account.
+
+DECLAREDVALUE.EXCEEDS.LIMIT
+
+Declared value exceeds allowed limit. Please update and try again.
+
+ENTERED.AMOUNT.INVALID
+
+The entered amount for COD for Package {PACKAGE_INDEX} has exceeded the maximum limit. Please update and try again.
+
+PACKAGE.DECLAREDVALUE.EXCEEDED
+
+Package {PACKAGE_INDEX} - Declared value exceeds limit of {CURRENCY_AMOUNT} {CURRENCY_TYPE} for the packaging type.
+
+PACKAGETYPE.DECLAREDVALUE.EXCEEDED
+
+Declared value exceeds limit of {CURRENCY_AMOUNT} {CURRENCY_TYPE} for package {PACKAGE_INDEX}. Please update and try again.
+
+SERVICE.TYPE.NOTAVAILABLE
+
+The requested service type is not supported. Please update and try again.
+
+SPECIALSERVICE.PICKUPMETHOD.NOT.ALLOWED
+
+{SPECIAL_SERVICE_TYPE} is not allowed with the pickup method. Please update and try again.
+
+SHIPMENT.DGHMDIVIOLATIONS.NOTALLOWED
+
+{SERVICE_TYPE} service is not allowed because of dangerous goods or dry ice violations that limit your shipping options. Please update and try again.
+
+CURRENCYAMOUNT.CURRENCYTYPE.EXCEEDSLIMIT
+
+The total declared value for customs entered exceeds the limit of {CURRENCY_AMOUNT} {CURRENCY_TYPE} for {SPECIAL_SERVICE_TYPE}. Please update and try agai
