@@ -17,15 +17,35 @@ export async function apiRequest<T>(
   const method = options?.method || 'GET';
   const data = options?.data;
   
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res.json();
+  // If the URL is not absolute, make it absolute
+  let absoluteUrl = url;
+  if (!url.startsWith('http')) {
+    const baseUrl = window.location.origin;
+    absoluteUrl = url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+  }
+  
+  console.log('API request to:', absoluteUrl);
+  
+  try {
+    const res = await fetch(absoluteUrl, {
+      method,
+      headers: {
+        ...(data ? { "Content-Type": "application/json" } : {}),
+        "Accept": "application/json",
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "same-origin",
+      mode: "cors",
+    });
+    
+    console.log('Response received:', res.status, res.statusText);
+    
+    await throwIfResNotOk(res);
+    return res.json();
+  } catch (error) {
+    console.error('API request error to', absoluteUrl, ':', error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -34,16 +54,37 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    // Same URL handling as in apiRequest
+    let url = queryKey[0] as string;
+    let absoluteUrl = url;
+    if (!url.startsWith('http')) {
+      const baseUrl = window.location.origin;
+      absoluteUrl = url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
     }
+    
+    console.log('Query request to:', absoluteUrl);
+    
+    try {
+      const res = await fetch(absoluteUrl, {
+        credentials: "same-origin",
+        mode: "cors",
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+      
+      console.log('Query response received:', res.status, res.statusText);
 
-    await throwIfResNotOk(res);
-    return await res.json();
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      console.error('Query request error to', absoluteUrl, ':', error);
+      throw error;
+    }
   };
 
 export const queryClient = new QueryClient({
