@@ -1,18 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useCart } from '../../hooks/useCart';
 import Layout from '../../components/Layout';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { formatPrice } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
-
-// Make sure to call loadStripe outside of a component's render to avoid
-// recreating the Stripe object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 // Define shipping options
 const SHIPPING_OPTIONS = [

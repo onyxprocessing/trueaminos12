@@ -75,7 +75,7 @@ export async function createCheckoutInAirtable(sessionId: string): Promise<strin
         fields: {
           // Use correct Airtable field names - lowercased and with spaces
           "checkoutid": checkoutData.checkoutId,
-          "session id": checkoutData.sessionId,
+          "sessionid": checkoutData.sessionId,
           "status": checkoutData.status,
           "created at": checkoutData.createdAt
         }
