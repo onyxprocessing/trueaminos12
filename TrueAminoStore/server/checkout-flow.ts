@@ -223,13 +223,14 @@ export async function handleShippingInfo(req: Request, res: Response) {
       console.log('Suggested address:', addressValidationDetails.suggestedAddress);
     }
     
-    // Store in session for later use
+    // Store in session for later use with detailed shipping info
     req.session.shippingInfo = {
       address,
       city,
       state,
       zip: zipCode,
-      shippingMethod
+      shippingMethod,
+      shippingDetails: finalShippingDetails
     };
     
     // Update checkout step
@@ -302,8 +303,8 @@ export async function handleShippingInfo(req: Request, res: Response) {
     const selectedShipping = shippingOptions[shippingMethod as keyof typeof shippingOptions] || 
                             { price: 5.99, estimatedDelivery: '5-7 business days' };
     
-    // Create shipping details object for Airtable
-    const shippingDetails = {
+    // Use provided shipping details from FedEx API if available, otherwise use fallback
+    const finalShippingDetails = shippingDetails || {
       method: shippingMethod,
       price: selectedShipping.price,
       estimatedDelivery: selectedShipping.estimatedDelivery,
@@ -312,7 +313,10 @@ export async function handleShippingInfo(req: Request, res: Response) {
       addressClassification: addressValidationDetails?.classification || 'unknown'
     };
     
-    console.log('Shipping details:', JSON.stringify(shippingDetails, null, 2));
+    // Log real shipping details
+    console.log('Using shipping details:', JSON.stringify(finalShippingDetails, null, 2));
+    
+    console.log('Original shipping details:', JSON.stringify(shippingDetails, null, 2));
     
     // Update in Airtable with all customer info and cart data
     if (req.session.checkoutId) {
@@ -334,7 +338,7 @@ export async function handleShippingInfo(req: Request, res: Response) {
             state,
             zip: zipCode,
             shippingMethod,
-            shippingDetails, // Add the structured shipping details object
+            shippingDetails: finalShippingDetails, // Add the structured shipping details object
             status: 'shipping_info',
             cartItems: cartItems,
             totalAmount: cartTotal,
