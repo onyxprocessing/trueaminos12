@@ -157,29 +157,74 @@ export async function createOrdersFromCart(
  */
 export async function recordPaymentToAirtable(paymentIntent: any): Promise<boolean> {
   try {
-    console.log('Recording payment to Airtable:', paymentIntent.id);
+    console.log('🔴 Recording payment to Airtable:', paymentIntent.id);
+    console.log('Payment intent metadata:', JSON.stringify(paymentIntent.metadata, null, 2));
     
-    // If no session ID or customer data, we can't record the order
-    if (!paymentIntent || !paymentIntent.metadata || !paymentIntent.metadata.session_id) {
-      console.error('Missing session ID in payment intent metadata');
+    // If no metadata, we can't record the order
+    if (!paymentIntent || !paymentIntent.metadata) {
+      console.error('❌ Missing metadata in payment intent');
       return false;
     }
     
-    // Extract customer data from metadata
-    const sessionId = paymentIntent.metadata.session_id;
+    // Extract shipping method from metadata
     const shippingMethod = paymentIntent.metadata.shipping_method || 'standard';
     
     // Extract customer data from the payment intent
+    // First check if we have a customer in orderSummary
+    let firstName = '';
+    let lastName = '';
+    let customerEmail = '';
+    
+    // Try to get customer info from orderSummary first
+    if (paymentIntent.metadata.orderSummary) {
+      try {
+        const orderSummary = JSON.parse(paymentIntent.metadata.orderSummary);
+        if (orderSummary.customer) {
+          const nameParts = orderSummary.customer.split(' ');
+          firstName = nameParts[0] || '';
+          lastName = nameParts.slice(1).join(' ') || '';
+        }
+        customerEmail = orderSummary.email || '';
+      } catch (e) {
+        console.warn('⚠️ Failed to parse customer from orderSummary:', e);
+      }
+    }
+    
+    // Fall back to other metadata fields or shipping info
+    if (!firstName && paymentIntent.metadata.customer_name) {
+      const nameParts = paymentIntent.metadata.customer_name.split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
+    } else if (!firstName && paymentIntent.shipping?.name) {
+      const nameParts = paymentIntent.shipping.name.split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
+    }
+    
+    // If still no name, use defaults
+    if (!firstName) firstName = 'Unknown';
+    if (!lastName) lastName = 'Customer';
+    
+    // Get email from various possible sources
+    if (!customerEmail) {
+      customerEmail = paymentIntent.metadata.customer_email || 
+                      paymentIntent.receipt_email || 
+                      '';
+    }
+    
+    // Build complete customer data object
     const customerData = {
-      firstName: paymentIntent.shipping?.name?.split(' ')[0] || 'Unknown',
-      lastName: paymentIntent.shipping?.name?.split(' ').slice(1).join(' ') || 'Customer',
+      firstName,
+      lastName,
       address: paymentIntent.shipping?.address?.line1 || '',
       city: paymentIntent.shipping?.address?.city || '',
       state: paymentIntent.shipping?.address?.state || '',
       zip: paymentIntent.shipping?.address?.postal_code || '',
-      email: paymentIntent.receipt_email || '',
+      email: customerEmail,
       phone: paymentIntent.shipping?.phone || paymentIntent.metadata?.customer_phone || ''
     };
+    
+    console.log('📋 Customer data for order:', JSON.stringify(customerData, null, 2));
     
     // Format payment details as JSON
     const paymentDetails = JSON.stringify({
@@ -193,10 +238,11 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
     
     // Create one record for each item in the cart
     const orderId = generateUniqueOrderId();
+    console.log('🏷️ Generated order ID:', orderId);
     
     // If we have cart items for the session, create order records
     try {
-      console.log('Creating order records for payment:', paymentIntent.id);
+      console.log('📦 Creating order records for payment:', paymentIntent.id);
       
       // Try to extract product information from metadata if available
       let products = [];
@@ -205,27 +251,33 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
       if (paymentIntent.metadata.orderSummary) {
         try {
           const orderSummary = JSON.parse(paymentIntent.metadata.orderSummary);
+          console.log('📦 Found orderSummary:', JSON.stringify(orderSummary, null, 2));
+          
           if (orderSummary && orderSummary.items) {
+            // Calculate per-item price (approximate)
+            const totalItems = orderSummary.items.reduce((sum: number, item: any) => sum + (item.qty || 1), 0);
+            const perItemPrice = (paymentIntent.amount / 100) / Math.max(totalItems, 1);
+            
             products = orderSummary.items.map((item: { id: number; name: string; qty: number; weight: string | null }) => ({
               id: item.id,
               name: item.name,
               quantity: item.qty,
               weight: item.weight,
-              price: 0 // We'll need to set this from the payment amount
+              price: perItemPrice // Approximate price based on total
             }));
-            console.log('Found product details in orderSummary metadata:', products.length);
+            console.log('📦 Found product details in orderSummary metadata:', products.length);
           }
         } catch (e) {
-          console.warn('Failed to parse orderSummary JSON from metadata:', e);
+          console.warn('⚠️ Failed to parse orderSummary JSON from metadata:', e);
         }
       } 
       // Fall back to legacy products format
       else if (paymentIntent.metadata.products) {
         try {
           products = JSON.parse(paymentIntent.metadata.products);
-          console.log('Found product details in products metadata:', products.length);
+          console.log('📦 Found product details in products metadata:', products.length);
         } catch (e) {
-          console.warn('Failed to parse products JSON from metadata:', e);
+          console.warn('⚠️ Failed to parse products JSON from metadata:', e);
         }
       }
       

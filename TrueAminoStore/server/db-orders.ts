@@ -112,25 +112,67 @@ export async function recordPaymentToDatabase(paymentIntent: any): Promise<boole
     // Check if we have the new orderSummary format
     if (paymentIntent.metadata.orderSummary) {
       try {
+        console.log('🔵 Processing orderSummary in database storage:', paymentIntent.id);
+        console.log('Payment intent metadata:', JSON.stringify(paymentIntent.metadata, null, 2));
+        
         const orderSummary = JSON.parse(paymentIntent.metadata.orderSummary);
+        console.log('Parsed orderSummary:', JSON.stringify(orderSummary, null, 2));
+        
         const shipping = orderSummary.shipping || 'standard';
         
         // Create a unique order ID
         const orderUniqueId = generateUniqueOrderId();
+        console.log('Generated order ID for database:', orderUniqueId);
+        
         const orderIds: number[] = [];
         
-        // Extract customer data from the payment intent
+        // Extract customer name from various sources
+        let firstName = '';
+        let lastName = '';
+        let customerEmail = '';
+        
+        // Try to get customer info from orderSummary first
+        if (orderSummary.customer) {
+          const nameParts = orderSummary.customer.split(' ');
+          firstName = nameParts[0] || '';
+          lastName = nameParts.slice(1).join(' ') || '';
+          customerEmail = orderSummary.email || '';
+        }
+        
+        // Fall back to other metadata fields if needed
+        if (!firstName && paymentIntent.metadata.customer_name) {
+          const nameParts = paymentIntent.metadata.customer_name.split(' ');
+          firstName = nameParts[0] || '';
+          lastName = nameParts.slice(1).join(' ') || '';
+        } else if (!firstName && paymentIntent.shipping?.name) {
+          const nameParts = paymentIntent.shipping.name.split(' ');
+          firstName = nameParts[0] || '';
+          lastName = nameParts.slice(1).join(' ') || '';
+        }
+        
+        // If still no name, use defaults
+        if (!firstName) firstName = 'Unknown';
+        if (!lastName) lastName = 'Customer';
+        
+        // Get email from various possible sources if not already set
+        if (!customerEmail) {
+          customerEmail = paymentIntent.metadata.customer_email || 
+                          paymentIntent.receipt_email || '';
+        }
+        
+        // Build complete customer data
         const customerData = {
-          firstName: paymentIntent.shipping?.name?.split(' ')[0] || orderSummary.customer?.split(' ')[0] || 'Unknown',
-          lastName: (paymentIntent.shipping?.name?.split(' ').slice(1).join(' ') || 
-                     orderSummary.customer?.split(' ').slice(1).join(' ') || 'Customer'),
-          email: orderSummary.email || paymentIntent.receipt_email || '',
+          firstName,
+          lastName,
+          email: customerEmail,
           phone: paymentIntent.shipping?.phone || paymentIntent.metadata?.customer_phone || '',
           address: paymentIntent.shipping?.address?.line1 || '',
           city: paymentIntent.shipping?.address?.city || '',
           state: paymentIntent.shipping?.address?.state || '',
           zipCode: paymentIntent.shipping?.address?.postal_code || ''
         };
+        
+        console.log('Customer data for DB order:', JSON.stringify(customerData, null, 2));
         
         // Format payment details as JSON
         const paymentDetails = JSON.stringify({

@@ -506,14 +506,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
-      // Add product information to metadata
-      params.metadata.products = JSON.stringify(cartItems.map(item => ({
-        id: item.product.id,
-        name: item.product.name,
-        weight: item.selectedWeight || '',
-        quantity: item.quantity,
-        price: getPriceByWeight(item.product, item.selectedWeight)
-      })));
+      // Create a compact order summary for metadata (Stripe limit is 500 characters)
+      const orderSummary = {
+        customer: `${firstName || ''} ${lastName || ''}`.trim(),
+        email: email || '',
+        items: cartItems.map(item => ({
+          id: item.product.id,
+          name: item.product.name.substring(0, 20), // Limit name length
+          qty: item.quantity,
+          weight: item.selectedWeight || null
+        })),
+        shipping: shipping_method || 'standard'
+      };
+      
+      // Store this compact order summary
+      params.metadata.orderSummary = JSON.stringify(orderSummary);
       
       // Add customer info to metadata if provided
       if (firstName || lastName) {
