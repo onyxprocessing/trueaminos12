@@ -94,6 +94,8 @@ export interface Product {
   slug: string;
   inStock: boolean;
   featured: boolean;
+  // Allow dynamic price field access for TypeScript
+  [key: `price${string}`]: string | undefined;
 }
 
 export type InsertProduct = z.infer<typeof insertProductSchema>;
