@@ -96,9 +96,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }),
     cookie: { 
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', // Allow cookies to be sent in cross-site requests
+      httpOnly: true,  // Prevent client-side JavaScript access
       maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
     }
   }));
+  
+  // Add CORS headers for all requests
+  app.use((req, res, next) => {
+    // Get the origin from the request header or use * as a fallback
+    const origin = req.headers.origin || '*';
+    
+    // Allow the specific origin that sent the request or all origins if not specified
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    
+    next();
+  });
 
   // Image proxy endpoint to resolve CORS issues with Airtable images
   app.get("/api/image-proxy", async (req: Request, res: Response) => {
@@ -477,12 +498,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
     try {
       console.log('💳 Creating payment intent - request received');
+      console.log('  Request cookies:', req.headers.cookie);
+      console.log('  Request content-type:', req.headers['content-type']);
+      console.log('  Origin:', req.headers.origin);
+      
+      // Make sure session is saved before proceeding
+      if (!req.session.id) {
+        console.log('⚠️ No session ID available, generating a new session');
+      }
       
       const sessionId = req.session.id;
       console.log('  Session ID:', sessionId);
       
-      const cartItems = await storage.getCartItems(sessionId);
+      // Force session to be saved
+      await new Promise<void>((resolve) => {
+        req.session.save(() => {
+          console.log('  Session saved with ID:', sessionId);
+          resolve();
+        });
+      });
+      
+      // Handle case where body includes cart items directly
+      let cartItems;
+      if (req.body && req.body.cartItems && Array.isArray(req.body.cartItems) && req.body.cartItems.length > 0) {
+        console.log('  Using cart items from request body instead of session');
+        cartItems = req.body.cartItems;
+      } else {
+        // Get cart items from storage based on session ID
+        cartItems = await storage.getCartItems(sessionId);
+      }
+      
       console.log(`  Cart has ${cartItems.length} items`);
+      console.log('  Cart items:', JSON.stringify(cartItems.map(item => ({
+        id: item.id,
+        product_id: item.productId,
+        product_name: item.product?.name || 'Unknown',
+        quantity: item.quantity,
+        weight: item.selectedWeight || 'standard'
+      })), null, 2));
       
       if (cartItems.length === 0) {
         console.log('❌ Cannot create payment intent: Cart is empty');
@@ -490,8 +543,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Calculate the total amount from cart
-      let amount = cartItems.reduce((sum, item) => 
-        sum + getPriceByWeight(item.product, item.selectedWeight) * item.quantity, 0);
+      let amount = cartItems.reduce((sum, item) => {
+        const price = item.product ? 
+          getPriceByWeight(item.product, item.selectedWeight) : 
+          (item.price || 0);
+        return sum + price * item.quantity;
+      }, 0);
       
       console.log(`  Calculated cart amount: $${amount.toFixed(2)}`);
       
