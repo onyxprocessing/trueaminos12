@@ -19,6 +19,34 @@ export interface CheckoutData {
   state?: string;
   zip?: string;
   shippingMethod?: string;
+  shippingDetails?: {
+    method: string;
+    price: number;
+    estimatedDelivery?: string;
+    notes?: string;
+  };
+  paymentDetails?: {
+    method: string;
+    status: string;
+    timestamp: string;
+    cardDetails?: {
+      lastFour: string;
+      expiryMonth: string;
+      expiryYear: string;
+      nameOnCard: string;
+    } | null;
+    bankDetails?: {
+      accountName: string;
+      accountNumber: string;
+      routingNumber: string;
+      bankName: string;
+    } | null;
+    cryptoDetails?: {
+      currency: string;
+      walletAddress: string;
+      transactionReference: string;
+    } | null;
+  };
   status: 'started' | 'personal_info' | 'shipping_info' | 'payment_selection' | 'payment_processing' | 'completed' | 'abandoned';
   cartItems?: any[];
   totalAmount?: number;
@@ -189,6 +217,20 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
     if (updateData.shippingMethod) {
       fields["shippingmethod"] = updateData.shippingMethod;
       console.log('Setting shippingMethod:', updateData.shippingMethod);
+    }
+    
+    // Handle the shippingDetails JSON field
+    if (updateData.shippingDetails) {
+      // Convert the shipping details object to a JSON string for Airtable
+      fields["shippingdetails"] = JSON.stringify(updateData.shippingDetails);
+      console.log('Setting shippingDetails:', JSON.stringify(updateData.shippingDetails));
+    }
+    
+    // Handle the paymentDetails JSON field
+    if (updateData.paymentDetails) {
+      // Convert the payment details object to a JSON string for Airtable
+      fields["paymentdetails"] = JSON.stringify(updateData.paymentDetails);
+      console.log('Setting paymentDetails:', JSON.stringify(updateData.paymentDetails));
     }
     if (updateData.status) {
       fields["status"] = updateData.status;

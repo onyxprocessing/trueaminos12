@@ -279,6 +279,29 @@ export async function handleShippingInfo(req: Request, res: Response) {
     // Calculate total
     const cartTotal = calculateCartTotal(cartItems);
     
+    // Define shipping options with prices
+    const shippingOptions = {
+      'standard': { price: 5.99, estimatedDelivery: '5-7 business days' },
+      'express': { price: 12.99, estimatedDelivery: '2-3 business days' },
+      'priority': { price: 19.99, estimatedDelivery: '1-2 business days' },
+      'international': { price: 24.99, estimatedDelivery: '7-14 business days' },
+      'free': { price: 0, estimatedDelivery: '7-10 business days' }
+    };
+    
+    // Get the shipping details based on selected method
+    const selectedShipping = shippingOptions[shippingMethod as keyof typeof shippingOptions] || 
+                            { price: 5.99, estimatedDelivery: '5-7 business days' };
+    
+    // Create shipping details object for Airtable
+    const shippingDetails = {
+      method: shippingMethod,
+      price: selectedShipping.price,
+      estimatedDelivery: selectedShipping.estimatedDelivery,
+      notes: `Shipping to ${address}, ${city}, ${state} ${zipCode}`
+    };
+    
+    console.log('Shipping details:', JSON.stringify(shippingDetails, null, 2));
+    
     // Update in Airtable with all customer info and cart data
     if (req.session.checkoutId) {
       console.log('Updating Airtable with shipping info:', {
@@ -299,6 +322,7 @@ export async function handleShippingInfo(req: Request, res: Response) {
             state,
             zip: zipCode,
             shippingMethod,
+            shippingDetails, // Add the structured shipping details object
             status: 'shipping_info',
             cartItems: cartItems,
             totalAmount: cartTotal,
@@ -499,6 +523,33 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
     req.session.checkoutStep = 'payment_processing';
     await req.session.save();
     
+    // Create payment details object for Airtable
+    const paymentInfo = {
+      method: paymentMethod,
+      status: 'pending',
+      timestamp: new Date().toISOString(),
+      cardDetails: paymentMethod === 'card' ? {
+        lastFour: cardDetails?.number?.slice(-4) || '****',
+        expiryMonth: cardDetails?.expiry?.split('/')[0]?.trim() || 'MM',
+        expiryYear: cardDetails?.expiry?.split('/')[1]?.trim() || 'YY',
+        nameOnCard: cardDetails?.name || 'Card Holder'
+      } : null,
+      bankDetails: paymentMethod === 'bank' ? {
+        accountName: 'TrueAminos LLC',
+        accountNumber: '123456789',
+        routingNumber: '987654321',
+        bankName: 'First National Bank'
+      } : null,
+      cryptoDetails: paymentMethod === 'crypto' ? {
+        currency: 'Bitcoin/Ethereum',
+        walletAddress: paymentMethod === 'crypto' ? 
+          (transactionId?.includes('BTC') ? '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' : '0x742d35Cc6634C0532925a3b844Bc454e4438f44e') : '',
+        transactionReference: transactionId || `manual-${Date.now()}`
+      } : null
+    };
+    
+    console.log('Payment info for Airtable:', JSON.stringify(paymentInfo, null, 2));
+    
     // Update in Airtable
     if (req.session.checkoutId) {
       console.log('Updating Airtable with payment processing status');
@@ -509,6 +560,8 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
         try {
           success = await updateCheckoutInAirtable(req.session.checkoutId, {
             status: 'payment_processing',
+            // Add the payment info field with structured data
+            paymentDetails: paymentInfo,
             updatedAt: new Date().toISOString()
           });
           
