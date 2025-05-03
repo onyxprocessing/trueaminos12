@@ -1,17 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import Layout from '../../components/Layout';
 import { Button } from '../../components/ui/button';
-import { useStripe } from '@stripe/react-stripe-js';
+import { useStripe, Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { useCart } from '../../hooks/useCart';
 
-const SuccessPage = () => {
+// Load Stripe outside of component to avoid re-creating Stripe object on each render
+if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+}
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+// Inner component that uses Stripe hooks
+const SuccessPageContent = () => {
   const stripe = useStripe();
   // wouter's useLocation returns [location, navigate]
   const [, navigate] = useLocation();
   const { clearCart } = useCart();
-  const [paymentStatus, setPaymentStatus] = React.useState<'success' | 'processing' | 'error'>('processing');
-  const [paymentDetails, setPaymentDetails] = React.useState<any>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'processing' | 'error'>('processing');
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
 
   useEffect(() => {
     if (!stripe) {
@@ -158,5 +166,17 @@ const SuccessPage = () => {
     </Layout>
   );
 };
+
+// Wrapper component to provide Stripe context
+const SuccessPageWrapper = () => {
+  return (
+    <Elements stripe={stripePromise}>
+      <SuccessPageContent />
+    </Elements>
+  );
+};
+
+// Use the wrapper as our exported component
+const SuccessPage = SuccessPageWrapper;
 
 export default SuccessPage;
