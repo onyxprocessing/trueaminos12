@@ -110,11 +110,11 @@ export async function createOrderWithPaymentMethod(
  */
 function getPriceByWeight(product: any, selectedWeight: string | null): number {
   if (!selectedWeight) {
-    const price = product.price || '0';
+    const price = product.price || 0;
     return typeof price === 'string' ? parseFloat(price) : price;
   }
 
   const priceField = `price${selectedWeight.toLowerCase()}`;
-  const price = product[priceField] || product.price || '0';
+  const price = product[priceField] || product.price || 0;
   return typeof price === 'string' ? parseFloat(price) : price;
 }

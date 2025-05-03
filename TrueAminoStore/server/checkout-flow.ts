@@ -257,7 +257,7 @@ export async function handlePaymentMethod(req: Request, res: Response) {
 }
 
 /**
- * Handle non-card payment confirmation (step 4 for bank and crypto)
+ * Handle payment confirmation (step 4 for all payment methods)
  */
 export async function handlePaymentConfirmation(req: Request, res: Response) {
   try {
@@ -268,13 +268,35 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
       });
     }
     
-    const { paymentMethod, transactionId } = req.body;
+    const { paymentMethod, transactionId, cardDetails } = req.body;
     
     // Validate payment method
-    if (!paymentMethod || !['bank', 'crypto'].includes(paymentMethod)) {
+    if (!paymentMethod || !['card', 'bank', 'crypto'].includes(paymentMethod)) {
       return res.status(400).json({ 
         message: "Invalid payment method for confirmation" 
       });
+    }
+    
+    // For card payments, validate card details
+    if (paymentMethod === 'card') {
+      if (!cardDetails || !cardDetails.name || !cardDetails.number || !cardDetails.expiry || !cardDetails.cvv) {
+        return res.status(400).json({ 
+          message: "Missing card details. Please provide name, number, expiry, and cvv." 
+        });
+      }
+      
+      // Basic card validation (just for demonstration purposes)
+      if (cardDetails.number.length < 13 || cardDetails.number.length > 19) {
+        return res.status(400).json({ 
+          message: "Invalid card number length. Card number should be between 13 and 19 digits." 
+        });
+      }
+      
+      if (cardDetails.cvv.length < 3 || cardDetails.cvv.length > 4) {
+        return res.status(400).json({ 
+          message: "Invalid CVV. CVV should be 3 or 4 digits." 
+        });
+      }
     }
     
     // Update checkout step
