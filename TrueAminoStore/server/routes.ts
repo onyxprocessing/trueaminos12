@@ -48,15 +48,43 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
 // Helper function to proxy image requests to avoid CORS issues
 async function proxyImage(url: string): Promise<Buffer | null> {
   try {
-    const response = await fetch(url);
+    // Add timeout to avoid hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    console.log(`Attempting to fetch image from: ${url}`);
+    
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'TrueAminoStore/1.0' // Add user agent to avoid some potential blocks
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      console.error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      console.error(`Failed to fetch image: ${response.status} ${response.statusText} for URL: ${url}`);
       return null;
     }
+    
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('image')) {
+      console.warn(`Response is not an image (${contentType}) for URL: ${url}`);
+    }
+    
     const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    const buffer = Buffer.from(arrayBuffer);
+    
+    console.log(`Successfully fetched image (${buffer.length} bytes) from: ${url}`);
+    return buffer;
   } catch (error) {
-    console.error('Error fetching image:', error);
+    // Check for abort error (timeout)
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error(`Timeout fetching image after 10 seconds: ${url}`);
+    } else {
+      console.error('Error fetching image:', error, 'URL:', url);
+    }
     return null;
   }
 }
@@ -91,28 +119,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/image-proxy", async (req: Request, res: Response) => {
     try {
       const imageUrl = req.query.url as string;
+      const requestId = Math.random().toString(36).substring(2, 10); // Generate a unique ID for this request for logging
       
       if (!imageUrl) {
+        console.error(`[${requestId}] Image proxy: Missing URL parameter`);
         return res.status(400).json({ message: "Missing image URL parameter" });
       }
       
       // Validate URL to ensure it's from Airtable (security measure)
       if (!imageUrl.includes('airtableusercontent.com')) {
+        console.error(`[${requestId}] Image proxy: Invalid source - ${imageUrl}`);
         return res.status(403).json({ message: "Invalid image source" });
       }
       
-      console.log("Proxying image:", imageUrl);
+      console.log(`[${requestId}] Proxying image: ${imageUrl}`);
       const imageBuffer = await proxyImage(imageUrl);
       
       if (!imageBuffer) {
+        console.error(`[${requestId}] Image proxy: Failed to fetch image - ${imageUrl}`);
         return res.status(404).json({ message: "Failed to fetch image" });
+      }
+      
+      // Determine content type from original URL or default to PNG
+      let contentType = 'image/png';
+      
+      if (imageUrl.endsWith('.jpg') || imageUrl.endsWith('.jpeg')) {
+        contentType = 'image/jpeg';
+      } else if (imageUrl.endsWith('.gif')) {
+        contentType = 'image/gif';
+      } else if (imageUrl.endsWith('.webp')) {
+        contentType = 'image/webp';
+      } else if (imageUrl.endsWith('.pdf')) {
+        contentType = 'application/pdf';
       }
       
       // Set appropriate headers
       res.set({
         'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
-        'Content-Type': 'image/png', // Default to PNG
+        'Content-Type': contentType,
+        'X-Proxy-Request-ID': requestId
       });
+      
+      console.log(`[${requestId}] Successfully served image (${imageBuffer.length} bytes) as ${contentType}`);
       
       // Send the image data
       res.send(imageBuffer);
