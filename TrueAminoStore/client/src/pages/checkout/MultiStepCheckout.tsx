@@ -696,8 +696,14 @@ const MultiStepCheckout: React.FC = () => {
       // Import the getShippingRates function
       const { getShippingRates } = await import('../../lib/shipping-rates');
       
+      // Log the request
+      console.log(`Fetching shipping rates for address: ${address}, ${city}, ${state} ${zipCode}`);
+      
       // Get shipping rates from FedEx API
       const ratesResult = await getShippingRates(address, city, state, zipCode);
+      
+      // Log the rates result
+      console.log('Shipping rate response:', ratesResult);
       
       if (ratesResult.success && ratesResult.rates && ratesResult.rates.length > 0) {
         // Sort rates by price (lowest to highest)
@@ -718,19 +724,23 @@ const MultiStepCheckout: React.FC = () => {
         
         // Set shipping method to the lowest priced option by default
         if (sortedRates.length > 0) {
-          setShippingMethod(sortedRates[0].serviceType.toLowerCase().replace(/_/g, '-'));
+          const lowestPriceOption = sortedRates[0].serviceType.toLowerCase().replace(/_/g, '-');
+          console.log(`Setting shipping method to lowest price option: ${lowestPriceOption}`);
+          setShippingMethod(lowestPriceOption);
         }
         
         // Check if we're showing mock data
         const hasMockData = sortedRates.some(rate => rate.isMockData);
         
         if (hasMockData) {
+          console.log('⚠️ Using mock shipping rates');
           toast({
             title: 'Using Standard Shipping Rates',
-            description: 'Using default shipping rates as location-based rates are unavailable',
+            description: 'Using standard shipping rates as real-time rates are unavailable',
             variant: 'default'
           });
         } else {
+          console.log('✅ Using real shipping rates from FedEx API');
           toast({
             title: 'Shipping Rates Updated',
             description: `${sortedRates.length} shipping options available for your location`,
@@ -740,6 +750,7 @@ const MultiStepCheckout: React.FC = () => {
         
         console.log('Shipping rates updated:', JSON.stringify(newShippingOptions, null, 2));
       } else {
+        console.log('❌ Failed to get shipping rates, using default options');
         // If we failed to get shipping rates, fall back to the default options
         setDynamicShippingOptions(SHIPPING_OPTIONS);
         toast({
@@ -752,6 +763,11 @@ const MultiStepCheckout: React.FC = () => {
       console.error('Error fetching shipping rates:', err);
       // Fall back to default shipping options
       setDynamicShippingOptions(SHIPPING_OPTIONS);
+      toast({
+        title: 'Using Standard Shipping Rates',
+        description: 'An error occurred while getting shipping rates',
+        variant: 'default'
+      });
     } finally {
       setIsLoadingRates(false);
     }

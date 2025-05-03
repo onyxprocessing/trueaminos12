@@ -35,17 +35,26 @@ export async function getShippingRates(
   country: string = 'US'
 ): Promise<{ success: boolean; rates?: ShippingRateOption[]; message?: string }> {
   try {
+    console.log(`Requesting shipping rates for: ${address}, ${city}, ${state}, ${zipCode}`);
+    
     // Call the API
-    const response = await apiRequest('POST', '/api/shipping-rates', {
-      street: address,
-      city,
-      state,
-      zipCode,
-      country
+    const response = await fetch('/api/shipping-rates', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        street: address,
+        city,
+        state,
+        zipCode,
+        country
+      })
     });
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('Error fetching shipping rates:', errorData);
       return {
         success: false,
         message: errorData.message || 'Could not retrieve shipping rates'
@@ -54,6 +63,7 @@ export async function getShippingRates(
     
     // Parse the JSON response
     const data = await response.json();
+    console.log('Shipping rates received:', data);
     return {
       success: true,
       rates: data.rates

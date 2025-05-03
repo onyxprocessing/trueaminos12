@@ -658,8 +658,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         country = 'US'
       } = req.body;
       
+      console.log('Shipping rates requested for:', { street, city, state, zipCode, country });
+      
       // Validate required fields
       if (!street || !city || !state || !zipCode) {
+        console.warn('Missing address fields in shipping rate request');
         return res.status(400).json({ 
           success: false,
           message: 'Missing required address fields'
@@ -669,8 +672,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get cart items to estimate package size
       const sessionId = req.session.id;
       const cartItems = await storage.getCartItems(sessionId);
+      console.log(`Found ${cartItems?.length || 0} cart items for session ${sessionId}`);
       
       if (!cartItems || cartItems.length === 0) {
+        console.warn('Cart is empty for shipping rate request');
         return res.status(400).json({ 
           success: false, 
           message: 'Your cart is empty'
@@ -682,16 +687,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Estimate package size based on cart items
       const packageSize = estimatePackageSize(cartItems);
+      console.log('Estimated package size:', packageSize);
       
       // Get shipping rates from FedEx API
+      console.log('Requesting FedEx shipping rates with:', {
+        recipientAddress,
+        packageSize
+      });
+      
       const shippingRates = await getShippingRates({
         recipientAddress,
         packageSize
       });
       
+      console.log(`Received ${shippingRates.length} shipping rate options`);
+      
+      // Check if rates are mock data
+      const hasMockRates = shippingRates.some(rate => rate.isMockData);
+      if (hasMockRates) {
+        console.log('⚠️ Returning MOCK shipping rates due to FedEx API issues');
+      } else {
+        console.log('✅ Returning REAL shipping rates from FedEx API');
+      }
+      
       res.json({
         success: true,
-        rates: shippingRates
+        rates: shippingRates,
+        isMockData: hasMockRates
       });
     } catch (error: any) {
       console.error('Error getting shipping rates:', error);
