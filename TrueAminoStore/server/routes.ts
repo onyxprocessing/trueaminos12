@@ -20,11 +20,9 @@ interface Request extends ExpressRequest {
   };
 }
 import fetch from 'node-fetch';
-import Stripe from 'stripe';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
 import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
-import { setupStripeTest } from './test-stripe';
 
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
@@ -56,36 +54,7 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
 // Helper function removed - directly using fetch in the endpoint
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize Stripe
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  if (!stripeSecretKey) {
-    console.error('Missing required Stripe secret: STRIPE_SECRET_KEY');
-    throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
-  }
-  
-  console.log('Initializing Stripe with key starting with:', stripeSecretKey.substring(0, 8) + '...');
-  
-  const stripe = new Stripe(stripeSecretKey, {
-    apiVersion: '2023-10-16' as any,
-  });
-  
-  // Register Stripe test endpoints
-  setupStripeTest(app);
-  console.log('✅ Stripe test endpoints registered successfully');
-  
-  // Test Stripe connection
-  try {
-    // Make a test API call to verify the API key is working
-    stripe.paymentMethods.list({ limit: 1 })
-      .then(() => {
-        console.log('✅ Stripe API key is valid and working!');
-      })
-      .catch(err => {
-        console.error('❌ Stripe API key validation failed:', err.message);
-      });
-  } catch (err: any) {
-    console.error('Error testing Stripe connection:', err.message);
-  }
+  // No Stripe initialization - using direct payment methods instead
   // Set up session middleware for cart management
   const MemoryStoreSession = MemoryStore(expressSession);
   app.use(expressSession.default({

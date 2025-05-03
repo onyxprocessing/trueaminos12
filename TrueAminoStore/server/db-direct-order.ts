@@ -59,8 +59,8 @@ export async function createOrderWithPaymentMethod(
         productName: item.product.name,
         quantity: item.quantity,
         selectedWeight: item.selectedWeight || '',
-        // Get price as number for database storage
-        salesPrice: getPriceByWeight(item.product, item.selectedWeight),
+        // Convert to string for database storage (numeric fields are stored as strings)
+        salesPrice: String(getPriceByWeight(item.product, item.selectedWeight)),
         shipping: customer.shipping,
         paymentMethod,
         paymentIntentId: paymentDetails?.id || '',
@@ -84,7 +84,7 @@ export async function createOrderWithPaymentMethod(
         state: customer.state,
         zip: customer.zip,
         mg: item.selectedWeight || '',
-        salesPrice: getPriceByWeight(item.product, item.selectedWeight),
+        salesPrice: String(getPriceByWeight(item.product, item.selectedWeight)),
         quantity: item.quantity,
         productId: item.productId,
         shipping: customer.shipping,
