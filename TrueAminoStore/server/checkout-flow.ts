@@ -206,6 +206,7 @@ export async function handleShippingInfo(req: Request, res: Response) {
       state,
       zipCode,
       shippingMethod,
+      shippingDetails,
       isAddressValidated,
       addressValidationDetails
     } = req.body;

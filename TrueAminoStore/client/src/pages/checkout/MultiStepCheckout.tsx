@@ -232,13 +232,23 @@ const MultiStepCheckout: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Include validation status in the request
+      // Find the selected shipping option
+      const selectedShippingOption = dynamicShippingOptions.find(opt => opt.id === shippingMethod);
+      
+      // Include validation status and shipping rate information in the request
       const response = await apiRequest('POST', '/api/checkout/shipping-info', {
         address,
         city,
         state,
         zipCode,
         shippingMethod,
+        shippingDetails: {
+          method: selectedShippingOption?.name || 'Standard Shipping',
+          price: selectedShippingOption?.price || 0,
+          estimatedDelivery: selectedShippingOption?.days || '5-7 business days',
+          addressValidated: useValidatedAddress,
+          addressClassification: addressValidation?.validation?.classification || 'unknown'
+        },
         isAddressValidated: useValidatedAddress,
         addressValidationDetails: addressValidation ? {
           classification: addressValidation.validation?.classification || 'unknown',
@@ -421,7 +431,8 @@ const MultiStepCheckout: React.FC = () => {
   const getShippingCost = () => {
     if (cart.subtotal >= 175) return 0; // Free shipping for orders over $175
     
-    const option = SHIPPING_OPTIONS.find(opt => opt.id === shippingMethod);
+    // Check if we have dynamic shipping rates first
+    const option = dynamicShippingOptions.find(opt => opt.id === shippingMethod);
     return option ? option.price : SHIPPING_OPTIONS[0].price;
   };
   
