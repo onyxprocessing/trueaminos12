@@ -6,7 +6,6 @@ import { useStripe, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentIntent as StripePaymentIntent } from '@stripe/stripe-js';
 import { useCart } from '../../hooks/useCart';
-import { hasCartBeenCleared, markCartCleared } from '../../utils/cartManager';
 
 // Extended PaymentIntent type that includes metadata
 interface PaymentIntent extends StripePaymentIntent {
@@ -41,28 +40,14 @@ const SuccessPageContent = () => {
   };
   
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
-  const [hasClearedCart, setHasClearedCart] = useState(hasCartBeenCleared());
 
-  // One-time cart clearing effect with no dependencies to prevent re-runs
-  useEffect(() => {
-    // Skip clearing if already cleared
-    if (!hasClearedCart) {
-      console.log('Clearing cart from success page - one time only');
-      markCartCleared(); // Mark as cleared before API call to prevent duplicates
-      setHasClearedCart(true);
-      
-      // Clear the cart via API
-      clearCart().catch(err => {
-        console.error('Error clearing cart:', err);
-      });
-    }
-  }, []);
-
-  // Process the payment intent only once
   useEffect(() => {
     if (!stripe) {
       return;
     }
+
+    // Clear cart regardless of payment status
+    clearCart();
 
     // Get the payment intent ID from the URL
     const clientSecret = new URLSearchParams(window.location.search).get(
@@ -91,28 +76,6 @@ const SuccessPageContent = () => {
             // Get shipping information if available
             const shippingMethod = intent.metadata?.shipping_method || 'Standard';
             
-            // Call our server to record the order in Airtable as a backup to the webhook
-            fetch('/api/record-payment-success', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                paymentIntentId: intent.id
-              }),
-              credentials: 'include',
-            })
-            .then(response => {
-              if (!response.ok) {
-                console.error('Failed to record order on success page. This is okay if the webhook processes it.');
-              } else {
-                console.log('Order recorded successfully from success page');
-              }
-            })
-            .catch(err => {
-              console.error('Error recording order from success page:', err);
-            });
-            
             setPaymentDetails({
               id: formattedOrderId,
               paymentId: intent.id,
@@ -138,7 +101,7 @@ const SuccessPageContent = () => {
       // Set success anyway if they came directly to this page
       setPaymentStatus('success');
     }
-  }, [stripe]);
+  }, [stripe, clearCart]);
 
   return (
     <Layout title="Order Confirmation - TrueAminos">
@@ -275,12 +238,15 @@ const SuccessPageContent = () => {
 };
 
 // Wrapper component to provide Stripe context
-const SuccessPage = () => {
+const SuccessPageWrapper = () => {
   return (
     <Elements stripe={stripePromise}>
       <SuccessPageContent />
     </Elements>
   );
 };
+
+// Use the wrapper as our exported component
+const SuccessPage = SuccessPageWrapper;
 
 export default SuccessPage;

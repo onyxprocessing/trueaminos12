@@ -3,20 +3,12 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, Product } from "@shared/schema";
 import { z } from "zod";
-import expressSession from 'express-session';
-import createMemoryStore from 'memorystore';
+import session from 'express-session';
+import MemoryStore from 'memorystore';
 import fetch from 'node-fetch';
 import Stripe from 'stripe';
 import { recordPaymentToAirtable } from './airtable-orders';
-import { shouldThrottle } from './throttle';
 import { recordPaymentToDatabase } from './db-orders';
-
-declare module 'express-session' {
-  interface SessionData {
-    id: string;
-    paymentIntentId?: string;
-  }
-}
 
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
@@ -48,43 +40,15 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
 // Helper function to proxy image requests to avoid CORS issues
 async function proxyImage(url: string): Promise<Buffer | null> {
   try {
-    // Add timeout to avoid hanging requests
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
-    console.log(`Attempting to fetch image from: ${url}`);
-    
-    const response = await fetch(url, { 
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'TrueAminoStore/1.0' // Add user agent to avoid some potential blocks
-      }
-    });
-    
-    clearTimeout(timeoutId);
-    
+    const response = await fetch(url);
     if (!response.ok) {
-      console.error(`Failed to fetch image: ${response.status} ${response.statusText} for URL: ${url}`);
+      console.error(`Failed to fetch image: ${response.status} ${response.statusText}`);
       return null;
     }
-    
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('image')) {
-      console.warn(`Response is not an image (${contentType}) for URL: ${url}`);
-    }
-    
     const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
-    console.log(`Successfully fetched image (${buffer.length} bytes) from: ${url}`);
-    return buffer;
+    return Buffer.from(arrayBuffer);
   } catch (error) {
-    // Check for abort error (timeout)
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.error(`Timeout fetching image after 10 seconds: ${url}`);
-    } else {
-      console.error('Error fetching image:', error, 'URL:', url);
-    }
+    console.error('Error fetching image:', error);
     return null;
   }
 }
@@ -101,12 +65,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     apiVersion: '2023-10-16' as any,
   });
   // Set up session middleware for cart management
-  const MemoryStore = createMemoryStore(expressSession);
-  app.use(expressSession({
+  const MemoryStoreSession = MemoryStore(session);
+  app.use(session({
     secret: 'trueaminos-secret-key',
     resave: false,
     saveUninitialized: true,
-    store: new MemoryStore({
+    store: new MemoryStoreSession({
       checkPeriod: 86400000 // prune expired entries every 24h
     }),
     cookie: { 
@@ -119,48 +83,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/image-proxy", async (req: Request, res: Response) => {
     try {
       const imageUrl = req.query.url as string;
-      const requestId = Math.random().toString(36).substring(2, 10); // Generate a unique ID for this request for logging
       
       if (!imageUrl) {
-        console.error(`[${requestId}] Image proxy: Missing URL parameter`);
         return res.status(400).json({ message: "Missing image URL parameter" });
       }
       
       // Validate URL to ensure it's from Airtable (security measure)
       if (!imageUrl.includes('airtableusercontent.com')) {
-        console.error(`[${requestId}] Image proxy: Invalid source - ${imageUrl}`);
         return res.status(403).json({ message: "Invalid image source" });
       }
       
-      console.log(`[${requestId}] Proxying image: ${imageUrl}`);
+      console.log("Proxying image:", imageUrl);
       const imageBuffer = await proxyImage(imageUrl);
       
       if (!imageBuffer) {
-        console.error(`[${requestId}] Image proxy: Failed to fetch image - ${imageUrl}`);
         return res.status(404).json({ message: "Failed to fetch image" });
-      }
-      
-      // Determine content type from original URL or default to PNG
-      let contentType = 'image/png';
-      
-      if (imageUrl.endsWith('.jpg') || imageUrl.endsWith('.jpeg')) {
-        contentType = 'image/jpeg';
-      } else if (imageUrl.endsWith('.gif')) {
-        contentType = 'image/gif';
-      } else if (imageUrl.endsWith('.webp')) {
-        contentType = 'image/webp';
-      } else if (imageUrl.endsWith('.pdf')) {
-        contentType = 'application/pdf';
       }
       
       // Set appropriate headers
       res.set({
         'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
-        'Content-Type': contentType,
-        'X-Proxy-Request-ID': requestId
+        'Content-Type': 'image/png', // Default to PNG
       });
-      
-      console.log(`[${requestId}] Successfully served image (${imageBuffer.length} bytes) as ${contentType}`);
       
       // Send the image data
       res.send(imageBuffer);
@@ -289,13 +233,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/cart", async (req: Request, res: Response) => {
     try {
-      if (!req.session || !req.session.id) {
-        console.error('Session is not properly initialized when adding to cart');
-        return res.status(500).json({ message: "Session error" });
-      }
-      
-      console.log('Adding to cart for session:', req.session.id);
-      
       // Validate request body
       const validationResult = insertCartItemSchema
         .omit({ id: true })
@@ -305,7 +242,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       
       if (!validationResult.success) {
-        console.error('Cart validation error:', validationResult.error.errors);
         return res.status(400).json({ 
           message: "Invalid request body",
           errors: validationResult.error.errors
@@ -313,27 +249,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const cartItem = validationResult.data;
-      console.log('Validated cart item:', { productId: cartItem.productId, quantity: cartItem.quantity, selectedWeight: cartItem.selectedWeight });
       
       // Check if product exists
       const product = await storage.getProductById(cartItem.productId);
       if (!product) {
-        console.error(`Product not found: ${cartItem.productId}`);
         return res.status(404).json({ message: "Product not found" });
       }
       
       // Add to cart
       const addedItem = await storage.addToCart(cartItem);
-      console.log('Item added to cart successfully:', addedItem.id);
       
       // Get updated cart
       const updatedCart = await storage.getCartItems(req.session.id);
       const itemCount = updatedCart.reduce((sum, item) => sum + item.quantity, 0);
       const subtotal = updatedCart.reduce((sum, item) => sum + getPriceByWeight(item.product, item.selectedWeight) * item.quantity, 0);
       
-      console.log(`Cart updated: ${itemCount} items, subtotal: ${subtotal}`);
-      
-      return res.status(201).json({
+      res.status(201).json({
         addedItem,
         cart: {
           items: updatedCart,
@@ -343,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error adding to cart:", error);
-      return res.status(500).json({ message: "Failed to add item to cart" });
+      res.status(500).json({ message: "Failed to add item to cart" });
     }
   });
 
@@ -428,35 +359,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Use our throttling utility
-  
   app.delete("/api/cart", async (req: Request, res: Response) => {
     try {
-      if (!req.session || !req.session.id) {
-        return res.status(400).json({ message: "Invalid session" });
-      }
-      
-      const sessionId = req.session.id;
-      const throttleKey = `cart_clear_${sessionId}`;
-      
-      // Throttle cart clearing requests to once per second per session
-      if (shouldThrottle(throttleKey, 1000)) {
-        console.log(`Throttling cart clear request for session ${sessionId}`);
-        return res.json({ 
-          success: true, 
-          throttled: true,
-          cart: {
-            items: [],
-            itemCount: 0,
-            subtotal: 0
-          }
-        });
-      }
-      
-      console.log(`Processing cart clear request for session ${sessionId}`);
-      
       // Clear cart
-      await storage.clearCart(sessionId);
+      await storage.clearCart(req.session.id);
       
       res.json({
         success: true,
@@ -549,17 +455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create Payment Intent API
   app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
     try {
-      if (!req.session || !req.session.id) {
-        console.error('Session is not properly initialized');
-        return res.status(500).json({ message: "Session error" });
-      }
-
       const sessionId = req.session.id;
-      console.log('Creating payment intent for session:', sessionId);
-      
-      // Get cart items
       const cartItems = await storage.getCartItems(sessionId);
-      console.log(`Cart has ${cartItems.length} items`);
       
       if (cartItems.length === 0) {
         return res.status(400).json({ message: "Your cart is empty" });
@@ -575,17 +472,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount = parseFloat(req.body.amount);
       }
       
-      if (isNaN(amount) || amount <= 0) {
-        console.error('Invalid amount:', amount);
-        return res.status(400).json({ message: "Invalid order amount" });
-      }
-
-      console.log('Calculated amount for payment intent:', amount);
-      
       // Create description containing the items ordered
       const description = `Order from TrueAminos: ${cartItems.map(item => 
         `${item.product.name} (${item.selectedWeight || ''}) x${item.quantity}`
       ).join(', ')}`;
+      
+      console.log('Creating payment intent for amount:', amount);
       
       // Extract customer data from request body if available
       const {
@@ -627,19 +519,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shipping: shipping_method || 'standard'
       };
       
-      try {
-        // Store this compact order summary - keep it under 500 chars
-        const orderSummaryString = JSON.stringify(orderSummary);
-        if (orderSummaryString.length < 500) {
-          params.metadata.orderSummary = orderSummaryString;
-        } else {
-          console.warn('Order summary too long, truncating');
-          params.metadata.orderSummary = orderSummaryString.substring(0, 490) + '...';
-        }
-      } catch (err) {
-        console.error('Error stringifying order summary:', err);
-        // Continue without order summary
-      }
+      // Store this compact order summary
+      params.metadata.orderSummary = JSON.stringify(orderSummary);
       
       // Add customer info to metadata if provided
       if (firstName || lastName) {
@@ -677,95 +558,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log('Creating Stripe payment intent with params:', JSON.stringify({
-        amount: params.amount,
-        currency: params.currency,
-        shipping_method: params.metadata.shipping_method,
-        customer_name: params.metadata.customer_name
-      }));
+      // Create the payment intent
+      const paymentIntent = await stripe.paymentIntents.create(params);
       
-      try {
-        // Create the payment intent
-        const paymentIntent = await stripe.paymentIntents.create(params);
-        console.log('Payment intent created successfully:', paymentIntent.id);
-        
-        // Save the payment intent ID to the session
-        req.session.paymentIntentId = paymentIntent.id;
-        
-        // Send details to client
-        res.json({
-          clientSecret: paymentIntent.client_secret,
-          amount: amount,
-          itemCount: cartItems.length
-        });
-      } catch (stripeError: any) {
-        console.error('Stripe API error creating payment intent:', stripeError);
-        
-        // Provide more detailed logging for Stripe errors
-        console.error('Stripe error details:', {
-          type: stripeError.type,
-          code: stripeError.code,
-          decline_code: stripeError.decline_code,
-          param: stripeError.param,
-          message: stripeError.message
-        });
-        
-        res.status(400).json({ 
-          message: "Failed to create payment with Stripe", 
-          error: stripeError.message || "Unknown Stripe error"
-        });
-      }
-    } catch (error: any) {
-      console.error('Error in payment intent creation route:', error);
+      // Save the payment intent ID to the session
+      req.session.paymentIntentId = paymentIntent.id;
       
-      // Log the detailed error to make debugging easier
-      try {
-        console.error('Error details:', JSON.stringify({
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        }, null, 2));
-      } catch (e) {
-        console.error('Could not stringify error:', e);
-      }
-      
-      res.status(500).json({ 
-        message: "Server error creating payment intent", 
-        error: error.message || "Unknown error occurred"
+      // Send details to client
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        amount: amount,
+        itemCount: cartItems.length
       });
-    }
-  });
-  
-  // Endpoint for recording successful payment from the success page (backup to webhook)
-  app.post("/api/record-payment-success", async (req: Request, res: Response) => {
-    try {
-      const { paymentIntentId } = req.body;
-      
-      if (!paymentIntentId) {
-        return res.status(400).json({ message: "No payment intent ID provided" });
-      }
-      
-      console.log(`🔄 Manual recording of payment from success page: ${paymentIntentId}`);
-      
-      // Retrieve payment intent from Stripe
-      try {
-        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        
-        if (paymentIntent.status === 'succeeded') {
-          await processPaymentSuccess(paymentIntent);
-          return res.status(200).json({ success: true, message: "Order recorded successfully" });
-        } else {
-          console.log(`Payment status is not succeeded: ${paymentIntent.status}`);
-          return res.status(400).json({ success: false, message: `Payment not succeeded: ${paymentIntent.status}` });
-        }
-      } catch (error) {
-        console.error(`Error retrieving payment intent ${paymentIntentId}:`, error);
-        return res.status(500).json({ success: false, message: "Error retrieving payment intent" });
-      }
     } catch (error: any) {
-      console.error('Error recording payment success:', error);
+      console.error('Error creating payment intent:', error);
       res.status(500).json({ 
-        message: "Error recording payment success", 
+        message: "Error creating payment intent", 
         error: error.message 
       });
     }

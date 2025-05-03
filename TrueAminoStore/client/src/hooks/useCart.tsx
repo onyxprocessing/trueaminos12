@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { apiRequest } from '@/lib/queryClient'
 import { queryClient } from '@/lib/queryClient'
-import { CartItemWithProduct, CartItem } from '@shared/schema'
+import { CartItemWithProduct } from '@shared/schema'
 
 interface CartApiResponse {
   addedItem?: any;
@@ -164,27 +164,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  // Add a flag to prevent multiple calls
-  const [isClearing, setIsClearing] = useState(false)
-  
   const clearCart = async () => {
-    // If already in the process of clearing, skip this call
-    if (isClearing) {
-      console.log('Cart is already being cleared, skipping this call')
-      return
-    }
-    
-    // If the cart is already empty, don't make the API call
-    if (items.length === 0) {
-      console.log('Cart is already empty, skipping clear call')
-      return
-    }
-    
     try {
-      setIsClearing(true)
       setIsLoading(true)
-      
-      console.log('Clearing cart via API')
       await apiRequest<{
         success: boolean;
       }>('/api/cart', {
@@ -206,10 +188,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     } finally {
       setIsLoading(false)
-      // Reset the flag after a delay to prevent race conditions
-      setTimeout(() => {
-        setIsClearing(false)
-      }, 1000)
     }
   }
 
