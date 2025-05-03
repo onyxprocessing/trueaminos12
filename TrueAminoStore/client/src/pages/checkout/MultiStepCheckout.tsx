@@ -294,13 +294,28 @@ const MultiStepCheckout: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setOrderIds(data.orderIds || []);
-        setCurrentStep('confirmation');
+        
+        // Clear the cart
         cart.clearCart();
-        toast({
-          title: 'Order Confirmed',
-          description: 'Your order has been placed successfully',
+        
+        // Store order data for success page
+        const orderParams = new URLSearchParams({
+          amount: paymentAmount.toString(),
+          payment_method: paymentMethod,
+          order_ids: (data.orderIds || []).join(','),
+          shipping_method: shippingMethod
         });
+        
+        // Store checkout information in sessionStorage for the success page
+        sessionStorage.setItem('checkout_first_name', firstName);
+        sessionStorage.setItem('checkout_last_name', lastName);
+        sessionStorage.setItem('checkout_address', address);
+        sessionStorage.setItem('checkout_city', city);
+        sessionStorage.setItem('checkout_state', state);
+        sessionStorage.setItem('checkout_zip', zipCode);
+        
+        // Navigate to the success page with the order data
+        navigate(`/checkout/confirmation?${orderParams.toString()}`);
       } else {
         const errorData = await response.json();
         toast({
@@ -771,13 +786,28 @@ const MultiStepCheckout: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setOrderIds(data.orderIds || []);
-        setCurrentStep('confirmation');
+        
+        // Clear the cart
         cart.clearCart();
-        toast({
-          title: 'Payment Successful',
-          description: 'Your order has been placed successfully',
+        
+        // Store order data for success page
+        const orderParams = new URLSearchParams({
+          amount: paymentAmount.toString(),
+          payment_method: 'card',
+          order_ids: (data.orderIds || []).join(','),
+          shipping_method: shippingMethod
         });
+        
+        // Store checkout information in sessionStorage for the success page
+        sessionStorage.setItem('checkout_first_name', firstName);
+        sessionStorage.setItem('checkout_last_name', lastName);
+        sessionStorage.setItem('checkout_address', address);
+        sessionStorage.setItem('checkout_city', city);
+        sessionStorage.setItem('checkout_state', state);
+        sessionStorage.setItem('checkout_zip', zipCode);
+        
+        // Navigate to the success page with the order data
+        navigate(`/checkout/confirmation?${orderParams.toString()}`);
       } else {
         const errorData = await response.json();
         toast({
