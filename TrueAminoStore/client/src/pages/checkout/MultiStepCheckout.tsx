@@ -354,7 +354,7 @@ const MultiStepCheckout: React.FC = () => {
                     </p>
                   </div>
                   <p className="font-medium">
-                    ${(parseFloat(item.product[`price${item.selectedWeight}`] || item.product.price) * item.quantity).toFixed(2)}
+                    ${(getProductPrice(item.product, item.selectedWeight) * item.quantity).toFixed(2)}
                   </p>
                 </div>
               </li>

@@ -19,7 +19,7 @@ interface OrderData {
   state: string;
   zip: string;
   mg?: string;
-  salesPrice: number;
+  salesPrice: string | number; // Allow either string or number for flexibility
   quantity: number;
   productId: number;
   shipping: string;

@@ -59,8 +59,8 @@ export async function createOrderWithPaymentMethod(
         productName: item.product.name,
         quantity: item.quantity,
         selectedWeight: item.selectedWeight || '',
-        // Convert to string for database storage (numeric fields are stored as strings)
-        salesPrice: String(getPriceByWeight(item.product, item.selectedWeight)),
+        // Store as numeric for database (PostgreSQL numeric type)
+        salesPrice: getPriceByWeight(item.product, item.selectedWeight),
         shipping: customer.shipping,
         paymentMethod,
         paymentIntentId: paymentDetails?.id || '',
