@@ -65,7 +65,7 @@ export const orders = pgTable("orders", {
   productName: text("product_name").notNull(),
   quantity: integer("quantity").notNull(),
   selectedWeight: text("selected_weight"),
-  salesPrice: numeric("sales_price").notNull(),
+  salesPrice: numeric("sales_price", { precision: 10, scale: 2 }).notNull(),
   shipping: text("shipping").notNull(),
   paymentMethod: text("payment_method").notNull().default("card"), // card, bank, crypto
   paymentIntentId: text("payment_intent_id"), // Only needed for card payments

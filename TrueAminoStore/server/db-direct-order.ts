@@ -4,6 +4,8 @@
  */
 import { db } from './db';
 import { orders, InsertOrder, Order } from '@shared/schema';
+// Import Drizzle transformers for type safety
+import { eq } from 'drizzle-orm';
 import { getCustomerBySessionId } from './db-customer';
 import { storage } from './storage';
 import { createOrderInAirtable } from './airtable-orders';
@@ -82,7 +84,7 @@ export async function createOrderWithPaymentMethod(
         state: customer.state,
         zip: customer.zip,
         mg: item.selectedWeight || '',
-        salesPrice: parseFloat(getPriceByWeight(item.product, item.selectedWeight).toString()),
+        salesPrice: getPriceByWeight(item.product, item.selectedWeight),
         quantity: item.quantity,
         productId: item.productId,
         shipping: customer.shipping,
