@@ -640,9 +640,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create description containing the items ordered
-      const description = `Order from TrueAminos: ${cartItems.map(item => 
-        `${item.product.name} (${item.selectedWeight || ''}) x${item.quantity}`
-      ).join(', ')}`;
+      const description = `Order from TrueAminos: ${cartItems.map(item => {
+        // Handle both formats: from session storage or direct API request
+        const productName = item.product?.name || item.name || 'Product';
+        const weight = item.selectedWeight || item.weight || '';
+        const quantity = item.quantity || item.qty || 1;
+        return `${productName} (${weight}) x${quantity}`;
+      }).join(', ')}`;
       
       console.log(`  Creating payment intent for amount: $${amount.toFixed(2)}`);
       console.log(`  Description: ${description.substring(0, 50)}${description.length > 50 ? '...' : ''}`);
@@ -682,13 +686,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orderSummary = {
         customer: `${firstName || ''} ${lastName || ''}`.trim(),
         email: email || '',
-        items: cartItems.map(item => ({
-          id: item.product.id,
-          name: item.product.name.substring(0, 20), // Limit name length
-          qty: item.quantity,
-          weight: item.selectedWeight || null
-        })),
-        shipping: shipping_method || 'standard'
+        items: cartItems.map(item => {
+          // Handle both formats: from session storage or direct API request
+          const productId = item.product?.id || item.id;
+          const productName = item.product?.name || item.name || 'Product';
+          const weight = item.selectedWeight || item.weight || '';
+          const quantity = item.quantity || item.qty || 1;
+          
+          return {
+            id: productId,
+            name: productName.substring(0, 20), // Limit name length
+            qty: quantity,
+            weight: weight
+          };
+        }),
+        shipping: shipping_method || req.body.shipping || 'standard'
       };
       
       // Store this compact order summary
