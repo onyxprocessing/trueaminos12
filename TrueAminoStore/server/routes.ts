@@ -572,6 +572,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('Error creating payment intent:', error);
+      // Log the detailed error to make debugging easier
+      console.error('Stripe error details:', JSON.stringify({
+        type: error.type,
+        code: error.code,
+        param: error.param,
+        message: error.message,
+        stack: error.stack
+      }, null, 2));
+      
       res.status(500).json({ 
         message: "Error creating payment intent", 
         error: error.message 
