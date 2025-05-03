@@ -241,6 +241,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/cart", async (req: Request, res: Response) => {
     try {
+      if (!req.session || !req.session.id) {
+        console.error('Session is not properly initialized when adding to cart');
+        return res.status(500).json({ message: "Session error" });
+      }
+      
+      console.log('Adding to cart for session:', req.session.id);
+      
       // Validate request body
       const validationResult = insertCartItemSchema
         .omit({ id: true })
@@ -250,6 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       
       if (!validationResult.success) {
+        console.error('Cart validation error:', validationResult.error.errors);
         return res.status(400).json({ 
           message: "Invalid request body",
           errors: validationResult.error.errors
@@ -257,22 +265,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const cartItem = validationResult.data;
+      console.log('Validated cart item:', { productId: cartItem.productId, quantity: cartItem.quantity, selectedWeight: cartItem.selectedWeight });
       
       // Check if product exists
       const product = await storage.getProductById(cartItem.productId);
       if (!product) {
+        console.error(`Product not found: ${cartItem.productId}`);
         return res.status(404).json({ message: "Product not found" });
       }
       
       // Add to cart
       const addedItem = await storage.addToCart(cartItem);
+      console.log('Item added to cart successfully:', addedItem.id);
       
       // Get updated cart
       const updatedCart = await storage.getCartItems(req.session.id);
       const itemCount = updatedCart.reduce((sum, item) => sum + item.quantity, 0);
       const subtotal = updatedCart.reduce((sum, item) => sum + getPriceByWeight(item.product, item.selectedWeight) * item.quantity, 0);
       
-      res.status(201).json({
+      console.log(`Cart updated: ${itemCount} items, subtotal: ${subtotal}`);
+      
+      return res.status(201).json({
         addedItem,
         cart: {
           items: updatedCart,
@@ -282,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error adding to cart:", error);
-      res.status(500).json({ message: "Failed to add item to cart" });
+      return res.status(500).json({ message: "Failed to add item to cart" });
     }
   });
 
