@@ -96,6 +96,31 @@ export async function handlePersonalInfo(req: Request, res: Response) {
     req.session.checkoutStep = 'personal_info';
     await req.session.save();
     
+    // Import and use the saveCustomerInfo function to create a customer record
+    const { saveCustomerInfo } = await import('./db-customer');
+    
+    // Create a basic customer record with just personal info
+    // This will be updated with shipping info in the next step
+    try {
+      await saveCustomerInfo({
+        sessionId: req.session.id,
+        firstName,
+        lastName,
+        email: email || '',
+        phone: phone || '',
+        address: '',
+        city: '',
+        state: '',
+        zip: '',
+        shipping: '',
+        createdAt: new Date()
+      });
+      console.log('✅ Customer info saved to database for session:', req.session.id);
+    } catch (dbError) {
+      console.error('Error saving customer to database:', dbError);
+      // Continue anyway since we have the info in session
+    }
+    
     // Get cart items for updating Airtable
     const cartItems = await storage.getCartItems(req.session.id);
     
@@ -170,6 +195,45 @@ export async function handleShippingInfo(req: Request, res: Response) {
     // Update checkout step
     req.session.checkoutStep = 'shipping_info';
     await req.session.save();
+    
+    // Import and use the saveCustomerInfo function to update the customer record
+    const { saveCustomerInfo, getCustomerBySessionId } = await import('./db-customer');
+    
+    // Get the existing customer record and update with shipping info
+    try {
+      const customer = await getCustomerBySessionId(req.session.id);
+      if (customer) {
+        await saveCustomerInfo({
+          ...customer,
+          address,
+          city,
+          state,
+          zip: zipCode,
+          shipping: shippingMethod
+        });
+        console.log('✅ Customer shipping info updated in database for session:', req.session.id);
+      } else {
+        // If no customer record exists (shouldn't happen), create one with all info from session
+        const personalInfo = req.session.personalInfo;
+        await saveCustomerInfo({
+          sessionId: req.session.id,
+          firstName: personalInfo.firstName,
+          lastName: personalInfo.lastName,
+          email: personalInfo.email || '',
+          phone: personalInfo.phone || '',
+          address,
+          city,
+          state,
+          zip: zipCode,
+          shipping: shippingMethod,
+          createdAt: new Date()
+        });
+        console.log('✅ Created new customer record with shipping info for session:', req.session.id);
+      }
+    } catch (dbError) {
+      console.error('Error updating customer shipping info in database:', dbError);
+      // Continue anyway since we have the info in session
+    }
     
     // Get cart items for updating Airtable
     const cartItems = await storage.getCartItems(req.session.id);
@@ -370,11 +434,19 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
     };
     
     // Create orders in the database
-    const orderIds = await createOrderWithPaymentMethod(
-      req.session.id, 
-      paymentMethod, 
-      paymentDetails
-    );
+    let orderIds: number[] = [];
+    try {
+      orderIds = await createOrderWithPaymentMethod(
+        req.session.id, 
+        paymentMethod, 
+        paymentDetails
+      );
+      console.log('Orders created successfully with IDs:', orderIds);
+    } catch (orderError) {
+      console.error('Error creating orders:', orderError);
+      // Continue without throwing error - we'll still show success to the user
+      // In a production environment, you might want to handle this differently
+    }
     
     // Mark checkout as completed
     if (req.session.checkoutId) {

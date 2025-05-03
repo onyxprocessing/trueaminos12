@@ -80,11 +80,15 @@ export async function createCheckoutInAirtable(sessionId: string): Promise<strin
       },
       body: JSON.stringify({
         fields: {
-          // Use correct Airtable field names - lowercased and with spaces
+          // Use correct Airtable field names - lowercased and without spaces
           "checkoutid": checkoutData.checkoutId,
           "session id": checkoutData.sessionId,  // Correct field name with space
           "status": checkoutData.status,
-          "createdat": checkoutData.createdAt  // Removed space in field name
+          "createdat": checkoutData.createdAt,  // Removed space in field name
+          "firstname": "",
+          "lastname": "",
+          "email": "",
+          "phone": ""
         }
       })
     });
@@ -191,7 +195,7 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
       console.log('Setting status:', updateData.status);
     }
     if (updateData.totalAmount) {
-      fields["totalamount"] = updateData.totalAmount;
+      fields["total"] = updateData.totalAmount;
       console.log('Setting totalAmount:', updateData.totalAmount);
     }
     
