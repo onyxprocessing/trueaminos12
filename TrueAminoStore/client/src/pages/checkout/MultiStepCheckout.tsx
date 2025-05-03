@@ -16,7 +16,7 @@ import {
 import { apiRequest } from '@/lib/api-client';
 import { Separator } from '@/components/ui/separator';
 import { US_STATES } from '@/lib/constants';
-// Removed toast import to disable notifications
+import { useToast } from '@/hooks/empty-toast'; // Using silent toast implementation
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
@@ -36,8 +36,7 @@ const CHECKOUT_STEPS = [
 const MultiStepCheckout: React.FC = () => {
   const [, navigate] = useLocation();
   const cart = useCart();
-  // Toast notifications completely disabled
-  const toast = (_options: any) => {}; // Empty function that accepts but ignores arguments
+  const { toast } = useToast(); // Using silent toast implementation
   
   // State for checkout steps
   const [currentStep, setCurrentStep] = useState('personal_info');
