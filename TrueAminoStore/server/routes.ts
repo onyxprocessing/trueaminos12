@@ -601,6 +601,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await handlePaymentConfirmation(req, res);
   });
   
+  // FedEx address validation endpoint
+  app.post('/api/validate-address', async (req: Request, res: Response) => {
+    try {
+      const { validateAddress } = await import('./fedex-address-validation');
+      
+      const { 
+        streetLine1, 
+        streetLine2, 
+        city, 
+        state, 
+        zipCode, 
+        country = 'US' 
+      } = req.body;
+      
+      // Validate address using FedEx API
+      const validationResult = await validateAddress({
+        streetLine1,
+        streetLine2,
+        city,
+        state,
+        zipCode,
+        country
+      });
+      
+      if (!validationResult) {
+        return res.status(500).json({ 
+          success: false, 
+          message: "Address validation service unavailable" 
+        });
+      }
+      
+      res.json({
+        success: true,
+        validation: validationResult
+      });
+    } catch (error: any) {
+      console.error('Error validating address:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: `Error validating address: ${error.message}` 
+      });
+    }
+  });
+
   // Start checkout process and get ID
   app.post('/api/checkout/initialize', async (req: Request, res: Response) => {
     try {
