@@ -1,5 +1,6 @@
 import { CartItemWithProduct } from "@shared/schema";
 import fetch from 'node-fetch';
+import { sendOrderConfirmationEmail } from './email-service';
 
 // Airtable API key from environment variable
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
@@ -10,7 +11,7 @@ const AIRTABLE_BASE_ID = "app3XDDBbU0ZZDBiY";
 const ORDERS_TABLE_ID = "tblI5N0Xn65DB5L5s";
 
 // Define interface for order data to be stored in Airtable
-interface OrderData {
+export interface OrderData {
   orderId: string;
   firstName: string;
   lastName: string;
@@ -129,6 +130,9 @@ export async function createOrdersFromCart(
   const orderIds: string[] = [];
   const orderId = generateUniqueOrderId(); // Generate one unique order ID for all items
   
+  // Store the first order for sending confirmation email
+  let firstOrderData: OrderData | null = null;
+  
   for (const item of cartItems) {
     try {
       const orderData: OrderData = {
@@ -151,6 +155,11 @@ export async function createOrdersFromCart(
         affiliateCode: ''
       };
       
+      // Save first order data for email confirmation
+      if (!firstOrderData) {
+        firstOrderData = orderData;
+      }
+      
       const recordId = await createOrderInAirtable(orderData);
       if (recordId) {
         orderIds.push(recordId);
@@ -158,6 +167,18 @@ export async function createOrdersFromCart(
     } catch (error) {
       console.error(`Error creating order for item ${item.product.id}:`, error);
     }
+  }
+  
+  // Send confirmation email if we have a valid order and customer email
+  if (firstOrderData && firstOrderData.email) {
+    try {
+      console.log(`Sending order confirmation email to ${firstOrderData.email} for order ${firstOrderData.orderId}`);
+      await sendOrderConfirmationEmail(firstOrderData);
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+    }
+  } else if (firstOrderData) {
+    console.log(`Cannot send confirmation email for order ${firstOrderData.orderId} - no email address provided`);
   }
   
   return orderIds;
@@ -294,6 +315,9 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
         }
       }
       
+      // Store first order data for email confirmation
+      let firstOrderData: OrderData | null = null;
+      
       if (products && products.length > 0) {
         // Create one record for each product in the order
         for (const product of products) {
@@ -317,6 +341,11 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
             payment: paymentDetails,
             affiliateCode: paymentIntent.metadata.affiliate_code || '' // Will be logged but not sent
           };
+          
+          // Save the first order data for email confirmation
+          if (!firstOrderData) {
+            firstOrderData = orderData;
+          }
           
           await createOrderInAirtable(orderData);
           console.log(`Order record created for product ${product.name} (${product.id})`);
@@ -343,8 +372,22 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
           affiliateCode: paymentIntent.metadata.affiliate_code || '' // Will be logged but not sent
         };
         
+        firstOrderData = orderData;
+        
         await createOrderInAirtable(orderData);
         console.log('Order record created with general payment data');
+      }
+      
+      // Send confirmation email if we have a valid order and customer email
+      if (firstOrderData && firstOrderData.email) {
+        try {
+          console.log(`Sending order confirmation email to ${firstOrderData.email} for order ${firstOrderData.orderId}`);
+          await sendOrderConfirmationEmail(firstOrderData);
+        } catch (error) {
+          console.error('Error sending confirmation email:', error);
+        }
+      } else if (firstOrderData) {
+        console.log(`Cannot send confirmation email for order ${firstOrderData.orderId} - no email address provided`);
       }
       
       console.log('Order recorded successfully for payment:', paymentIntent.id);
