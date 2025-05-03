@@ -38,21 +38,7 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
   return parseFloat(product.price);
 }
 
-// Helper function to proxy image requests to avoid CORS issues
-async function proxyImage(url: string): Promise<Buffer | null> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-      return null;
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } catch (error) {
-    console.error('Error fetching image:', error);
-    return null;
-  }
-}
+// Helper function removed - directly using fetch in the endpoint
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Stripe
@@ -135,21 +121,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Invalid image source" });
       }
       
-      console.log("Proxying image:", imageUrl);
-      const imageBuffer = await proxyImage(imageUrl);
+      console.log("Proxying image:", imageUrl.substring(0, 100) + '...');
       
-      if (!imageBuffer) {
-        return res.status(404).json({ message: "Failed to fetch image" });
+      try {
+        // Use node-fetch directly for more control
+        const fetchResponse = await fetch(imageUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          },
+        });
+        
+        if (!fetchResponse.ok) {
+          console.error(`Image fetch failed with status: ${fetchResponse.status}`);
+          return res.status(fetchResponse.status).json({ 
+            message: `Failed to fetch image: ${fetchResponse.statusText}` 
+          });
+        }
+        
+        // Get the image data
+        const imageBuffer = await fetchResponse.arrayBuffer();
+        
+        // Get content type from response or use a default
+        const contentType = fetchResponse.headers.get('content-type') || 'image/jpeg';
+        
+        // Set appropriate headers
+        res.set({
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+          'Content-Type': contentType,
+        });
+        
+        // Send the image data
+        res.send(Buffer.from(imageBuffer));
+      } catch (fetchError) {
+        console.error("Error fetching image:", fetchError);
+        return res.status(500).json({ message: "Failed to fetch image from source" });
       }
-      
-      // Set appropriate headers
-      res.set({
-        'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
-        'Content-Type': 'image/png', // Default to PNG
-      });
-      
-      // Send the image data
-      res.send(imageBuffer);
     } catch (error) {
       console.error("Image proxy error:", error);
       res.status(500).json({ message: "Failed to proxy image" });
