@@ -52,7 +52,7 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
         "order id": orderData.orderId,
         "product": orderData.product || '',
         "saleprice": orderData.salesPrice,
-        "productid": orderData.productId,
+        "productid": String(orderData.productId || ''),
         "first name": orderData.firstName,
         "last name": orderData.lastName,
         "address": orderData.address,
@@ -299,7 +299,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
             phone: customerData.phone,
             salesPrice: product.price || 0,
             quantity: product.quantity || 1,
-            productId: product.id || 0,
+            productId: parseInt(String(product.id)) || 0,
             mg: product.weight || '',
             shipping: shippingMethod,
             payment: paymentDetails
