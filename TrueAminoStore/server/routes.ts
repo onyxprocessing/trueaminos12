@@ -1043,37 +1043,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       syncCompleted: false
     };
     
-    // 1. Record the order in Airtable and Database
+    // 1. Record the order in Database first, then Airtable
     try {
-      // Store in Airtable
-      console.log(`📝 Storing order in Airtable for payment: ${paymentIntent.id}`);
-      const successAirtable = await recordPaymentToAirtable(paymentIntent);
-      if (successAirtable) {
-        console.log(`✅ Order recorded in Airtable for payment: ${paymentIntent.id}`);
-        results.airtable = true;
-      } else {
-        console.error(`❌ Failed to record order in Airtable for payment: ${paymentIntent.id}`);
-      }
-      
-      // Always do a Stripe sync for every successful payment to make sure all orders are recorded
-      // This ensures we get the order in Airtable even if the direct recording failed
-      console.log(`🔄 Performing Stripe sync for payment: ${paymentIntent.id}`);
-      
-      try {
-        // Import dynamically to avoid circular dependencies
-        const { syncOrdersFromStripe } = await import('./stripe-sync');
-        
-        // Sync orders from the last hour to make sure we get this one
-        const oneHourAgo = Math.floor(Date.now() / 1000) - (60 * 60);
-        
-        const syncResult = await syncOrdersFromStripe(oneHourAgo);
-        console.log(`🔄 Immediate Stripe sync completed for new order: ${syncResult.savedToAirtable} orders saved to Airtable`);
-        results.syncCompleted = syncResult.success;
-      } catch (syncError) {
-        console.error(`❌ Failed to run immediate Stripe sync for new order:`, syncError);
-      }
-      
-      // Store in Database with extended debugging
+      // First store in Database
       console.log(`📝 Storing order in Database for payment: ${paymentIntent.id}`);
       try {
         const successDatabase = await recordPaymentToDatabase(paymentIntent);
@@ -1112,6 +1084,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (dbError) {
         console.error(`❌ Exception in Database order recording:`, dbError);
+      }
+      
+      // Then store in Airtable (but only if database succeeded)
+      if (results.database) {
+        console.log(`📝 Storing order in Airtable for payment: ${paymentIntent.id}`);
+        const successAirtable = await recordPaymentToAirtable(paymentIntent);
+        if (successAirtable) {
+          console.log(`✅ Order recorded in Airtable for payment: ${paymentIntent.id}`);
+          results.airtable = true;
+        } else {
+          console.error(`❌ Failed to record order in Airtable for payment: ${paymentIntent.id}`);
+        }
+      } else {
+        console.log(`⚠️ Skipping Airtable storage since database storage failed`);
       }
     } catch (error) {
       console.error(`Error recording order for payment ${paymentIntent.id}:`, error);
