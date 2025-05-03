@@ -36,13 +36,8 @@ const CHECKOUT_STEPS = [
 const MultiStepCheckout: React.FC = () => {
   const [, navigate] = useLocation();
   const cart = useCart();
-  // Toast notifications disabled
-  const useToast = () => {
-    return {
-      toast: () => {}, // Empty function to replace toast functionality
-    };
-  };
-  const { toast } = useToast();
+  // Toast notifications completely disabled
+  const toast = (_options: any) => {}; // Empty function that accepts but ignores arguments
   
   // State for checkout steps
   const [currentStep, setCurrentStep] = useState('personal_info');
