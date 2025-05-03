@@ -10,7 +10,6 @@ import MemoryStore from 'memorystore';
 interface Request extends ExpressRequest {
   session: {
     id: string;
-    paymentIntentId?: string;
     cookie: any;
     regenerate: (callback: (err?: any) => void) => void;
     destroy: (callback: (err?: any) => void) => void;
