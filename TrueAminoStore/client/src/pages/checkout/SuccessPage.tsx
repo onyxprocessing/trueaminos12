@@ -275,15 +275,12 @@ const SuccessPageContent = () => {
 };
 
 // Wrapper component to provide Stripe context
-const SuccessPageWrapper = () => {
+const SuccessPage = () => {
   return (
     <Elements stripe={stripePromise}>
       <SuccessPageContent />
     </Elements>
   );
 };
-
-// Use the wrapper as our exported component
-const SuccessPage = SuccessPageWrapper;
 
 export default SuccessPage;
