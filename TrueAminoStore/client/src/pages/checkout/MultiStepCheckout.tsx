@@ -216,15 +216,34 @@ const MultiStepCheckout: React.FC = () => {
       return;
     }
     
+    // Optional warning if address hasn't been validated with FedEx
+    if (!useValidatedAddress && !isValidatingAddress) {
+      const confirmContinue = window.confirm(
+        'Your address has not been validated with FedEx. Validating your address helps ensure accurate delivery. Do you want to continue without validation?'
+      );
+      
+      if (!confirmContinue) {
+        // User chose to validate first
+        validateAddressWithFedEx();
+        return;
+      }
+    }
+    
     try {
       setIsLoading(true);
       
+      // Include validation status in the request
       const response = await apiRequest('POST', '/api/checkout/shipping-info', {
         address,
         city,
         state,
         zipCode,
         shippingMethod,
+        isAddressValidated: useValidatedAddress,
+        addressValidationDetails: addressValidation ? {
+          classification: addressValidation.validation?.classification || 'unknown',
+          suggestedAddress: addressValidation.validation?.suggestedAddress || null
+        } : null
       });
       
       if (response.ok) {
@@ -555,6 +574,10 @@ const MultiStepCheckout: React.FC = () => {
     const newZip = e.target.value;
     setZipCode(newZip);
     
+    // Reset validation states when ZIP changes
+    setAddressValidation(null);
+    setUseValidatedAddress(false);
+    
     // Import is inside the function to avoid issues with server-side rendering
     import('../../lib/address-lookup').then(({ lookupZipCode, validateZipCode }) => {
       // Only lookup if the ZIP is valid
@@ -569,6 +592,76 @@ const MultiStepCheckout: React.FC = () => {
     });
   };
   
+  // Function to validate address with FedEx API
+  const validateAddressWithFedEx = async () => {
+    if (!address || !city || !state || !zipCode) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill out all address fields before validating',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      setIsValidatingAddress(true);
+      setAddressValidation(null);
+      
+      // Import address validation function
+      const { validateAddressWithFedEx } = await import('../../lib/address-lookup');
+      
+      // Call the validation function
+      const validationResult = await validateAddressWithFedEx(address, city, state, zipCode);
+      
+      if (validationResult && validationResult.success) {
+        setAddressValidation(validationResult);
+        
+        // If there's a suggested address, we'll show it to the user
+        if (validationResult.validation?.suggestedAddress) {
+          setUseValidatedAddress(false); // User needs to explicitly choose to use it
+        } else if (validationResult.validation?.isValid) {
+          // If the address is valid as-is, we'll mark it as validated
+          setUseValidatedAddress(true);
+          toast({
+            title: 'Address Validated',
+            description: 'Your address has been validated successfully.',
+          });
+        }
+      } else {
+        toast({
+          title: 'Address Validation Failed',
+          description: validationResult?.message || 'Could not validate address. Please check your information.',
+          variant: 'destructive',
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Validation Error',
+        description: err.message || 'Could not validate address',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsValidatingAddress(false);
+    }
+  };
+  
+  // Function to apply the validated/suggested address
+  const applyValidatedAddress = () => {
+    if (addressValidation?.validation?.suggestedAddress) {
+      const suggested = addressValidation.validation.suggestedAddress;
+      setAddress(suggested.streetLines.join(', '));
+      setCity(suggested.city);
+      setState(suggested.state);
+      setZipCode(suggested.zipCode);
+      setUseValidatedAddress(true);
+      
+      toast({
+        title: 'Address Updated',
+        description: 'The suggested address has been applied.',
+      });
+    }
+  };
+  
   // Render shipping info form (Step 2)
   const renderShippingInfoForm = () => (
     <form onSubmit={handleShippingInfoSubmit} className="space-y-6">
@@ -576,15 +669,68 @@ const MultiStepCheckout: React.FC = () => {
       
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="address">Street Address *</Label>
-          <Input 
-            id="address" 
-            value={address} 
-            onChange={(e) => setAddress(e.target.value)} 
-            placeholder="123 Main Street, Apt #4"
-            required 
-          />
+          <div className="flex justify-between items-center">
+            <Label htmlFor="address">Street Address *</Label>
+            {useValidatedAddress && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
+                <Check className="h-3 w-3" /> Validated
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Input 
+              id="address" 
+              value={address} 
+              onChange={(e) => {
+                setAddress(e.target.value);
+                setAddressValidation(null);
+                setUseValidatedAddress(false);
+              }} 
+              placeholder="123 Main Street, Apt #4"
+              required 
+              className={useValidatedAddress ? "border-green-500" : ""}
+            />
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={validateAddressWithFedEx}
+              disabled={isValidatingAddress || !address || !city || !state || !zipCode}
+            >
+              {isValidatingAddress ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Validating...
+                </>
+              ) : (
+                'Validate'
+              )}
+            </Button>
+          </div>
         </div>
+        
+        {addressValidation && addressValidation.validation?.suggestedAddress && !useValidatedAddress && (
+          <Alert className="bg-blue-50 border-blue-200">
+            <AlertCircle className="h-4 w-4 text-blue-700" />
+            <AlertTitle className="text-blue-700">Suggested Address</AlertTitle>
+            <AlertDescription className="text-blue-700">
+              <p className="mb-2">We found a more accurate address:</p>
+              <p className="font-medium">
+                {addressValidation.validation.suggestedAddress.streetLines.join(', ')}, {' '}
+                {addressValidation.validation.suggestedAddress.city}, {' '}
+                {addressValidation.validation.suggestedAddress.state} {' '}
+                {addressValidation.validation.suggestedAddress.zipCode}
+              </p>
+              <Button 
+                type="button" 
+                size="sm" 
+                className="mt-2 bg-blue-700 hover:bg-blue-800"
+                onClick={applyValidatedAddress}
+              >
+                Use This Address
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -594,7 +740,7 @@ const MultiStepCheckout: React.FC = () => {
               value={zipCode} 
               onChange={handleZipCodeChange}
               placeholder="Enter ZIP code first"
-              className="font-mono"
+              className={`font-mono ${useValidatedAddress ? "border-green-500" : ""}`}
               required 
             />
             <span className="text-xs text-muted-foreground">
@@ -607,15 +753,28 @@ const MultiStepCheckout: React.FC = () => {
             <Input 
               id="city" 
               value={city} 
-              onChange={(e) => setCity(e.target.value)} 
+              onChange={(e) => {
+                setCity(e.target.value);
+                setAddressValidation(null);
+                setUseValidatedAddress(false);
+              }} 
+              className={useValidatedAddress ? "border-green-500" : ""}
               required 
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="state">State *</Label>
-            <Select value={state} onValueChange={setState} required>
-              <SelectTrigger id="state">
+            <Select 
+              value={state} 
+              onValueChange={(val) => {
+                setState(val);
+                setAddressValidation(null);
+                setUseValidatedAddress(false);
+              }}
+              required
+            >
+              <SelectTrigger id="state" className={useValidatedAddress ? "border-green-500" : ""}>
                 <SelectValue placeholder="Select state" />
               </SelectTrigger>
               <SelectContent>

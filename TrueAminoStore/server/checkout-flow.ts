@@ -205,12 +205,21 @@ export async function handleShippingInfo(req: Request, res: Response) {
       city,
       state,
       zipCode,
-      shippingMethod
+      shippingMethod,
+      isAddressValidated,
+      addressValidationDetails
     } = req.body;
     
     // Validate required fields
     if (!address || !city || !state || !zipCode || !shippingMethod) {
       return res.status(400).json({ message: "Missing required shipping fields" });
+    }
+    
+    // Log FedEx validation status
+    console.log('Address validation status:', isAddressValidated ? 'Validated' : 'Not validated');
+    if (addressValidationDetails) {
+      console.log('Address classification:', addressValidationDetails.classification);
+      console.log('Suggested address:', addressValidationDetails.suggestedAddress);
     }
     
     // Store in session for later use
@@ -297,7 +306,9 @@ export async function handleShippingInfo(req: Request, res: Response) {
       method: shippingMethod,
       price: selectedShipping.price,
       estimatedDelivery: selectedShipping.estimatedDelivery,
-      notes: `Shipping to ${address}, ${city}, ${state} ${zipCode}`
+      notes: `Shipping to ${address}, ${city}, ${state} ${zipCode}`,
+      addressValidated: isAddressValidated || false,
+      addressClassification: addressValidationDetails?.classification || 'unknown'
     };
     
     console.log('Shipping details:', JSON.stringify(shippingDetails, null, 2));

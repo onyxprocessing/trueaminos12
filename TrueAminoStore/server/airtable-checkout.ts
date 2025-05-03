@@ -24,6 +24,8 @@ export interface CheckoutData {
     price: number;
     estimatedDelivery?: string;
     notes?: string;
+    addressValidated?: boolean;
+    addressClassification?: string;
   };
   paymentDetails?: {
     method: string;
