@@ -6,6 +6,7 @@ import { useStripe, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { PaymentIntent as StripePaymentIntent } from '@stripe/stripe-js';
 import { useCart } from '../../hooks/useCart';
+import { apiRequest } from '../../lib/queryClient';
 
 // Extended PaymentIntent type that includes metadata
 interface PaymentIntent extends StripePaymentIntent {
@@ -40,6 +41,30 @@ const SuccessPageContent = () => {
   };
   
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [orderProcessed, setOrderProcessed] = useState(false);
+
+  // Function to manually trigger webhook processing on the server
+  async function triggerOrderProcessing(paymentIntentId: string) {
+    try {
+      console.log(`Triggering manual order processing for payment: ${paymentIntentId}`);
+      // Call a new endpoint we'll create to manually process the order
+      const response = await apiRequest('POST', '/api/process-payment', { 
+        paymentIntentId 
+      });
+      
+      if (response.ok) {
+        console.log('Order processing triggered successfully');
+        setOrderProcessed(true);
+        return true;
+      } else {
+        console.error('Failed to trigger order processing:', await response.text());
+        return false;
+      }
+    } catch (error) {
+      console.error('Error triggering order processing:', error);
+      return false;
+    }
+  }
 
   useEffect(() => {
     if (!stripe) {
@@ -64,7 +89,7 @@ const SuccessPageContent = () => {
     );
 
     if (clientSecret) {
-      stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+      stripe.retrievePaymentIntent(clientSecret).then(async ({ paymentIntent }) => {
         if (!paymentIntent) {
           setPaymentStatus('error');
           return;
@@ -96,6 +121,12 @@ const SuccessPageContent = () => {
                 address: intent.shipping?.address ? `${intent.shipping.address.line1}, ${intent.shipping.address.city}, ${intent.shipping.address.state} ${intent.shipping.address.postal_code}` : '',
               }
             });
+            
+            // Manually trigger webhook processing since we can't rely on Stripe webhooks in development environment
+            if (!orderProcessed) {
+              await triggerOrderProcessing(intent.id);
+            }
+            
             break;
           case 'processing':
             setPaymentStatus('processing');
@@ -110,7 +141,7 @@ const SuccessPageContent = () => {
       // Set success anyway if they came directly to this page
       setPaymentStatus('success');
     }
-  }, [stripe, clearCart]);
+  }, [stripe, clearCart, orderProcessed]);
 
   return (
     <Layout title="Order Confirmation - TrueAminos">
