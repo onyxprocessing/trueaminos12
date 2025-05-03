@@ -73,10 +73,11 @@ export async function createCheckoutInAirtable(sessionId: string): Promise<strin
       },
       body: JSON.stringify({
         fields: {
-          checkoutId: checkoutData.checkoutId,
-          sessionId: checkoutData.sessionId,
-          status: checkoutData.status,
-          createdAt: checkoutData.createdAt
+          // Use correct Airtable field names - lowercased and with spaces
+          "checkoutid": checkoutData.checkoutId,
+          "session id": checkoutData.sessionId,
+          "status": checkoutData.status,
+          "created at": checkoutData.createdAt
         }
       })
     });
@@ -109,7 +110,7 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
 
   try {
     // First, find the record ID by checkout ID
-    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_CARTS_TABLE}?filterByFormula={checkoutId}="${checkoutId}"`;
+    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_CARTS_TABLE}?filterByFormula={checkoutid}="${checkoutId}"`;
     const searchResponse = await fetch(searchUrl, {
       method: 'GET',
       headers: {
@@ -138,24 +139,24 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
     const fields: any = {};
     
     // Only include fields that are present in updateData
-    if (updateData.firstName) fields.firstName = updateData.firstName;
-    if (updateData.lastName) fields.lastName = updateData.lastName;
-    if (updateData.email) fields.email = updateData.email;
-    if (updateData.phone) fields.phone = updateData.phone;
-    if (updateData.address) fields.address = updateData.address;
-    if (updateData.city) fields.city = updateData.city;
-    if (updateData.state) fields.state = updateData.state;
-    if (updateData.zip) fields.zip = updateData.zip;
-    if (updateData.shippingMethod) fields.shippingMethod = updateData.shippingMethod;
-    if (updateData.status) fields.status = updateData.status;
-    if (updateData.totalAmount) fields.totalAmount = updateData.totalAmount;
+    if (updateData.firstName) fields["first name"] = updateData.firstName;
+    if (updateData.lastName) fields["last name"] = updateData.lastName;
+    if (updateData.email) fields["email"] = updateData.email;
+    if (updateData.phone) fields["phone"] = updateData.phone;
+    if (updateData.address) fields["address"] = updateData.address;
+    if (updateData.city) fields["city"] = updateData.city;
+    if (updateData.state) fields["state"] = updateData.state;
+    if (updateData.zip) fields["zip"] = updateData.zip;
+    if (updateData.shippingMethod) fields["shippingmethod"] = updateData.shippingMethod;
+    if (updateData.status) fields["status"] = updateData.status;
+    if (updateData.totalAmount) fields["totalamount"] = updateData.totalAmount;
     
     // Always update updatedAt
-    fields.updatedAt = new Date().toISOString();
+    fields["updated at"] = new Date().toISOString();
     
     // If cart items are provided, stringify them
     if (updateData.cartItems) {
-      fields.cartItems = JSON.stringify(updateData.cartItems);
+      fields["cartitems"] = JSON.stringify(updateData.cartItems);
     }
 
     const updateResponse = await fetch(updateUrl, {
