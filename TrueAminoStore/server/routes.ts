@@ -684,28 +684,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customer_name: params.metadata.customer_name
       }));
       
-      // Create the payment intent
-      const paymentIntent = await stripe.paymentIntents.create(params);
-      console.log('Payment intent created successfully:', paymentIntent.id);
-      
-      // Save the payment intent ID to the session
-      req.session.paymentIntentId = paymentIntent.id;
-      
-      // Send details to client
-      res.json({
-        clientSecret: paymentIntent.client_secret,
-        amount: amount,
-        itemCount: cartItems.length
-      });
+      try {
+        // Create the payment intent
+        const paymentIntent = await stripe.paymentIntents.create(params);
+        console.log('Payment intent created successfully:', paymentIntent.id);
+        
+        // Save the payment intent ID to the session
+        req.session.paymentIntentId = paymentIntent.id;
+        
+        // Send details to client
+        res.json({
+          clientSecret: paymentIntent.client_secret,
+          amount: amount,
+          itemCount: cartItems.length
+        });
+      } catch (stripeError: any) {
+        console.error('Stripe API error creating payment intent:', stripeError);
+        
+        // Provide more detailed logging for Stripe errors
+        console.error('Stripe error details:', {
+          type: stripeError.type,
+          code: stripeError.code,
+          decline_code: stripeError.decline_code,
+          param: stripeError.param,
+          message: stripeError.message
+        });
+        
+        res.status(400).json({ 
+          message: "Failed to create payment with Stripe", 
+          error: stripeError.message || "Unknown Stripe error"
+        });
+      }
     } catch (error: any) {
-      console.error('Error creating payment intent:', error);
+      console.error('Error in payment intent creation route:', error);
       
       // Log the detailed error to make debugging easier
       try {
-        console.error('Stripe error details:', JSON.stringify({
-          type: error.type,
-          code: error.code,
-          param: error.param,
+        console.error('Error details:', JSON.stringify({
+          name: error.name,
           message: error.message,
           stack: error.stack
         }, null, 2));
@@ -714,7 +730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ 
-        message: "Error creating payment intent", 
+        message: "Server error creating payment intent", 
         error: error.message || "Unknown error occurred"
       });
     }
