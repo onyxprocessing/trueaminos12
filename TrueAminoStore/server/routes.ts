@@ -8,6 +8,7 @@ import MemoryStore from 'memorystore';
 import fetch from 'node-fetch';
 import Stripe from 'stripe';
 import { recordPaymentToAirtable } from './airtable-orders';
+import { recordPaymentToDatabase } from './db-orders';
 
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
