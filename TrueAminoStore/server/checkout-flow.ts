@@ -7,7 +7,7 @@
  * Step 4: Payment processing
  */
 
-import { Request, Response } from 'express';
+import { Request as ExpressRequest, Response } from 'express';
 import { storage } from './storage';
 import { 
   createCheckoutInAirtable, 
@@ -15,6 +15,23 @@ import {
   markCheckoutCompleted 
 } from './airtable-checkout';
 import { createOrderWithPaymentMethod } from './db-direct-order';
+
+// Define custom Request type with session
+interface Request extends ExpressRequest {
+  session: {
+    id: string;
+    checkoutId?: string;
+    checkoutStep?: string;
+    personalInfo?: any;
+    shippingInfo?: any;
+    cookie: any;
+    regenerate: (callback: (err?: any) => void) => void;
+    destroy: (callback: (err?: any) => void) => void;
+    reload: (callback: (err?: any) => void) => void;
+    save: (callback?: (err?: any) => void) => void;
+    touch: (callback?: (err?: any) => void) => void;
+  };
+}
 
 export async function initializeCheckout(req: Request): Promise<string> {
   // Create a checkout ID if one doesn't exist

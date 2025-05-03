@@ -27,9 +27,14 @@ export interface CheckoutData {
 }
 
 // Airtable constants
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
+// Use hardcoded fallback values if environment variables are not available
+const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY || 'patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d';
+const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID || 'app3XDDBbU0ZZDBiY';
 const AIRTABLE_CARTS_TABLE = 'tblhjfzTX2zjf22s1'; // Table for abandoned carts
+
+console.log('Airtable integration configured with:');
+console.log('AIRTABLE_API_KEY:', AIRTABLE_API_KEY ? 'Present (length: ' + AIRTABLE_API_KEY.length + ')' : 'Missing');
+console.log('AIRTABLE_BASE_ID:', AIRTABLE_BASE_ID ? 'Present (value: ' + AIRTABLE_BASE_ID + ')' : 'Missing');
 
 /**
  * Generate a unique checkout ID
