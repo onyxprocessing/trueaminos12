@@ -40,11 +40,31 @@ export async function apiRequest<T>(
     
     console.log('Response received:', res.status, res.statusText);
     
-    await throwIfResNotOk(res);
-    return res.json();
-  } catch (error) {
+    // Check if the response is ok
+    if (!res.ok) {
+      // For 4xx and 5xx errors, try to get the error message from the response
+      try {
+        const errorData = await res.json();
+        console.error(`Server error: ${res.status} ${res.statusText}`, errorData);
+        throw new Error(errorData.message || `${res.status}: ${res.statusText}`);
+      } catch (parseError) {
+        // If we can't parse the JSON, just throw with the status
+        throw new Error(`${res.status}: ${res.statusText}`);
+      }
+    }
+    
+    // Try to parse the JSON response
+    try {
+      return await res.json();
+    } catch (jsonError) {
+      console.error('Failed to parse JSON response:', jsonError);
+      throw new Error('Invalid response from server');
+    }
+  } catch (err) {
+    const error = err as Error;
     console.error('API request error to', absoluteUrl, ':', error);
-    throw error;
+    // Throw a more user-friendly error message
+    throw new Error(`Failed to ${method.toLowerCase()} ${absoluteUrl.split('/').pop() || 'resource'}: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -79,11 +99,31 @@ export const getQueryFn: <T>(options: {
         return null;
       }
 
-      await throwIfResNotOk(res);
-      return await res.json();
-    } catch (error) {
+      // Check if the response is ok
+      if (!res.ok) {
+        // For 4xx and 5xx errors, try to get the error message from the response
+        try {
+          const errorData = await res.json();
+          console.error(`Server error: ${res.status} ${res.statusText}`, errorData);
+          throw new Error(errorData.message || `${res.status}: ${res.statusText}`);
+        } catch (parseError) {
+          // If we can't parse the JSON, just throw with the status
+          throw new Error(`${res.status}: ${res.statusText}`);
+        }
+      }
+      
+      // Try to parse the JSON response
+      try {
+        return await res.json();
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        throw new Error('Invalid response from server');
+      }
+    } catch (err) {
+      const error = err as Error;
       console.error('Query request error to', absoluteUrl, ':', error);
-      throw error;
+      // Throw a more user-friendly error message
+      throw new Error(`Failed to fetch ${absoluteUrl.split('/').pop() || 'resource'}: ${error.message || 'Unknown error'}`);
     }
   };
 

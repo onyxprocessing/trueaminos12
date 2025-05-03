@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { apiRequest } from '@/lib/queryClient'
 import { queryClient } from '@/lib/queryClient'
-import { CartItemWithProduct } from '@shared/schema'
+import { CartItemWithProduct, CartItem } from '@shared/schema'
 
 interface CartApiResponse {
   addedItem?: any;
