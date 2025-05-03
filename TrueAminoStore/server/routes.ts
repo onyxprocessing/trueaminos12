@@ -462,8 +462,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create Payment Intent API
   app.post("/api/create-payment-intent", async (req: Request, res: Response) => {
     try {
+      if (!req.session || !req.session.id) {
+        console.error('Session is not properly initialized');
+        return res.status(500).json({ message: "Session error" });
+      }
+
       const sessionId = req.session.id;
+      console.log('Creating payment intent for session:', sessionId);
+      
+      // Get cart items
       const cartItems = await storage.getCartItems(sessionId);
+      console.log(`Cart has ${cartItems.length} items`);
       
       if (cartItems.length === 0) {
         return res.status(400).json({ message: "Your cart is empty" });
@@ -479,12 +488,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount = parseFloat(req.body.amount);
       }
       
+      if (isNaN(amount) || amount <= 0) {
+        console.error('Invalid amount:', amount);
+        return res.status(400).json({ message: "Invalid order amount" });
+      }
+
+      console.log('Calculated amount for payment intent:', amount);
+      
       // Create description containing the items ordered
       const description = `Order from TrueAminos: ${cartItems.map(item => 
         `${item.product.name} (${item.selectedWeight || ''}) x${item.quantity}`
       ).join(', ')}`;
-      
-      console.log('Creating payment intent for amount:', amount);
       
       // Extract customer data from request body if available
       const {
@@ -526,8 +540,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shipping: shipping_method || 'standard'
       };
       
-      // Store this compact order summary
-      params.metadata.orderSummary = JSON.stringify(orderSummary);
+      try {
+        // Store this compact order summary - keep it under 500 chars
+        const orderSummaryString = JSON.stringify(orderSummary);
+        if (orderSummaryString.length < 500) {
+          params.metadata.orderSummary = orderSummaryString;
+        } else {
+          console.warn('Order summary too long, truncating');
+          params.metadata.orderSummary = orderSummaryString.substring(0, 490) + '...';
+        }
+      } catch (err) {
+        console.error('Error stringifying order summary:', err);
+        // Continue without order summary
+      }
       
       // Add customer info to metadata if provided
       if (firstName || lastName) {
@@ -565,8 +590,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      console.log('Creating Stripe payment intent with params:', JSON.stringify({
+        amount: params.amount,
+        currency: params.currency,
+        shipping_method: params.metadata.shipping_method,
+        customer_name: params.metadata.customer_name
+      }));
+      
       // Create the payment intent
       const paymentIntent = await stripe.paymentIntents.create(params);
+      console.log('Payment intent created successfully:', paymentIntent.id);
       
       // Save the payment intent ID to the session
       req.session.paymentIntentId = paymentIntent.id;
@@ -579,18 +612,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('Error creating payment intent:', error);
+      
       // Log the detailed error to make debugging easier
-      console.error('Stripe error details:', JSON.stringify({
-        type: error.type,
-        code: error.code,
-        param: error.param,
-        message: error.message,
-        stack: error.stack
-      }, null, 2));
+      try {
+        console.error('Stripe error details:', JSON.stringify({
+          type: error.type,
+          code: error.code,
+          param: error.param,
+          message: error.message,
+          stack: error.stack
+        }, null, 2));
+      } catch (e) {
+        console.error('Could not stringify error:', e);
+      }
       
       res.status(500).json({ 
         message: "Error creating payment intent", 
-        error: error.message 
+        error: error.message || "Unknown error occurred"
       });
     }
   });
