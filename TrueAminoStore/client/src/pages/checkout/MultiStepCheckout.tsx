@@ -22,7 +22,7 @@ import { US_STATES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 
 // Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
@@ -42,6 +42,7 @@ const CHECKOUT_STEPS = [
 const MultiStepCheckout: React.FC = () => {
   const [, navigate] = useLocation();
   const cart = useCart();
+  const { toast } = useToast();
   
   // State for checkout steps
   const [currentStep, setCurrentStep] = useState('personal_info');

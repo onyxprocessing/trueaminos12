@@ -1,4 +1,4 @@
-// United States states list
+// US States for form dropdowns
 export const US_STATES = [
   { value: 'AL', label: 'Alabama' },
   { value: 'AK', label: 'Alaska' },
