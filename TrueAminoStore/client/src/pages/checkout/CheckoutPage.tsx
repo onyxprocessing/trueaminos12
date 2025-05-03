@@ -415,6 +415,7 @@ const CheckoutPage = () => {
     return cart.subtotal + calculateShippingCost();
   };
 
+  // Create payment intent only once when the page loads or if cart changes
   useEffect(() => {
     // Check if cart is empty
     if (!cart.items || cart.items.length === 0) {
@@ -426,6 +427,7 @@ const CheckoutPage = () => {
     const createPaymentIntent = async () => {
       try {
         setIsLoading(true);
+        // Get initial total with shipping
         const totalAmount = calculateTotal();
         
         const response = await fetch('/api/create-payment-intent', {
@@ -455,7 +457,41 @@ const CheckoutPage = () => {
     };
 
     createPaymentIntent();
-  }, [cart, navigate, selectedShippingMethod]);
+  }, [cart, navigate]); // Remove selectedShippingMethod dependency
+  
+  // Use a separate effect to update payment intent amount when shipping method changes
+  // This won't reset the form fields
+  useEffect(() => {
+    // Skip first render
+    if (!clientSecret) return;
+    
+    const updatePaymentIntent = async () => {
+      try {
+        const totalAmount = calculateTotal();
+        
+        // Update the payment intent with new amount
+        await fetch('/api/update-payment-intent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            amount: totalAmount,
+            shipping_method: selectedShippingMethod
+          }),
+          credentials: 'include',
+        });
+        
+        // No need to update client secret as we're just changing the amount
+        console.log('Updated payment intent with new shipping: ', selectedShippingMethod);
+      } catch (err: any) {
+        console.error('Error updating payment intent:', err);
+        // Don't show error for updates - fallback to original amount if update fails
+      }
+    };
+
+    updatePaymentIntent();
+  }, [selectedShippingMethod, clientSecret]);
 
   if (isLoading) {
     return (
