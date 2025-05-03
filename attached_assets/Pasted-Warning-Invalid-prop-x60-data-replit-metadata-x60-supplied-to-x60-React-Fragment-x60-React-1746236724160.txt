@@ -1,0 +1,24 @@
+Warning: Invalid prop &#x60;data-replit-metadata&#x60; supplied to &#x60;React.Fragment&#x60;. React.Fragment can only have &#x60;key&#x60; and &#x60;children&#x60; props.
+    at ProductPage (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/src/pages/ProductPage.tsx:361:20)
+    at Route (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/@fs/home/runner/workspace/TrueAminoStore/node_modules/.vite/deps/wouter.js?v=232ace03:323:16)
+    at Switch (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/@fs/home/runner/workspace/TrueAminoStore/node_modules/.vite/deps/wouter.js?v=232ace03:379:17)
+    at Router
+    at CartProvider (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/src/hooks/useCart.tsx:23:32)
+    at Provider (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/@fs/home/runner/workspace/TrueAminoStore/node_modules/.vite/deps/chunk-MV53PHM7.js?v=232ace03:48:15)
+    at TooltipProvider (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/@fs/home/runner/workspace/TrueAminoStore/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=232ace03:58:5)
+    at QueryClientProvider (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/@fs/home/runner/workspace/TrueAminoStore/node_modules/.vite/deps/@tanstack_react-query.js?v=232ace03:2805:3)
+    at App
+    at _a (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/@fs/home/runner/workspace/TrueAminoStore/node_modules/.vite/deps/react-helmet-async.js?v=232ace03:624:5)
+Creating payment intent with cart items: 1
+Error creating payment intent: 
+Error {}
+message: "Failed to create payment intent"
+stack: "Error: Failed to create payment intent↵ at createPaymentIntent (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/src/pages/checkout/CheckoutPage.tsx:762:17)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+at t.value (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
