@@ -1,7 +1,11 @@
 /**
- * Simple US ZIP code validation and city/state lookup
- * This provides a free alternative to Google Places API
+ * Address validation and lookup utilities
+ * Includes:
+ * 1. Simple US ZIP code validation and city/state lookup
+ * 2. FedEx Address Validation API integration
  */
+
+import { apiRequest } from './queryClient';
 
 // Common ZIP code patterns
 const ZIP_REGEX = /^\d{5}(-\d{4})?$/;
@@ -132,4 +136,63 @@ export function validateCity(city: string): boolean {
 
 export function formatAddress(address: string, city: string, state: string, zipCode: string): string {
   return `${address}, ${city}, ${state} ${zipCode}`;
+}
+
+/**
+ * FedEx Address Validation API Types
+ */
+export interface FedExAddressValidationResponse {
+  success: boolean;
+  validation?: {
+    isValid: boolean;
+    classification: 'business' | 'residential' | 'mixed' | 'unknown';
+    suggestedAddress?: {
+      streetLines: string[];
+      city: string;
+      state: string;
+      zipCode: string;
+      country: string;
+    };
+    message?: string;
+  };
+  message?: string;
+}
+
+/**
+ * Validates an address using the FedEx Address Validation API
+ * @param address The street address to validate
+ * @param city The city
+ * @param state The state code
+ * @param zipCode The ZIP code
+ * @param country The country code (defaults to US)
+ * @returns Promise with validation results or null if validation fails
+ */
+export async function validateAddressWithFedEx(
+  address: string,
+  city: string,
+  state: string,
+  zipCode: string,
+  country: string = 'US'
+): Promise<FedExAddressValidationResponse | null> {
+  try {
+    // Split address into lines (basic implementation)
+    const addressLines = address.split(',').map(line => line.trim());
+    const streetLine1 = addressLines[0] || address;
+    const streetLine2 = addressLines.length > 1 ? addressLines[1] : undefined;
+
+    // Call the API
+    const response = await apiRequest('POST', '/api/validate-address', {
+      streetLine1,
+      streetLine2,
+      city,
+      state,
+      zipCode,
+      country
+    });
+
+    return response as FedExAddressValidationResponse;
+  } catch (error) {
+    console.error('Error validating address with FedEx API:', error);
+    return null;
+  }
 }

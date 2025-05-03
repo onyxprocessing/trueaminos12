@@ -17,6 +17,9 @@ import { apiRequest } from '@/lib/api-client';
 import { Separator } from '@/components/ui/separator';
 import { US_STATES } from '@/lib/constants';
 import { useToast } from '@/hooks/empty-toast'; // Using silent toast implementation
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
@@ -56,6 +59,11 @@ const MultiStepCheckout: React.FC = () => {
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
   const [shippingMethod, setShippingMethod] = useState(SHIPPING_OPTIONS[0].id);
+  
+  // State for address validation
+  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
+  const [addressValidation, setAddressValidation] = useState<any>(null);
+  const [useValidatedAddress, setUseValidatedAddress] = useState(false);
   
   // State for payment
   const [paymentMethod, setPaymentMethod] = useState('card');
