@@ -87,7 +87,7 @@ export async function optimizeAndServeImage(req: Request, res: Response) {
     }
     
     // Remove any potential URL encoding issues
-    const decodedUrl = decodeURIComponent(imageUrl);
+    let decodedUrl = decodeURIComponent(imageUrl);
     console.log(`Optimizing image: ${decodedUrl.substring(0, 100)}...`);
     
     // Generate a cache key for this URL
@@ -121,6 +121,20 @@ export async function optimizeAndServeImage(req: Request, res: Response) {
     
     // Not cached, fetch from source
     console.log("No cache found, fetching from source");
+    
+    // Handle URLs that are already proxied
+    if (decodedUrl.startsWith('/api/image-proxy')) {
+      console.log("Handling already proxied URL");
+      // Extract the original URL from the proxy URL
+      const originalUrlMatch = decodedUrl.match(/url=(.*)/);
+      if (originalUrlMatch && originalUrlMatch[1]) {
+        decodedUrl = decodeURIComponent(originalUrlMatch[1]);
+        console.log(`Extracted original URL: ${decodedUrl.substring(0, 100)}...`);
+      } else {
+        console.error("Image optimizer error: Could not extract URL from proxy URL");
+        return res.status(400).json({ message: "Invalid proxied URL format" });
+      }
+    }
     
     // Validate URL to ensure it's from trusted sources
     if (!decodedUrl.includes('airtableusercontent.com') &&

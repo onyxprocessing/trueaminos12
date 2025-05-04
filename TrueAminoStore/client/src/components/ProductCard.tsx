@@ -153,7 +153,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {product.imageUrl ? (
             <div className="w-full h-full" style={{ backgroundColor: '#FDDB5B', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <img 
-                src={product.imageUrl ? product.imageUrl : ''} 
+                src={product.imageUrl || ''} 
                 alt={product.name}
                 className="w-full h-full object-contain object-center"
                 loading="lazy"

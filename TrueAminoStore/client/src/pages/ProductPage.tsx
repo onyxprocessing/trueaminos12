@@ -29,14 +29,24 @@ const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
   // Create an array of image objects with labels
   const imageObjects: ImageObject[] = [];
   
+  // Function to optimize image URLs if they're from Airtable
+  const getOptimizedImageUrl = (url: string | null): string | null => {
+    if (!url) return null;
+    return url.includes('airtableusercontent.com') 
+      ? `/api/image-optimize?url=${encodeURIComponent(url)}` 
+      : url;
+  };
+  
   // Add main product image if it exists
   if (product.imageUrl) {
-    imageObjects.push({ url: product.imageUrl, label: 'Product', id: 'main' });
+    const optimizedUrl = getOptimizedImageUrl(product.imageUrl);
+    imageObjects.push({ url: optimizedUrl, label: 'Product', id: 'main' });
   }
   
   // Add Certificate of Analysis if it exists
   if (product.image2Url) {
-    imageObjects.push({ url: product.image2Url, label: 'Certificate of Analysis', id: 'coa' });
+    const optimizedUrl = getOptimizedImageUrl(product.image2Url);
+    imageObjects.push({ url: optimizedUrl, label: 'Certificate of Analysis', id: 'coa' });
   } else {
     // Add placeholder for Certificate of Analysis if not available
     imageObjects.push({ url: null, label: 'Certificate of Analysis', id: 'coa-placeholder' });
@@ -44,7 +54,8 @@ const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
   
   // Add additional image if it exists
   if (product.image3Url) {
-    imageObjects.push({ url: product.image3Url, label: 'Additional Image', id: 'additional' });
+    const optimizedUrl = getOptimizedImageUrl(product.image3Url);
+    imageObjects.push({ url: optimizedUrl, label: 'Additional Image', id: 'additional' });
   }
   
   // Set initial image on component mount or when image objects change
