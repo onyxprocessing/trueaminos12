@@ -687,6 +687,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add a direct Airtable endpoint specifically for creating records with test field
+  app.post('/api/airtable/direct-order', async (req: Request, res: Response) => {
+    try {
+      console.log('🔍 Direct Airtable order endpoint called with data');
+      
+      // Import our direct Airtable module
+      const { createOrderWithTestData } = await import('./direct-airtable');
+      
+      // Create the record directly in Airtable
+      const recordId = await createOrderWithTestData(req.body);
+      
+      if (recordId) {
+        console.log('✅ Direct Airtable order created with ID:', recordId);
+        res.status(201).json({
+          success: true,
+          recordId
+        });
+      } else {
+        console.error('❌ Failed to create direct Airtable order');
+        res.status(500).json({
+          success: false,
+          message: 'Failed to create Airtable record'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error in direct Airtable order route:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Error processing direct Airtable order'
+      });
+    }
+  });
+  
   // No webhook or external payment service integration is needed
   // Our multi-step checkout flow handles everything through direct form submission
   app.post('/api/webhook', async (req: Request, res: Response) => {

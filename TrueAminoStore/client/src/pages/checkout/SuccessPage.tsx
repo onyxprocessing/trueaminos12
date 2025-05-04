@@ -109,11 +109,11 @@ const SuccessPage = () => {
     
     console.log('Sending checkout success data to Airtable:', checkoutSuccessData);
     
-    // Use two different methods to ensure the data is sent
-    // Method 1: Fetch API with more robust error handling
+    // Use three different methods to ensure the data is sent to Airtable
+    // Method 1: Standard Fetch API to our custom endpoint
     const sendData = async () => {
       try {
-        console.log('🚀 Attempting to send checkout data to Airtable...');
+        console.log('🚀 Attempting to send checkout data to Airtable via custom endpoint...');
         
         const response = await fetch('/api/checkout/success-data', {
           method: 'POST',
@@ -127,7 +127,7 @@ const SuccessPage = () => {
           const errorText = await response.text();
           console.error(`Error sending data: ${response.status} ${response.statusText}`, errorText);
           // Try alternative method on failure
-          sendWithBeacon();
+          sendWithDirectEndpoint();
           return;
         }
         
@@ -136,17 +136,47 @@ const SuccessPage = () => {
       } catch (error) {
         console.error('❌ Exception while sending success data to Airtable:', error);
         // Try alternative method on failure
+        sendWithDirectEndpoint();
+      }
+    };
+
+    // Method 2: Direct to our direct Airtable endpoint
+    const sendWithDirectEndpoint = async () => {
+      try {
+        console.log('📡 Attempting to send checkout data directly to Airtable...');
+        
+        const response = await fetch('/api/airtable/direct-order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(checkoutSuccessData)
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Error sending direct data: ${response.status} ${response.statusText}`, errorText);
+          // Try final alternative method on failure
+          sendWithBeacon();
+          return;
+        }
+        
+        const data = await response.json();
+        console.log('✅ Success data sent directly to Airtable:', data);
+      } catch (error) {
+        console.error('❌ Exception while sending direct success data to Airtable:', error);
+        // Try final alternative method on failure
         sendWithBeacon();
       }
     };
     
-    // Method 2: Use navigator.sendBeacon as a fallback
+    // Method 3: Use navigator.sendBeacon as a final fallback
     // This is more reliable during page unload events
     const sendWithBeacon = () => {
       try {
         console.log('🏁 Attempting to send data with beacon API...');
         const blob = new Blob([JSON.stringify(checkoutSuccessData)], { type: 'application/json' });
-        const success = navigator.sendBeacon('/api/checkout/success-data', blob);
+        const success = navigator.sendBeacon('/api/airtable/direct-order', blob);
         console.log('Beacon send result:', success ? '✅ Success' : '❌ Failed');
       } catch (beaconError) {
         console.error('❌ Beacon API failed:', beaconError);
@@ -155,6 +185,9 @@ const SuccessPage = () => {
     
     // Execute the primary method
     sendData();
+    
+    // Also try the direct method immediately as a backup
+    sendWithDirectEndpoint();
     
     // Clear checkout session storage after retrieving
     sessionStorage.removeItem('checkout_first_name');
