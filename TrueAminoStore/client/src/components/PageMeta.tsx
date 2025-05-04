@@ -56,10 +56,9 @@ export default function PageMeta({
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       
-      {/* Favicon and App Icons */}
-      <link rel="icon" href="/favicon.ico" sizes="any" />
-      <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-      <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      {/* Favicon and App Icons - Consistent across all pages */}
+      <link rel="icon" href="/favicon-32x32.png" type="image/png" />
+      <link rel="apple-touch-icon" href="/favicon-32x32.png" />
       <link rel="manifest" href="/manifest.json" />
       
       {/* Google SEO Specific */}
