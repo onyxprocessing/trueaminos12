@@ -1038,12 +1038,16 @@ const MultiStepCheckout: React.FC = () => {
                   <span className="font-medium">Credit/Debit Card</span>
                   <p className="text-sm text-gray-500">Pay securely with your card</p>
                 </div>
-                <span className="flex space-x-1">
-                  <VisaIcon />
-                  <MastercardIcon />
-                  <AmexIcon />
-                  <DiscoverIcon />
-                </span>
+                <div className="ml-2 flex-col">
+                  <div className="mb-2">
+                    <VisaIcon />
+                  </div>
+                  <div className="flex gap-2">
+                    <MastercardIcon />
+                    <AmexIcon />
+                    <DiscoverIcon />
+                  </div>
+                </div>
               </div>
             </Label>
           </div>
@@ -1056,7 +1060,9 @@ const MultiStepCheckout: React.FC = () => {
                   <span className="font-medium">Bank Transfer</span>
                   <p className="text-sm text-gray-500">Pay via bank transfer</p>
                 </div>
-                <BankIcon />
+                <div className="ml-2">
+                  <BankIcon />
+                </div>
               </div>
             </Label>
           </div>
@@ -1069,10 +1075,10 @@ const MultiStepCheckout: React.FC = () => {
                   <span className="font-medium">Cryptocurrency</span>
                   <p className="text-sm text-gray-500">Pay with Bitcoin or Ethereum</p>
                 </div>
-                <span className="flex space-x-1">
+                <div className="ml-2 flex space-x-1">
                   <BitcoinIcon />
                   <EthereumIcon />
-                </span>
+                </div>
               </div>
             </Label>
           </div>
