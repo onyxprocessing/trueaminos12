@@ -167,8 +167,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 height="400"
                 style={{
                   aspectRatio: "1/1",
-                  maxWidth: "100%", 
-                  height: "auto"
+                  maxWidth: "85%", 
+                  height: "auto",
+                  transform: "scale(0.8)", /* Zoom out the image to 80% of its original size */
+                  objectFit: "contain"
                 }}
                 onError={(e) => {
                   console.error("Product image failed to load:", product.imageUrl);
