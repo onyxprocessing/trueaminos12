@@ -826,7 +826,7 @@ const MultiStepCheckout: React.FC = () => {
               }} 
               placeholder="123 Main Street, Apt #4"
               required 
-              className={useValidatedAddress ? "border-green-500" : ""}
+              className={`pr-8 ${useValidatedAddress ? "border-green-500 bg-green-50" : ""}`}
               onBlur={() => {
                 // Auto-validate when user finishes typing and moves to next field
                 if (address && city && state && zipCode && !isValidatingAddress) {
@@ -834,11 +834,13 @@ const MultiStepCheckout: React.FC = () => {
                 }
               }}
             />
-            {isValidatingAddress && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              {isValidatingAddress ? (
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
+              ) : (
+                useValidatedAddress && <Check className="h-4 w-4 text-green-600" />
+              )}
+            </div>
           </div>
         </div>
         
@@ -869,20 +871,27 @@ const MultiStepCheckout: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="zipCode">ZIP Code *</Label>
-            <Input 
-              id="zipCode" 
-              value={zipCode} 
-              onChange={handleZipCodeChange}
-              onBlur={() => {
-                // Auto-validate when user finishes typing and moves to next field
-                if (address && city && state && zipCode && !isValidatingAddress) {
-                  validateAddressWithFedEx();
-                }
-              }}
-              placeholder="Enter ZIP code first"
-              className={`font-mono ${useValidatedAddress ? "border-green-500" : ""}`}
-              required 
-            />
+            <div className="relative">
+              <Input 
+                id="zipCode" 
+                value={zipCode} 
+                onChange={handleZipCodeChange}
+                onBlur={() => {
+                  // Auto-validate when user finishes typing and moves to next field
+                  if (address && city && state && zipCode && !isValidatingAddress) {
+                    validateAddressWithFedEx();
+                  }
+                }}
+                placeholder="Enter ZIP code first"
+                className={`font-mono pr-8 ${useValidatedAddress ? "border-green-500 bg-green-50" : ""}`}
+                required 
+              />
+              {useValidatedAddress && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <Check className="h-4 w-4 text-green-600" />
+                </div>
+              )}
+            </div>
             <span className="text-xs text-muted-foreground">
               Enter your ZIP code first for faster checkout
             </span>
@@ -890,23 +899,30 @@ const MultiStepCheckout: React.FC = () => {
           
           <div className="space-y-2">
             <Label htmlFor="city">City *</Label>
-            <Input 
-              id="city" 
-              value={city} 
-              onChange={(e) => {
-                setCity(e.target.value);
-                setAddressValidation(null);
-                setUseValidatedAddress(false);
-              }}
-              onBlur={() => {
-                // Auto-validate when user finishes typing and moves to next field
-                if (address && city && state && zipCode && !isValidatingAddress) {
-                  validateAddressWithFedEx();
-                }
-              }}
-              className={useValidatedAddress ? "border-green-500" : ""}
-              required 
-            />
+            <div className="relative">
+              <Input 
+                id="city" 
+                value={city} 
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  setAddressValidation(null);
+                  setUseValidatedAddress(false);
+                }}
+                onBlur={() => {
+                  // Auto-validate when user finishes typing and moves to next field
+                  if (address && city && state && zipCode && !isValidatingAddress) {
+                    validateAddressWithFedEx();
+                  }
+                }}
+                className={`pr-8 ${useValidatedAddress ? "border-green-500 bg-green-50" : ""}`}
+                required 
+              />
+              {useValidatedAddress && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <Check className="h-4 w-4 text-green-600" />
+                </div>
+              )}
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -927,8 +943,11 @@ const MultiStepCheckout: React.FC = () => {
               }}
               required
             >
-              <SelectTrigger id="state" className={useValidatedAddress ? "border-green-500" : ""}>
+              <SelectTrigger id="state" className={useValidatedAddress ? "border-green-500 bg-green-50 pr-8" : "pr-8"}>
                 <SelectValue placeholder="Select state" />
+                {useValidatedAddress && (
+                  <Check className="h-4 w-4 text-green-600 ml-auto" />
+                )}
               </SelectTrigger>
               <SelectContent>
                 {US_STATES.map((stateObj) => (

@@ -82,7 +82,7 @@ const Home: React.FC = () => {
               </Link>
               <Link href="/about">
                 <Button variant="outline" size="lg" className="px-6 py-3 bg-white text-primary hover:bg-gray-100 text-center">
-                  Learn More
+                  About TrueAmino Research
                 </Button>
               </Link>
             </div>
