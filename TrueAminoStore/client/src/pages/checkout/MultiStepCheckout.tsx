@@ -1259,9 +1259,11 @@ const MultiStepCheckout: React.FC = () => {
     );
   };
 
-  // Render card payment form (Step 4 for card payments)
-  const renderCardPaymentForm = () => {
+  // Card Payment Component (Step 4 for card payments)
+  // This is a separate component to prevent React hooks error
+  const CardPaymentForm = () => {
     const [paymentIntentLoading, setPaymentIntentLoading] = useState(true);
+    const { toast } = useToast();
     
     // Create a payment intent when we first render this component
     useEffect(() => {
@@ -1333,6 +1335,9 @@ const MultiStepCheckout: React.FC = () => {
       </div>
     );
   };
+  
+  // Wrapper function to render card payment
+  const renderCardPaymentForm = () => <CardPaymentForm />;
   
   // Card payment is now handled by the Stripe checkout component
   
