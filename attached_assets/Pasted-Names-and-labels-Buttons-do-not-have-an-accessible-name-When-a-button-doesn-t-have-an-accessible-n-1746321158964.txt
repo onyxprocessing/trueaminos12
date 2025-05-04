@@ -1,0 +1,35 @@
+Names and labels
+Buttons do not have an accessible name
+When a button doesn't have an accessible name, screen readers announce it as "button", making it unusable for users who rely on screen readers. Learn how to make buttons more accessible.
+Failing Elements
+100mg
+<button type="button" role="combobox" aria-controls="radix-:r0:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" data-replit-metadata="client/src/components/ProductCard.tsx:239:16" data-component-name="SelectTrigger" class="flex items-center justify-between rounded-md px-3 py-2 text-sm ring-offset…">
+div.grid > div > div.flex > button.inline-flex
+<button data-replit-metadata="client/src/components/ProductCard.tsx:258:16" data-component-name="Button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-…" type="button" disabled="">
+div.grid > div > div.flex > button.inline-flex
+<button data-replit-metadata="client/src/components/ProductCard.tsx:271:16" data-component-name="Button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-…" type="button">
+5mg
+<button type="button" role="combobox" aria-controls="radix-:r1:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" data-replit-metadata="client/src/components/ProductCard.tsx:239:16" data-component-name="SelectTrigger" class="flex items-center justify-between rounded-md px-3 py-2 text-sm ring-offset…">
+div.grid > div > div.flex > button.inline-flex
+<button data-replit-metadata="client/src/components/ProductCard.tsx:258:16" data-component-name="Button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-…" type="button" disabled="">
+div.grid > div > div.flex > button.inline-flex
+<button data-replit-metadata="client/src/components/ProductCard.tsx:271:16" data-component-name="Button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-…" type="button">
+5mg
+<button type="button" role="combobox" aria-controls="radix-:r2:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" data-replit-metadata="client/src/components/ProductCard.tsx:239:16" data-component-name="SelectTrigger" class="flex items-center justify-between rounded-md px-3 py-2 text-sm ring-offset…">
+div.grid > div > div.flex > button.inline-flex
+<button data-replit-metadata="client/src/components/ProductCard.tsx:258:16" data-component-name="Button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-…" type="button" disabled="">
+div.grid > div > div.flex > button.inline-flex
+<button data-replit-metadata="client/src/components/ProductCard.tsx:271:16" data-component-name="Button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-…" type="button">
+2mg
+<button type="button" role="combobox" aria-controls="radix-:r3:" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" data-replit-metadata="client/src/components/ProductCard.tsx:239:16" data-component-name="SelectTrigger" class="flex items-center justify-between rounded-md px-3 py-2 text-sm ring-offset…">
+div.grid > div > div.flex > button.inline-flex
+<button data-replit-metadata="client/src/components/ProductCard.tsx:258:16" data-component-name="Button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-…" type="button" disabled="">
+div.grid > div > div.flex > button.inline-flex
+<button data-replit-metadata="client/src/components/ProductCard.tsx:271:16" data-component-name="Button" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-…" type="button">
+Links do not have a discernible name
+These are opportunities to improve the semantics of the controls in your application. This may enhance the experience for users of assistive technology, like a screen reader.
+Best practices
+[user-scalable="no"] is used in the <meta name="viewport"> element or the [maximum-scale] attribute is less than 5.
+These items highlight common accessibility best practices.
+Contrast
+Background and foreground colors do not have a sufficient contrast ratio.

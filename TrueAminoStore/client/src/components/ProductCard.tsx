@@ -236,7 +236,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 onValueChange={setSelectedWeight}
                 disabled={!product.inStock}
               >
-                <SelectTrigger className="w-full h-10 border border-gray-200 bg-gray-50 focus:ring-0 focus:ring-offset-0">
+                <SelectTrigger 
+                  className="w-full h-10 border border-gray-200 bg-gray-50 focus:ring-0 focus:ring-offset-0"
+                  aria-label={`Select weight for ${product.name}`}
+                >
                   <SelectValue placeholder="Select weight" />
                 </SelectTrigger>
                 <SelectContent>
@@ -262,10 +265,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   className="h-10 w-10 bg-gray-400 hover:bg-gray-500 text-white rounded-r-none rounded-l-md border-0"
                   onClick={decreaseQuantity}
                   disabled={!product.inStock || quantity <= 1}
+                  aria-label={`Decrease quantity for ${product.name}`}
                 >
                   <Minus className="h-3 w-3" />
                 </Button>
-                <div className="h-10 w-full flex items-center justify-center border-t border-b border-gray-300 text-center">
+                <div 
+                  className="h-10 w-full flex items-center justify-center border-t border-b border-gray-300 text-center"
+                  aria-live="polite"
+                  aria-label={`Current quantity: ${quantity}`}
+                  role="status"
+                >
                   {quantity}
                 </div>
                 <Button
@@ -275,6 +284,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   className="h-10 w-10 bg-blue-900 hover:bg-blue-950 text-white rounded-l-none rounded-r-md border-0"
                   onClick={increaseQuantity}
                   disabled={!product.inStock}
+                  aria-label={`Increase quantity for ${product.name}`}
                 >
                   <Plus className="h-3 w-3" />
                 </Button>
@@ -299,6 +309,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               className="w-full bg-blue-500 hover:bg-blue-600 text-base font-semibold text-white py-5"
               onClick={handleAddToCart}
               disabled={!product.inStock}
+              aria-label={`Add ${product.name} to cart, ${selectedWeight}, quantity ${quantity}`}
             >
               ADD TO CART
             </Button>
