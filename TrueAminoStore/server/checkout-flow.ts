@@ -442,20 +442,35 @@ export async function handlePaymentMethod(req: Request, res: Response) {
       return res.status(400).json({ message: "Your cart is empty" });
     }
     
-    const amount = calculateCartTotal(cartItems);
+    // Get shipping info from session
+    const shippingInfo = req.session.shippingInfo || {};
+    const shippingDetails = JSON.parse(shippingInfo.shippingDetails || '{}');
     
-    // For card payments, just return the amount and next step
+    // Calculate subtotal from cart items
+    const subtotal = calculateCartTotal(cartItems);
+    
+    // Add shipping cost to the total
+    const shippingCost = parseFloat(shippingDetails.price || 0);
+    const totalAmount = subtotal + shippingCost;
+    
+    console.log(`Payment calculation: Subtotal (${subtotal}) + Shipping (${shippingCost}) = Total (${totalAmount})`);
+    
+    // For card payments, return amount with shipping included
     if (paymentMethod === 'card') {
       res.json({
         paymentMethod: 'card',
-        amount: amount,
+        amount: totalAmount,
+        subtotal: subtotal,
+        shipping: shippingCost,
         nextStep: 'card_payment'
       });
     } else if (paymentMethod === 'bank') {
-      // For bank payments, provide bank transfer instructions
+      // For bank payments, provide bank transfer instructions with total amount
       res.json({
         paymentMethod: 'bank',
-        amount: amount,
+        amount: totalAmount,
+        subtotal: subtotal,
+        shipping: shippingCost,
         bankInfo: {
           accountName: 'TrueAminos LLC',
           accountNumber: '123456789',
@@ -466,10 +481,12 @@ export async function handlePaymentMethod(req: Request, res: Response) {
         nextStep: 'confirm_payment'
       });
     } else if (paymentMethod === 'crypto') {
-      // For crypto payments, provide wallet address
+      // For crypto payments, provide wallet address with total amount
       res.json({
         paymentMethod: 'crypto',
-        amount: amount,
+        amount: totalAmount,
+        subtotal: subtotal,
+        shipping: shippingCost,
         cryptoInfo: {
           bitcoin: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
           ethereum: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
@@ -630,7 +647,7 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
             state: customer.state,
             zip: customer.zip,
             quantity: 1, // Will be displayed in email
-            salesPrice: paymentDetails.amount || calculateCartTotal(await storage.getCartItems(req.session.id)),
+            salesPrice: paymentDetails.amount || await calculateTotalWithShipping(req.session.id),
             productId: 0,
             shipping: customer.shipping || 'Standard Shipping',
             payment: paymentMethod
@@ -708,7 +725,7 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
 }
 
 /**
- * Calculate total price of cart items
+ * Calculate total price of cart items (subtotal)
  */
 function calculateCartTotal(cartItems: any[]): number {
   return cartItems.reduce((sum, item) => {
@@ -717,4 +734,35 @@ function calculateCartTotal(cartItems: any[]): number {
                  0;
     return sum + parseFloat(price) * item.quantity;
   }, 0);
+}
+
+/**
+ * Calculate total including shipping from session
+ */
+async function calculateTotalWithShipping(sessionId: string): Promise<number> {
+  // Get cart items
+  const cartItems = await storage.getCartItems(sessionId);
+  const subtotal = calculateCartTotal(cartItems);
+  
+  // Try to get shipping cost from session storage
+  let shippingCost = 0;
+  try {
+    const session = await storage.getSession(sessionId);
+    if (session && session.shippingInfo) {
+      const shippingInfo = session.shippingInfo;
+      const shippingDetails = JSON.parse(shippingInfo.shippingDetails || '{}');
+      shippingCost = parseFloat(shippingDetails.price || 0);
+    } else {
+      // Fallback to default shipping cost based on number of items
+      const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+      shippingCost = itemCount <= 5 ? 15 : 25;
+    }
+  } catch (error) {
+    console.error('Error getting shipping cost:', error);
+    // Default to basic shipping cost
+    shippingCost = 15;
+  }
+  
+  console.log(`Total calculation: Subtotal ($${subtotal}) + Shipping ($${shippingCost}) = $${subtotal + shippingCost}`);
+  return subtotal + shippingCost;
 }

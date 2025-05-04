@@ -17,6 +17,15 @@ import {
   fetchCategories 
 } from '@/lib/airtable';
 
+// Session type for storage
+type Session = {
+  id: string;
+  personalInfo?: any;
+  shippingInfo?: any;
+  checkoutId?: string;
+  checkoutStep?: string;
+};
+
 // Storage interface
 export interface IStorage {
   // Product methods
@@ -40,6 +49,9 @@ export interface IStorage {
   updateCartItem(id: number, quantity: number): Promise<CartItem | undefined>;
   removeCartItem(id: number): Promise<boolean>;
   clearCart(sessionId: string): Promise<boolean>;
+  
+  // Session methods
+  getSession(sessionId: string): Promise<Session | undefined>;
 }
 
 // Hybrid storage implementation that uses Airtable for products and categories
@@ -49,12 +61,14 @@ export class AirtableMemStorage implements IStorage {
   private cartItemIdCounter: number;
   private productCache: Map<number, Product>;
   private categoryCache: Map<number, Category>;
+  private sessionStore: Map<string, Session>; // Add session storage
 
   constructor() {
     this.cartItems = new Map();
     this.cartItemIdCounter = 1;
     this.productCache = new Map();
     this.categoryCache = new Map();
+    this.sessionStore = new Map();
   }
 
   // Product methods
