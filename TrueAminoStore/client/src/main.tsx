@@ -1,9 +1,59 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./index.css";
+import { Suspense, lazy } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
-import './favicon-32x32.png';
+import "./index.css";
 
+// Lazy load main app component to reduce initial bundle size
+const App = lazy(() => import("./App"));
+
+// Performance metrics tracking
+if (process.env.NODE_ENV === 'production') {
+  // Report performance metrics only in production
+  const reportWebVitals = () => {
+    if ('performance' in window && 'getEntriesByType' in performance) {
+      // Get paint metrics
+      const paintMetrics = performance.getEntriesByType('paint');
+      const FCP = paintMetrics.find(entry => entry.name === 'first-contentful-paint')?.startTime || 0;
+      
+      // LCP may not be available via this API in all browsers
+      let LCP = 0;
+      try {
+        // @ts-ignore - Type safety handled at runtime
+        const lcpEntries = performance.getEntriesByType('largest-contentful-paint');
+        if (lcpEntries && lcpEntries.length > 0) {
+          LCP = lcpEntries[lcpEntries.length - 1]?.startTime || 0;
+        }
+      } catch (e) {
+        // Silently handle if browser doesn't support this entry type
+      }
+      
+      console.log('Paint Metrics:', {
+        FCP: Math.round(FCP) + 'ms',
+        LCP: LCP ? Math.round(LCP) + 'ms' : 'unavailable',
+      });
+      
+      // Check if navigation timing is available
+      const navEntries = performance.getEntriesByType('navigation');
+      if (navEntries && navEntries.length > 0) {
+        const navEntry = navEntries[0] as PerformanceNavigationTiming;
+        const TTFB = navEntry.responseStart - navEntry.requestStart;
+        console.log('Navigation Metrics:', {
+          TTFB: Math.round(TTFB) + 'ms',
+          DOMContentLoaded: Math.round(navEntry.domContentLoadedEventEnd) + 'ms',
+          Load: Math.round(navEntry.loadEventEnd) + 'ms',
+        });
+      }
+    }
+  };
+  
+  // Report metrics after load
+  window.addEventListener('load', () => {
+    // Use setTimeout to not block the main thread
+    setTimeout(reportWebVitals, 3000);
+  });
+}
+
+// Rendering with fallback loading state
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
     <Helmet>
@@ -42,6 +92,12 @@ createRoot(document.getElementById("root")!).render(
       <link rel="icon" href="/favicon-32x32.png" type="image/png" />
       <link rel="shortcut icon" href="/favicon-32x32.png" type="image/png" />
     </Helmet>
-    <App />
+    <Suspense fallback={
+      <div className="loading-placeholder">
+        <div className="loading-spinner"></div>
+      </div>
+    }>
+      <App />
+    </Suspense>
   </HelmetProvider>
 );

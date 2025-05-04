@@ -6,21 +6,74 @@
     <title>TrueAminos | Research Peptides & SARMs | Franklin, TN</title>
     <meta name="description" content="TrueAminos offers high-quality research peptides, SARMs, and supplements. Shop BPC-157, NAD+, Sermorelin, GLP1, and more. Free shipping available." />
     <meta name="keywords" content="research peptides, SARMs, BPC-157, NAD+, Sermorelin, GLP1, Semax, mk677, rad 140" />
-    <!-- Favicon directly from user (TA logo) -->
-    <!-- Multiple favicon references to ensure browser compatibility -->
+    
+    <!-- Preload critical assets for faster rendering -->
+    <link rel="preload" href="/src/main.tsx" as="script" type="module" fetchpriority="high" />
+    <link rel="modulepreload" href="/src/components/Layout.tsx" />
+    
+    <!-- Favicon with optimized loading -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon-32x32.png" type="image/png" />
-    <link rel="shortcut icon" href="/favicon-32x32.png" type="image/png" />
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="icon" href="https://replit.com/@lendousa/GitImportWorkspace?path=favicon-32x32.png" type="image/png" />
     <link rel="apple-touch-icon" href="/favicon-32x32.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Font optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    
+    <!-- Font CSS with optimal loading strategy -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" media="print" onload="this.media='all'" />
+    
+    <!-- Critical above-the-fold CSS inline -->
+    <style>
+      /* Minimal critical CSS for initial render */
+      body { 
+        margin: 0;
+        font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        background-color: #f8f9fa;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      #root {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .loading-placeholder {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100%;
+      }
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3772FF;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
-    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+    <div id="root">
+      <!-- Initial loading state to improve perceived performance -->
+      <div class="loading-placeholder">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+    
+    <!-- Main application script with high priority -->
+    <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
+    
+    <!-- Non-critical scripts loaded with low priority -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js" defer></script>
   </body>
 </html>
