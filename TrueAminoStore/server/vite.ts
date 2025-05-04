@@ -27,11 +27,19 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true,
   };
 
-  // Handle robots.txt in development mode
+  // Handle SEO files in development mode
   const publicPath = path.resolve(import.meta.dirname, "..", "public");
+  
+  // Handle robots.txt with correct content type
   app.get('/robots.txt', (req, res) => {
     res.set('Content-Type', 'text/plain');
     res.sendFile(path.resolve(publicPath, "robots.txt"));
+  });
+  
+  // Handle sitemap.xml with correct content type
+  app.get('/sitemap.xml', (req, res) => {
+    res.set('Content-Type', 'application/xml');
+    res.sendFile(path.resolve(publicPath, "sitemap.xml"));
   });
 
   const vite = await createViteServer({
@@ -85,10 +93,17 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Serve robots.txt directly with proper content type
+  // Serve SEO files directly with proper content types
+  // Handle robots.txt with correct content type
   app.get('/robots.txt', (req, res) => {
     res.set('Content-Type', 'text/plain');
     res.sendFile(path.resolve(publicPath, "robots.txt"));
+  });
+  
+  // Handle sitemap.xml with correct content type
+  app.get('/sitemap.xml', (req, res) => {
+    res.set('Content-Type', 'application/xml');
+    res.sendFile(path.resolve(publicPath, "sitemap.xml"));
   });
 
   // Enable aggressive caching for static assets with different strategies per asset type
