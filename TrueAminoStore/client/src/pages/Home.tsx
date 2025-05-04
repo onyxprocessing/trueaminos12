@@ -173,7 +173,7 @@ const Home: React.FC = () => {
                 <path d="M12 16h.01" />
                 <path d="M16 16h.01" />
               </svg>
-              <span className="text-xs md:text-sm font-medium">Free Shipping Over $100</span>
+              <span className="text-xs md:text-sm font-medium">Free Shipping Over $175</span>
             </div>
             
             <div className="flex items-center gap-2">
