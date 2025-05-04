@@ -82,7 +82,9 @@ const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
           <img 
             key={displayedImage} // Key helps force re-render when image changes
             src={displayedImage 
-              ? `/api/image-proxy?url=${encodeURIComponent(displayedImage)}&usage=detail&width=800` 
+              ? (displayedImage.includes('/api/image-proxy') 
+                  ? displayedImage + '&usage=detail&width=800' 
+                  : `/api/image-proxy?url=${encodeURIComponent(displayedImage)}&usage=detail&width=800`)
               : ''
             }
             alt={imageObjects[activeImageIndex]?.label || product.name}
@@ -131,7 +133,9 @@ const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
               {image.url ? (
                 <img 
                   src={image.url 
-                    ? `/api/image-proxy?url=${encodeURIComponent(image.url)}&usage=thumbnail&width=120` 
+                    ? (image.url.includes('/api/image-proxy') 
+                        ? image.url + '&usage=thumbnail&width=120' 
+                        : `/api/image-proxy?url=${encodeURIComponent(image.url)}&usage=thumbnail&width=120`)
                     : ''
                   } 
                   alt={image.label} 
