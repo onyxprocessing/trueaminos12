@@ -392,10 +392,10 @@ export async function handlePaymentMethod(req: Request, res: Response) {
     
     const { paymentMethod } = req.body;
     
-    // Validate payment method
-    if (!paymentMethod || !['card', 'bank', 'crypto'].includes(paymentMethod)) {
+    // Validate payment method - only accept card payments for now
+    if (!paymentMethod || paymentMethod !== 'card') {
       return res.status(400).json({ 
-        message: "Invalid payment method. Please choose card, bank, or crypto." 
+        message: "Invalid payment method. Only credit/debit card payments are currently accepted." 
       });
     }
     
@@ -455,46 +455,14 @@ export async function handlePaymentMethod(req: Request, res: Response) {
     
     console.log(`Payment calculation: Subtotal (${subtotal}) + Shipping (${shippingCost}) = Total (${totalAmount})`);
     
-    // For card payments, return amount with shipping included
-    if (paymentMethod === 'card') {
-      res.json({
-        paymentMethod: 'card',
-        amount: totalAmount,
-        subtotal: subtotal,
-        shipping: shippingCost,
-        nextStep: 'card_payment'
-      });
-    } else if (paymentMethod === 'bank') {
-      // For bank payments, provide bank transfer instructions with total amount
-      res.json({
-        paymentMethod: 'bank',
-        amount: totalAmount,
-        subtotal: subtotal,
-        shipping: shippingCost,
-        bankInfo: {
-          accountName: 'TrueAminos LLC',
-          accountNumber: '123456789',
-          routingNumber: '987654321',
-          bankName: 'First National Bank',
-          instructions: 'Please include your name and email in the transfer memo'
-        },
-        nextStep: 'confirm_payment'
-      });
-    } else if (paymentMethod === 'crypto') {
-      // For crypto payments, provide wallet address with total amount
-      res.json({
-        paymentMethod: 'crypto',
-        amount: totalAmount,
-        subtotal: subtotal,
-        shipping: shippingCost,
-        cryptoInfo: {
-          bitcoin: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-          ethereum: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-          instructions: 'After sending payment, click the confirm button to complete your order'
-        },
-        nextStep: 'confirm_payment'
-      });
-    }
+    // Return card payment details with shipping included
+    res.json({
+      paymentMethod: 'card',
+      amount: totalAmount,
+      subtotal: subtotal,
+      shipping: shippingCost,
+      nextStep: 'card_payment'
+    });
   } catch (error: any) {
     console.error('Error processing payment method selection:', error);
     res.status(500).json({ 
@@ -544,29 +512,17 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
     req.session.checkoutStep = 'payment_processing';
     await req.session.save();
     
-    // Create payment details object for Airtable
+    // Create payment details object for Airtable - card payments only
     const paymentInfo = {
-      method: paymentMethod,
+      method: 'card',
       status: 'pending',
       timestamp: new Date().toISOString(),
-      cardDetails: paymentMethod === 'card' ? {
+      cardDetails: {
         lastFour: cardDetails?.number?.slice(-4) || '****',
         expiryMonth: cardDetails?.expiry?.split('/')[0]?.trim() || 'MM',
         expiryYear: cardDetails?.expiry?.split('/')[1]?.trim() || 'YY',
         nameOnCard: cardDetails?.name || 'Card Holder'
-      } : null,
-      bankDetails: paymentMethod === 'bank' ? {
-        accountName: 'TrueAminos LLC',
-        accountNumber: '123456789',
-        routingNumber: '987654321',
-        bankName: 'First National Bank'
-      } : null,
-      cryptoDetails: paymentMethod === 'crypto' ? {
-        currency: 'Bitcoin/Ethereum',
-        walletAddress: paymentMethod === 'crypto' ? 
-          (transactionId?.includes('BTC') ? '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' : '0x742d35Cc6634C0532925a3b844Bc454e4438f44e') : '',
-        transactionReference: transactionId || `manual-${Date.now()}`
-      } : null
+      }
     };
     
     console.log('Payment info for Airtable:', JSON.stringify(paymentInfo, null, 2));

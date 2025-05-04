@@ -1042,54 +1042,26 @@ const MultiStepCheckout: React.FC = () => {
       <h2 className="text-xl font-bold">Payment Method</h2>
       
       <div className="space-y-4">
-        <RadioGroup 
-          value={paymentMethod} 
-          onValueChange={setPaymentMethod}
-          className="space-y-3"
-        >
-          <div className="flex items-center space-x-2 border p-3 rounded">
-            <RadioGroupItem value="card" id="payment-card" />
-            <Label htmlFor="payment-card" className="flex-grow">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="font-medium">Credit/Debit Card</span>
-                  <p className="text-sm text-gray-500">Pay securely with your card</p>
-                </div>
+        <div className="flex items-center space-x-2 border p-3 rounded">
+          <div className="flex-grow">
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="font-medium">Credit/Debit Card</span>
+                <p className="text-sm text-gray-500">Pay securely with your card</p>
               </div>
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2 border p-3 rounded">
-            <RadioGroupItem value="bank" id="payment-bank" />
-            <Label htmlFor="payment-bank" className="flex-grow">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="font-medium">Bank Transfer (Plaid)</span>
-                  <p className="text-sm text-gray-500">Connect your bank securely with Plaid</p>
-                </div>
-                <div className="ml-2">
-                  <BankIcon />
-                </div>
+              <div className="flex space-x-2 ml-2">
+                <VisaIcon />
+                <MastercardIcon />
+                <AmexIcon />
+                <DiscoverIcon />
               </div>
-            </Label>
+            </div>
           </div>
-          
-          <div className="flex items-center space-x-2 border p-3 rounded">
-            <RadioGroupItem value="crypto" id="payment-crypto" />
-            <Label htmlFor="payment-crypto" className="flex-grow">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="font-medium">Cryptocurrency</span>
-                  <p className="text-sm text-gray-500">Pay with Bitcoin or Ethereum</p>
-                </div>
-                <div className="ml-2 flex space-x-1">
-                  <BitcoinIcon />
-                  <EthereumIcon />
-                </div>
-              </div>
-            </Label>
-          </div>
-        </RadioGroup>
+        </div>
+        
+        <div className="mt-2 text-sm text-gray-500">
+          <p>We accept Visa, Mastercard, American Express, and Discover cards. Your payment information is encrypted and secure.</p>
+        </div>
       </div>
       
       <div className="flex justify-between mt-6">
