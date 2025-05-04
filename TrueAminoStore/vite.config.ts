@@ -5,6 +5,10 @@ import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { visualizer } from 'rollup-plugin-visualizer';
 import { createHtmlPlugin } from 'vite-plugin-html';
 import compression from 'vite-plugin-compression';
+import { splitVendorChunkPlugin } from 'vite';
+import cssnano from 'cssnano';
+import postcssPresetEnv from 'postcss-preset-env';
+import purgecss from '@fullhuman/postcss-purgecss';
 
 // Define environment
 const isProd = process.env.NODE_ENV === "production";
@@ -18,12 +22,17 @@ export default defineConfig({
         plugins: isProd ? [
           ["transform-remove-console", { exclude: ["error", "warn"] }],
           "@babel/plugin-transform-react-constant-elements",
-          "@babel/plugin-transform-react-inline-elements"
+          "@babel/plugin-transform-react-inline-elements",
+          "babel-plugin-transform-imports", // Optimize imports
+          ["babel-plugin-transform-react-remove-prop-types", { removeImport: true }]
         ] : []
       },
       // Fast refresh in development
       fastRefresh: !isProd
     }),
+    
+    // Use vendor chunk splitting for better caching
+    splitVendorChunkPlugin(),
     
     // Development-specific plugins
     runtimeErrorOverlay(),
@@ -288,28 +297,78 @@ export default defineConfig({
     ]
   },
   
-  // Optimizations for dependencies
-  optimizeDeps: {
-    include: [
-      'react', 
-      'react-dom', 
-      'react-router-dom',
-      '@radix-ui/react-select',
-      '@radix-ui/react-dialog',
-      'lucide-react',
-      'axios',
-      'react-helmet-async',
-      'tailwind-merge',
-      '@tanstack/react-query'
-    ],
-    // Force-included deps that might have dynamic imports
-    force: [
-      'react-helmet-async',
-      'lucide-react'
-    ],
-    // Exclude content-heavy packages from optimization
-    exclude: [
-      'sharp'
-    ]
+  // CSS processing
+  css: {
+    postcss: {
+      plugins: [
+        postcssPresetEnv({
+          stage: 3,
+          features: {
+            'nesting-rules': true,
+            'custom-properties': true,
+            'color-mod-function': true
+          }
+        }),
+        // Advanced CSS optimization
+        ...(isProd ? [
+          cssnano({
+            preset: ['advanced', {
+              discardComments: { removeAll: true },
+              reduceIdents: true,
+              zindex: false,
+              colormin: true,
+              minifySelectors: true,
+              minifyFontValues: true,
+              normalizeWhitespace: true,
+              svgo: true
+            }]
+          }),
+          purgecss({
+            content: [
+              './src/**/*.{js,jsx,ts,tsx}',
+              './index.html'
+            ],
+            defaultExtractor: content => content.match(/[\w-/:]+(?<!:)/g) || [],
+            safelist: {
+              standard: [
+                /^btn-/,
+                /^text-/,
+                /^bg-/,
+                /^w-/,
+                /^h-/,
+                /^m-/,
+                /^p-/,
+                /^flex/,
+                /^grid/,
+                /^col-/,
+                /^row-/,
+                /^gap-/,
+                /^border/,
+                /^rounded/,
+                /^shadow/,
+                /^transition/,
+                /^transform/,
+                /^opacity/,
+                /^z-/,
+                /^focus:/,
+                /^hover:/,
+                /^active:/,
+                /data-/,
+                /^rotate-/,
+                /^translate-/,
+                /^scale-/,
+                /^skew-/,
+                /^animate-/,
+                /^md:/,
+                /^lg:/,
+                /^xl:/,
+                /^2xl:/
+              ],
+              deep: [/tippy/, /headless/, /radix/, /react-modal/, /.*dialog.*/]
+            }
+          })
+        ] : [])
+      ]
+    }
   }
 });

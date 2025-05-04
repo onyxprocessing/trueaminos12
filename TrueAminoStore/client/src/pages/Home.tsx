@@ -90,48 +90,107 @@ const Home: React.FC = () => {
         className="sticky top-0 left-0 right-0 w-full"
       />
       
-      {/* Static Hero Banner Content - Optimized for Fast LCP - No JS Required */}
+      {/* Static Hero Banner Content - Highly Optimized for Ultra-Fast LCP - Pure Static HTML */}
       <section 
-        className="bg-gradient-to-r from-primary to-accent py-16 md:py-24"
-      >
-        {/* Using dangerouslySetInnerHTML for critical-path HTML */}
-        <div 
-          className="container px-6 md:px-8 mx-auto max-w-7xl"
-          dangerouslySetInnerHTML={{
-            __html: `
-              <div class="max-w-2xl text-white">
-                <h1 
-                  class="font-heading font-bold text-4xl md:text-5xl mb-4"
-                  style="font-size:clamp(2rem, 5vw, 3rem); font-family:-apple-system, BlinkMacSystemFont, 'Inter', Segoe UI, Arial, sans-serif"
-                >
-                  Advanced Research Peptides &amp; SARMs
-                </h1>
-                <p 
-                  class="text-lg mb-8"
-                >
-                  Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.
-                </p>
-                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                  <a href="/products" class="inline-block">
-                    <button 
-                      class="bg-secondary text-white hover:bg-secondary/90 px-6 py-3 rounded-md font-medium"
-                    >
-                      Shop Products
-                    </button>
-                  </a>
-                  <a href="/about" class="inline-block">
-                    <button 
-                      class="bg-white text-primary hover:bg-gray-100 px-6 py-3 rounded-md border border-gray-200 font-medium"
-                    >
-                      About TrueAmino Research
-                    </button>
-                  </a>
+        className="hero-section"
+        dangerouslySetInnerHTML={{
+          __html: `
+            <style>
+              /* Highly optimized critical hero styles injected directly */
+              .hero-section {
+                background: linear-gradient(to right, var(--primary), var(--accent));
+                padding: 4rem 1.5rem;
+                overflow: hidden;
+                contain: content;
+                contain-intrinsic-size: 100% 350px;
+                content-visibility: auto;
+              }
+              
+              .hero-container {
+                width: 100%;
+                max-width: 80rem;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+              }
+              
+              .hero-content {
+                max-width: 34rem;
+                color: white;
+              }
+              
+              .hero-heading {
+                font-size: clamp(2rem, 5vw, 3rem);
+                font-weight: 700;
+                margin-bottom: 1rem;
+                font-family: -apple-system, BlinkMacSystemFont, 'Inter', Segoe UI, Arial, sans-serif;
+                line-height: 1.2;
+              }
+              
+              .hero-text {
+                font-size: 1.125rem;
+                margin-bottom: 2rem;
+                opacity: 0.95;
+                font-family: -apple-system, BlinkMacSystemFont, 'Inter', Segoe UI, Arial, sans-serif;
+                line-height: 1.6;
+                max-width: 100%;
+              }
+              
+              .hero-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+              }
+              
+              .hero-button-primary {
+                display: inline-block;
+                background-color: var(--secondary);
+                color: white;
+                padding: 0.75rem 1.5rem;
+                border-radius: 0.375rem;
+                font-weight: 500;
+                text-decoration: none;
+                text-align: center;
+              }
+              
+              .hero-button-secondary {
+                display: inline-block;
+                background-color: white;
+                color: var(--primary);
+                padding: 0.75rem 1.5rem;
+                border-radius: 0.375rem;
+                font-weight: 500;
+                text-decoration: none;
+                border: 1px solid rgba(0,0,0,0.1);
+                text-align: center;
+              }
+              
+              @media (min-width: 640px) {
+                .hero-section {
+                  padding: 6rem 1.5rem;
+                }
+                
+                .hero-buttons {
+                  flex-direction: row;
+                  gap: 1rem;
+                }
+              }
+            </style>
+            
+            <div class="hero-container">
+              <div class="hero-content">
+                <h1 class="hero-heading">Advanced Research Peptides &amp; SARMs</h1>
+                <p class="hero-text">Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.</p>
+                <div class="hero-buttons">
+                  <a href="/products" class="hero-button-primary">Shop Products</a>
+                  <a href="/about" class="hero-button-secondary">About TrueAmino Research</a>
                 </div>
               </div>
-            `
-          }}
-        />
-      </section>
+            </div>
+          `
+        }}
+      />
       
       {/* Trust Banners */}
       <section className="py-3 bg-gray-50 border-y border-gray-200">
