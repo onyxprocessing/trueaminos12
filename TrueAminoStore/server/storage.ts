@@ -297,6 +297,20 @@ export class AirtableMemStorage implements IStorage {
     
     return true;
   }
+  
+  // Session methods
+  async getSession(sessionId: string): Promise<Session | undefined> {
+    // We'll use express-session for storage, but provide a fallback 
+    // for direct access when working with checkout calculations
+    if (this.sessionStore.has(sessionId)) {
+      return this.sessionStore.get(sessionId);
+    }
+    
+    // Return basic session data if we don't have it in local store
+    return {
+      id: sessionId
+    };
+  }
 }
 
 // Export singleton instance
