@@ -81,6 +81,67 @@ function getContentType(url: string, defaultType: string = 'image/jpeg'): string
 }
 
 /**
+ * Detect if the client supports WebP
+ * @param req Express request
+ * @returns Boolean indicating WebP support
+ */
+function supportsWebP(req: Request): boolean {
+  const acceptHeader = req.headers.accept || '';
+  return acceptHeader.includes('image/webp');
+}
+
+/**
+ * Detect the optimal image format for the client
+ * @param req Express request
+ * @returns Best image format to serve
+ */
+function getBestImageFormat(req: Request): 'webp' | 'jpeg' | 'png' {
+  // If client supports WebP and isn't requesting SVG, use WebP for best compression
+  if (supportsWebP(req)) {
+    return 'webp';
+  }
+  
+  // Fallback to original format determination based on URL
+  const url = req.query.url as string;
+  if (url) {
+    const extension = path.extname(url).toLowerCase();
+    if (extension === '.png') {
+      return 'png';
+    }
+  }
+  
+  // Default to JPEG for best compatibility
+  return 'jpeg';
+}
+
+/**
+ * Determine optimal image width based on request
+ * @param req Express request
+ * @returns Width in pixels
+ */
+function getOptimalWidth(req: Request): number | null {
+  // Check if width parameter is provided
+  const width = req.query.width ? parseInt(req.query.width as string, 10) : null;
+  
+  // Validate width is reasonable (not too large or small)
+  if (width && width > 0 && width <= 2000) {
+    return width;
+  }
+  
+  // Default widths for common use cases
+  if (req.query.usage === 'thumbnail') {
+    return 300;
+  } else if (req.query.usage === 'preview') {
+    return 600;
+  } else if (req.query.usage === 'detail') {
+    return 1200;
+  }
+  
+  // No width transformation needed
+  return null;
+}
+
+/**
  * Optimize and serve image from URL
  * @param req Express request
  * @param res Express response
@@ -96,59 +157,59 @@ export async function optimizeAndServeImage(req: Request, res: Response) {
     
     // Remove any potential URL encoding issues
     let decodedUrl = decodeURIComponent(imageUrl);
-    console.log(`Optimizing image: ${decodedUrl.substring(0, 100)}...`);
     
-    // Generate a cache key for this URL
-    const cacheKey = generateCacheKey(decodedUrl);
+    // Determine optimal format and size
+    const targetFormat = getBestImageFormat(req);
+    const targetWidth = getOptimalWidth(req);
     
-    // Check if we have the image cached
+    // Generate a unique cache key that includes format and size
+    const cacheKey = generateCacheKey(decodedUrl, targetFormat, targetWidth || 0);
+    
+    // Check if we have the optimized version cached
     const cachedImagePath = getCachedImage(cacheKey);
     
     if (cachedImagePath) {
-      console.log(`Serving cached image for: ${decodedUrl.substring(0, 50)}...`);
+      // Serve from cache for better performance
+      console.log(`Serving cached optimized image: ${targetFormat} w:${targetWidth || 'orig'}`);
       
       // Get file stats for cache control headers
       const stats = fs.statSync(cachedImagePath);
       const lastModified = stats.mtime.toUTCString();
       
-      // Determine content type
-      const contentType = getContentType(decodedUrl);
+      // Set content type based on the target format
+      const contentType = targetFormat === 'webp' 
+                          ? 'image/webp' 
+                          : (targetFormat === 'png' ? 'image/png' : 'image/jpeg');
       
-      // Set appropriate headers
+      // Set performance-oriented headers
       res.set({
         'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
         'Content-Type': contentType,
         'Last-Modified': lastModified,
+        'Vary': 'Accept', // Important for CDNs to cache variants correctly
       });
       
-      // Stream the file to the response
+      // Stream the optimized file
       const fileStream = fs.createReadStream(cachedImagePath);
       fileStream.pipe(res);
       return;
     }
     
-    // Not cached, fetch from source
-    console.log("No cache found, fetching from source");
+    // Not cached, need to fetch and process
+    console.log(`Processing image: ${targetFormat} w:${targetWidth || 'orig'}`);
     
     // Handle URLs that are already proxied
     if (decodedUrl.startsWith('/api/image-proxy')) {
-      console.log("Handling already proxied URL");
-      // Extract the original URL from the proxy URL
-      const originalUrlMatch = decodedUrl.match(/url=(.*)/);
-      if (originalUrlMatch && originalUrlMatch[1]) {
-        decodedUrl = decodeURIComponent(originalUrlMatch[1]);
-        console.log(`Extracted original URL: ${decodedUrl.substring(0, 100)}...`);
-      } else {
-        console.error("Image optimizer error: Could not extract URL from proxy URL");
-        return res.status(400).json({ message: "Invalid proxied URL format" });
-      }
+      console.error("Proxy URL detected in image optimizer. This is not supported.");
+      return res.status(400).json({ 
+        message: "Cannot process nested image proxy URLs. Please provide the original image URL."
+      });
     }
     
     // Validate URL to ensure it's from trusted sources
     if (!decodedUrl.includes('airtableusercontent.com') &&
         !decodedUrl.includes('trueaminos.com') &&
         !decodedUrl.includes('amazonaws.com')) {
-      console.error("Image optimizer error: Invalid source domain");
       return res.status(403).json({ message: "Invalid image source domain" });
     }
     
@@ -161,32 +222,82 @@ export async function optimizeAndServeImage(req: Request, res: Response) {
     });
     
     if (!fetchResponse.ok) {
-      console.error(`Image fetch failed with status: ${fetchResponse.status} - ${fetchResponse.statusText}`);
       return res.status(fetchResponse.status).json({ 
         message: `Failed to fetch image: ${fetchResponse.statusText}` 
       });
     }
     
-    // Get the image data
+    // Get the image data as buffer
     const imageBuffer = await fetchResponse.arrayBuffer();
     const buffer = Buffer.from(imageBuffer);
     
-    // Save to cache
-    console.log(`Saving image to cache: ${cacheKey}`);
-    saveToCache(cacheKey, buffer);
+    // SVG images don't need transformation, serve as-is
+    const originalContentType = fetchResponse.headers.get('content-type') || '';
+    if (originalContentType.includes('svg')) {
+      // Set appropriate headers
+      res.set({
+        'Cache-Control': 'public, max-age=31536000',
+        'Content-Type': originalContentType,
+      });
+      
+      // Cache the SVG
+      saveToCache(cacheKey, buffer);
+      
+      // Send directly
+      res.send(buffer);
+      return;
+    }
     
-    // Get content type from response or use a default
-    const contentType = fetchResponse.headers.get('content-type') || getContentType(decodedUrl);
+    // Use Sharp to optimize the image
+    let sharpInstance = sharp(buffer);
     
-    // Set appropriate headers
+    // Resize if width specified
+    if (targetWidth) {
+      sharpInstance = sharpInstance.resize({
+        width: targetWidth,
+        withoutEnlargement: true, // Don't upscale small images
+        fit: 'inside'
+      });
+    }
+    
+    // Apply format-specific optimizations
+    let optimizedBuffer: Buffer;
+    if (targetFormat === 'webp') {
+      optimizedBuffer = await sharpInstance.webp({
+        quality: 85,
+        effort: 4, // Higher values are slower but produce better compression
+      }).toBuffer();
+    } else if (targetFormat === 'png') {
+      optimizedBuffer = await sharpInstance.png({
+        compressionLevel: 8,
+        quality: 90
+      }).toBuffer();
+    } else {
+      // Default to JPEG
+      optimizedBuffer = await sharpInstance.jpeg({
+        quality: 85,
+        mozjpeg: true // Better JPEG compression
+      }).toBuffer();
+    }
+    
+    // Save optimized version to cache
+    saveToCache(cacheKey, optimizedBuffer);
+    
+    // Set the appropriate content type
+    const contentType = targetFormat === 'webp' 
+                        ? 'image/webp' 
+                        : (targetFormat === 'png' ? 'image/png' : 'image/jpeg');
+    
+    // Set cache headers for best performance
     res.set({
-      'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+      'Cache-Control': 'public, max-age=31536000',
       'Content-Type': contentType,
+      'Vary': 'Accept',
     });
     
-    // Send the image data
-    res.send(buffer);
-    console.log("Image optimized and served successfully");
+    // Send the optimized image
+    res.send(optimizedBuffer);
+    console.log(`Image optimized successfully: ${targetFormat} w:${targetWidth || 'orig'}`);
     
   } catch (error) {
     console.error("Image optimization error:", error);

@@ -81,7 +81,10 @@ const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
         {displayedImage ? (
           <img 
             key={displayedImage} // Key helps force re-render when image changes
-            src={displayedImage}
+            src={displayedImage 
+              ? `/api/image-proxy?url=${encodeURIComponent(displayedImage)}&usage=detail&width=800` 
+              : ''
+            }
             alt={imageObjects[activeImageIndex]?.label || product.name}
             className="max-h-full max-w-full object-contain"
             onError={(e) => {
@@ -127,7 +130,10 @@ const ImageGallery: React.FC<{ product: Product }> = ({ product }) => {
             >
               {image.url ? (
                 <img 
-                  src={image.url} 
+                  src={image.url 
+                    ? `/api/image-proxy?url=${encodeURIComponent(image.url)}&usage=thumbnail&width=120` 
+                    : ''
+                  } 
                   alt={image.label} 
                   className="max-h-full max-w-full object-contain"
                   onError={(e) => {
