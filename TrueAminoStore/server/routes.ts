@@ -3,8 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, Product } from "@shared/schema";
 import { z } from "zod";
-import expressSession from 'express-session';
-import MemoryStore from 'memorystore';
+// Import as ESM modules
+import session from 'express-session';
+import createMemoryStore from 'memorystore';
 import fetch from 'node-fetch';
 import path from 'path';
 import { recordPaymentToAirtable } from './airtable-orders';
@@ -57,8 +58,8 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
 export async function registerRoutes(app: Express): Promise<Server> {
   // No Stripe initialization - using direct payment methods instead
   // Set up session middleware for cart management
-  const MemoryStoreSession = MemoryStore(expressSession);
-  app.use(expressSession({
+  const MemoryStoreSession = createMemoryStore(session);
+  app.use(session({
     secret: 'trueaminos-secret-key',
     resave: false,
     saveUninitialized: true,
