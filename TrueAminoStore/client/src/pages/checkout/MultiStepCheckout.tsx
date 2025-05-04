@@ -1064,8 +1064,8 @@ const MultiStepCheckout: React.FC = () => {
             <Label htmlFor="payment-bank" className="flex-grow">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="font-medium">Bank Transfer</span>
-                  <p className="text-sm text-gray-500">Pay via bank transfer</p>
+                  <span className="font-medium">Bank Transfer (Plaid)</span>
+                  <p className="text-sm text-gray-500">Connect your bank securely with Plaid</p>
                 </div>
                 <div className="ml-2">
                   <BankIcon />
@@ -1107,131 +1107,71 @@ const MultiStepCheckout: React.FC = () => {
     </form>
   );
   
-  // Render card payment form (Step 4 for cards)
-  // State for card information
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
+  // Initialize Stripe
+  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-  // Render card payment form (Step 4 for card payments)
-  const renderCardPaymentForm = () => {
-    return (
-      <div className="space-y-6">
-        <h2 className="text-xl font-bold">Card Payment</h2>
-        
-        <div className="bg-white p-6 border rounded-lg">
-          <form onSubmit={handleCardPaymentSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="cardName">Cardholder Name</Label>
-              <Input 
-                id="cardName" 
-                value={cardName} 
-                onChange={(e) => setCardName(e.target.value)} 
-                placeholder="Name on card"
-                required 
-              />
-            </div>
+  // Stripe Card Element component
+  const CheckoutForm = ({ clientSecret, amount }: { clientSecret: string, amount: number }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [error, setError] = useState<string | null>(null);
+    const [processing, setProcessing] = useState(false);
+    const [cardComplete, setCardComplete] = useState(false);
+    const [cardholderName, setCardholderName] = useState('');
+    const { toast } = useToast();
 
-            <div className="space-y-2">
-              <Label htmlFor="cardNumber">Card Number</Label>
-              <Input 
-                id="cardNumber" 
-                value={cardNumber}
-                onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16))}
-                placeholder="0000 0000 0000 0000"
-                required 
-              />
-            </div>
+    const handleSubmit = async (event: React.FormEvent) => {
+      event.preventDefault();
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry Date</Label>
-                <Input 
-                  id="expiryDate" 
-                  value={expiryDate}
-                  onChange={(e) => setExpiryDate(e.target.value)} 
-                  placeholder="MM/YY"
-                  required 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="cvv">CVV</Label>
-                <Input 
-                  id="cvv" 
-                  value={cvv}
-                  onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 3))} 
-                  placeholder="123"
-                  required 
-                />
-              </div>
-            </div>
+      if (!stripe || !elements) {
+        // Stripe.js has not loaded yet
+        return;
+      }
 
-            <div className="pt-4">
-              <p className="text-base font-medium">Amount: ${paymentAmount.toFixed(2)}</p>
-            </div>
-            
-            <div className="flex justify-between mt-6">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setCurrentStep('payment_method')}
-              >
-                Back
-              </Button>
-              
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Processing...' : `Pay $${paymentAmount.toFixed(2)}`}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
-  
-  // Handle card payment form submission
-  const handleCardPaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate card details
-    if (!cardNumber || !cardName || !expiryDate || !cvv) {
-      toast({
-        title: 'Missing Information',
-        description: 'Please fill in all card details',
-        variant: 'destructive',
+      if (!cardholderName) {
+        setError('Please enter the cardholder name');
+        return;
+      }
+
+      setProcessing(true);
+
+      // Get a reference to the card element
+      const cardElement = elements.getElement(CardElement);
+
+      if (!cardElement) {
+        setError('Card element not found');
+        setProcessing(false);
+        return;
+      }
+
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: cardholderName,
+          },
+        },
+        setup_future_usage: 'off_session',
       });
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      
-      // Process the payment directly without Stripe
-      const response = await apiRequest('POST', '/api/checkout/confirm-payment', {
-        paymentMethod: 'card',
-        cardDetails: {
-          name: cardName,
-          number: cardNumber,
-          expiry: expiryDate,
-          cvv: cvv
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        
+
+      setProcessing(false);
+
+      if (result.error) {
+        setError(result.error.message || 'Payment failed');
+        toast({
+          title: 'Payment Failed',
+          description: result.error.message || 'Could not process payment',
+          variant: 'destructive',
+        });
+      } else if (result.paymentIntent?.status === 'succeeded') {
+        // Payment successful, proceed with the order processing
+        toast({
+          title: 'Payment Successful',
+          description: 'Your order has been placed',
+        });
+
         // Clear the cart
         cart.clearCart();
-        
-        // Store order data for success page
-        const orderParams = new URLSearchParams({
-          amount: paymentAmount.toString(),
-          payment_method: 'card',
-          order_ids: (data.orderIds || []).join(','),
-          shipping_method: shippingMethod
-        });
         
         // Store checkout information in sessionStorage for the success page
         sessionStorage.setItem('checkout_first_name', firstName);
@@ -1242,94 +1182,324 @@ const MultiStepCheckout: React.FC = () => {
         sessionStorage.setItem('checkout_zip', zipCode);
         
         // Navigate to the success page with the order data
-        console.log('Card payment successful, redirecting to:', `/checkout/confirmation?${orderParams.toString()}`);
-        
-        // Force a hard redirect for maximum compatibility
-        setTimeout(() => {
-          console.log('Performing card payment redirect now');
-          window.location.href = `/checkout/confirmation?${orderParams.toString()}`;
-        }, 100);
-      } else {
-        const errorData = await response.json();
-        toast({
-          title: 'Payment Failed',
-          description: errorData.message || 'Could not process payment',
-          variant: 'destructive',
+        const orderParams = new URLSearchParams({
+          amount: amount.toString(),
+          payment_method: 'card',
+          payment_id: result.paymentIntent.id,
+          shipping_method: shippingMethod
         });
+        
+        window.location.href = `/checkout/confirmation?${orderParams.toString()}`;
       }
-    } catch (err: any) {
-      toast({
-        title: 'Network Error',
-        description: err.message || 'Could not connect to server',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Render bank transfer instructions (Step 4 for bank transfers)
-  const renderBankTransferForm = () => (
-    <form onSubmit={handlePaymentConfirmation} className="space-y-6">
-      <h2 className="text-xl font-bold">Bank Transfer Payment</h2>
-      
-      <div className="bg-white p-6 border rounded-lg">
-        <h3 className="font-medium mb-4">Please transfer ${paymentAmount.toFixed(2)} to:</h3>
-        
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            <p className="text-gray-500">Bank Name:</p>
-            <p className="col-span-2 font-medium">{bankInfo?.bankName || 'First National Bank'}</p>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-2">
-            <p className="text-gray-500">Account Name:</p>
-            <p className="col-span-2 font-medium">{bankInfo?.accountName || 'TrueAminos LLC'}</p>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-2">
-            <p className="text-gray-500">Account Number:</p>
-            <p className="col-span-2 font-medium">{bankInfo?.accountNumber || '123456789'}</p>
-          </div>
-          
-          <div className="grid grid-cols-3 gap-2">
-            <p className="text-gray-500">Routing Number:</p>
-            <p className="col-span-2 font-medium">{bankInfo?.routingNumber || '987654321'}</p>
-          </div>
-        </div>
-        
-        <div className="bg-blue-50 p-4 rounded-lg mt-6">
-          <p className="text-blue-700 text-sm">
-            {bankInfo?.instructions || 'Please include your name and email in the transfer memo. After completing the transfer, click "Confirm Payment" below.'}
-          </p>
-        </div>
-        
-        <div className="mt-6">
-          <Label htmlFor="transactionId">Transaction ID or Reference (optional)</Label>
+    };
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="cardholderName">Cardholder Name</Label>
           <Input 
-            id="transactionId" 
-            placeholder="Enter the transaction reference number"
-            value={transactionId} 
-            onChange={(e) => setTransactionId(e.target.value)} 
-            className="mt-1"
+            id="cardholderName" 
+            value={cardholderName} 
+            onChange={(e) => setCardholderName(e.target.value)} 
+            placeholder="Name on card"
+            required 
           />
         </div>
-      </div>
+
+        <div className="space-y-2">
+          <Label>Card Details</Label>
+          <div className="p-3 border rounded-md">
+            <CardElement 
+              options={{
+                style: {
+                  base: {
+                    fontSize: '16px',
+                    color: '#424770',
+                    '::placeholder': {
+                      color: '#aab7c4',
+                    },
+                  },
+                  invalid: {
+                    color: '#9e2146',
+                  },
+                },
+              }} 
+              onChange={(e) => setCardComplete(e.complete)}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="text-destructive text-sm mt-2">
+            {error}
+          </div>
+        )}
+
+        <div className="pt-4">
+          <p className="text-base font-medium">Amount: ${amount.toFixed(2)}</p>
+        </div>
+        
+        <div className="flex justify-between mt-6">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => setCurrentStep('payment_method')}
+          >
+            Back
+          </Button>
+          
+          <Button 
+            type="submit" 
+            disabled={!stripe || !elements || !cardComplete || processing}
+          >
+            {processing ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
+          </Button>
+        </div>
+      </form>
+    );
+  };
+
+  // Render card payment form (Step 4 for card payments)
+  const renderCardPaymentForm = () => {
+    const [paymentIntentLoading, setPaymentIntentLoading] = useState(true);
+    
+    // Create a payment intent when we first render this component
+    useEffect(() => {
+      const createPaymentIntent = async () => {
+        try {
+          setPaymentIntentLoading(true);
+          const response = await apiRequest('POST', '/api/create-payment-intent', {
+            amount: paymentAmount,
+            email: email,
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setClientSecret(data.clientSecret);
+          } else {
+            const errorData = await response.json();
+            toast({
+              title: 'Payment Setup Failed',
+              description: errorData.message || 'Could not set up payment',
+              variant: 'destructive',
+            });
+          }
+        } catch (err: any) {
+          toast({
+            title: 'Network Error',
+            description: err.message || 'Could not connect to payment server',
+            variant: 'destructive',
+          });
+        } finally {
+          setPaymentIntentLoading(false);
+        }
+      };
       
-      <div className="flex justify-between mt-6">
-        <Button 
-          type="button" 
-          variant="outline"
-          onClick={() => setCurrentStep('payment_method')}
-        >
-          Back
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Processing...' : 'Confirm Payment'}
-        </Button>
+      if (!clientSecret) {
+        createPaymentIntent();
+      } else {
+        setPaymentIntentLoading(false);
+      }
+    }, []);
+
+    return (
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold">Card Payment</h2>
+        
+        <div className="bg-white p-6 border rounded-lg">
+          {paymentIntentLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Setting up payment...</span>
+            </div>
+          ) : clientSecret ? (
+            <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <CheckoutForm clientSecret={clientSecret} amount={paymentAmount} />
+            </Elements>
+          ) : (
+            <div className="text-center py-8 text-destructive">
+              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+              <p>Could not set up payment. Please try again later.</p>
+              <Button 
+                className="mt-4" 
+                variant="outline"
+                onClick={() => setCurrentStep('payment_method')}
+              >
+                Back to Payment Methods
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
-    </form>
-  );
+    );
+  };
+  
+  // Card payment is now handled by the Stripe checkout component
+  
+  // Render bank transfer form with manual account/routing number entry
+  const renderBankTransferForm = () => {
+    const [accountNumber, setAccountNumber] = useState('');
+    const [routingNumber, setRoutingNumber] = useState('');
+    const [accountName, setAccountName] = useState('');
+    const [bankName, setBankName] = useState('');
+    
+    const handleBankPaymentSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      // Validate bank details
+      if (!accountNumber || !routingNumber || !accountName || !bankName) {
+        toast({
+          title: 'Missing Information',
+          description: 'Please fill in all bank details',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        
+        // Send bank details to server
+        const response = await apiRequest('POST', '/api/checkout/confirm-payment', {
+          paymentMethod: 'bank',
+          bankDetails: {
+            accountNumber,
+            routingNumber,
+            accountName,
+            bankName
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Clear the cart
+          cart.clearCart();
+          
+          // Store checkout information in sessionStorage for the success page
+          sessionStorage.setItem('checkout_first_name', firstName);
+          sessionStorage.setItem('checkout_last_name', lastName);
+          sessionStorage.setItem('checkout_address', address);
+          sessionStorage.setItem('checkout_city', city);
+          sessionStorage.setItem('checkout_state', state);
+          sessionStorage.setItem('checkout_zip', zipCode);
+          
+          // Navigate to the success page with the order data
+          const orderParams = new URLSearchParams({
+            amount: paymentAmount.toString(),
+            payment_method: 'bank',
+            order_ids: (data.orderIds || []).join(','),
+            shipping_method: shippingMethod
+          });
+          
+          window.location.href = `/checkout/confirmation?${orderParams.toString()}`;
+        } else {
+          const errorData = await response.json();
+          toast({
+            title: 'Payment Failed',
+            description: errorData.message || 'Could not process bank payment',
+            variant: 'destructive',
+          });
+        }
+      } catch (err: any) {
+        toast({
+          title: 'Network Error',
+          description: err.message || 'Could not connect to server',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    return (
+      <form onSubmit={handleBankPaymentSubmit} className="space-y-6">
+        <h2 className="text-xl font-bold">Bank Transfer Payment</h2>
+        
+        <div className="bg-white p-6 border rounded-lg">
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg mb-6">
+              <p className="text-blue-700 text-sm font-medium">
+                <span className="mr-2">•</span>
+                Your payment will be processed securely through our ACH system.
+              </p>
+              <p className="text-blue-700 text-sm pt-2">
+                <span className="mr-2">•</span>
+                Enter your bank account details below to complete your purchase of ${paymentAmount.toFixed(2)}.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="bankName">Bank Name</Label>
+              <Input 
+                id="bankName" 
+                value={bankName} 
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="e.g. Chase, Bank of America"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="accountName">Name on Account</Label>
+              <Input 
+                id="accountName" 
+                value={accountName} 
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="Name as it appears on your account"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="routingNumber">Routing Number</Label>
+              <Input 
+                id="routingNumber" 
+                value={routingNumber}
+                onChange={(e) => setRoutingNumber(e.target.value.replace(/\D/g, '').slice(0, 9))}
+                placeholder="9-digit routing number"
+                required
+                type="text"
+                pattern="[0-9]{9}"
+                inputMode="numeric"
+              />
+              <p className="text-xs text-gray-500">9-digit number typically found at the bottom left of your check</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="accountNumber">Account Number</Label>
+              <Input 
+                id="accountNumber" 
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
+                placeholder="Your account number"
+                required
+                type="text"
+                inputMode="numeric"
+              />
+            </div>
+            
+            <div className="pt-4">
+              <p className="text-base font-medium">Amount: ${paymentAmount.toFixed(2)}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-between mt-6">
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={() => setCurrentStep('payment_method')}
+          >
+            Back
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Processing...' : 'Complete Payment'}
+          </Button>
+        </div>
+      </form>
+    );
+  };
   
   // Render crypto payment instructions (Step 4 for crypto)
   const renderCryptoPaymentForm = () => (
