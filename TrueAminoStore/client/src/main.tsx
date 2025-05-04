@@ -186,10 +186,9 @@ createRoot(document.getElementById("root")!).render(
       <meta name="geo.region" content="US-TN" />
       <meta name="geo.placename" content="Franklin" />
       
-      {/* Canonical & Favicon */}
+      {/* Canonical & Favicon - Consistent across all pages */}
       <link rel="canonical" href="https://trueaminos.com" />
       <link rel="icon" href="/favicon-32x32.png" type="image/png" />
-      <link rel="shortcut icon" href="/favicon-32x32.png" type="image/png" />
       
       {/* Performance optimizations - Cache control */}
       <meta httpEquiv="Cache-Control" content="public, max-age=31536000, immutable" />
