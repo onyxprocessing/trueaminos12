@@ -444,7 +444,20 @@ export async function handlePaymentMethod(req: Request, res: Response) {
     
     // Get shipping info from session
     const shippingInfo = req.session.shippingInfo || {};
-    const shippingDetails = JSON.parse(shippingInfo.shippingDetails || '{}');
+    
+    // Check if shippingDetails is a string or already an object
+    let shippingDetails;
+    if (typeof shippingInfo.shippingDetails === 'string') {
+      try {
+        shippingDetails = JSON.parse(shippingInfo.shippingDetails);
+      } catch (e) {
+        console.error('Error parsing shipping details:', e);
+        shippingDetails = {};
+      }
+    } else {
+      // It's already an object
+      shippingDetails = shippingInfo.shippingDetails || {};
+    }
     
     // Calculate subtotal from cart items
     const subtotal = calculateCartTotal(cartItems);
