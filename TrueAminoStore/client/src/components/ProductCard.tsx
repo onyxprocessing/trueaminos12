@@ -155,16 +155,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <img 
                 src={product.imageUrl 
                   ? (product.imageUrl.includes('/api/image-proxy') 
-                      ? product.imageUrl + '&usage=thumbnail&width=240' 
-                      : `/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}&usage=thumbnail&width=240`)
+                      ? product.imageUrl + '&usage=thumbnail&width=400' 
+                      : `/api/image-proxy?url=${encodeURIComponent(product.imageUrl)}&usage=thumbnail&width=400`)
                   : ''
                 } 
                 alt={product.name}
                 className="w-full h-full object-contain object-center"
                 loading="lazy"
                 decoding="async"
-                width="240"
-                height="240"
+                width="400"
+                height="400"
                 style={{
                   aspectRatio: "1/1",
                   maxWidth: "100%", 

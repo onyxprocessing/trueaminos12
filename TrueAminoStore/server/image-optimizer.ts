@@ -29,7 +29,8 @@ if (!fs.existsSync(CACHE_DIR)) {
  * @returns Cache key
  */
 function generateCacheKey(url: string, format: string = 'original', width: number = 0): string {
-  return createHash('md5').update(`${url}-${format}-${width}-v2`).digest('hex');
+  // Increment version to v3 to invalidate old cached images with lower quality
+  return createHash('md5').update(`${url}-${format}-${width}-v3`).digest('hex');
 }
 
 /**
@@ -128,13 +129,13 @@ function getOptimalWidth(req: Request): number | null {
     return width;
   }
   
-  // Default widths for common use cases
+  // Default widths for common use cases (increased for better quality)
   if (req.query.usage === 'thumbnail') {
-    return 300;
+    return 400; // Increased from 300 for better thumbnail quality
   } else if (req.query.usage === 'preview') {
-    return 600;
+    return 800; // Increased from 600 for clearer preview images
   } else if (req.query.usage === 'detail') {
-    return 1200;
+    return 1600; // Increased from 1200 for higher detail resolution
   }
   
   // No width transformation needed
@@ -260,23 +261,25 @@ export async function optimizeAndServeImage(req: Request, res: Response) {
       });
     }
     
-    // Apply format-specific optimizations
+    // Apply format-specific optimizations with higher quality settings
     let optimizedBuffer: Buffer;
     if (targetFormat === 'webp') {
       optimizedBuffer = await sharpInstance.webp({
-        quality: 85,
-        effort: 4, // Higher values are slower but produce better compression
+        quality: 95, // Increased from 85 for better image quality
+        effort: 3,   // Lower effort (faster) with higher quality
+        lossless: req.query.usage === 'detail' ? true : false // Use lossless for detailed product images
       }).toBuffer();
     } else if (targetFormat === 'png') {
       optimizedBuffer = await sharpInstance.png({
-        compressionLevel: 8,
-        quality: 90
+        compressionLevel: 6, // Reduced from 8 for better quality
+        quality: 95         // Increased from 90
       }).toBuffer();
     } else {
       // Default to JPEG
       optimizedBuffer = await sharpInstance.jpeg({
-        quality: 85,
-        mozjpeg: true // Better JPEG compression
+        quality: 95,        // Increased from 85
+        mozjpeg: true,      // Better JPEG compression
+        trellisQuantisation: true // Additional quality improvement
       }).toBuffer();
     }
     
