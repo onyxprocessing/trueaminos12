@@ -1,80 +1,149 @@
-import { Request, Response } from 'express';
-import dotenv from 'dotenv';
+/**
+ * Stripe payment controller
+ * This module handles creating and managing Stripe payment intents and processing payments
+ */
+
 import Stripe from 'stripe';
+import { storage } from './storage';
 
-dotenv.config();
-
-// Initialize Stripe
+// Initialize Stripe with API key
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.error('Missing required environment variable: STRIPE_SECRET_KEY');
+  throw new Error('Missing required environment variable: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2023-10-16',
+});
 
-// Create a payment intent with Stripe
-export async function createPaymentIntent(req: Request, res: Response) {
+/**
+ * Create a payment intent for a transaction
+ * @param sessionId Session ID from the client
+ * @param amount Amount to charge in USD
+ * @param customerData Customer information
+ * @param metadata Additional metadata to store with the payment
+ * @returns The client secret for the payment intent
+ */
+export async function createPaymentIntent(
+  sessionId: string,
+  amount: number,
+  customerData: {
+    firstName: string;
+    lastName: string;
+    email?: string;
+    address: string;
+    city: string;
+    state: string;
+    zip: string;
+    phone?: string;
+  },
+  metadata: Record<string, string> = {}
+): Promise<string> {
   try {
-    const { amount, currency = 'usd' } = req.body;
+    console.log(`Creating payment intent for $${amount.toFixed(2)}`);
     
-    if (!amount) {
-      return res.status(400).json({
-        success: false,
-        message: 'Amount is required',
-      });
-    }
-
-    // Create a PaymentIntent with the order amount and currency
+    // Calculate amount in cents (Stripe uses cents)
+    const amountInCents = Math.round(amount * 100);
+    
+    // Get cart items to include in metadata
+    const cartItems = await storage.getCartItems(sessionId);
+    
+    // Format cart for compact storage in metadata
+    const orderSummary = {
+      customer: `${customerData.firstName} ${customerData.lastName}`,
+      email: customerData.email || '',
+      items: cartItems.map(item => ({
+        id: item.product.id,
+        name: item.product.name,
+        qty: item.quantity,
+        weight: item.selectedWeight || null,
+      }))
+    };
+    
+    // Create a payment intent with customer information
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency,
-      // Add receipt email if available
-      ...(req.body.email ? { receipt_email: req.body.email } : {}),
+      amount: amountInCents,
+      currency: 'usd',
       payment_method_types: ['card'],
+      metadata: {
+        ...metadata,
+        session_id: sessionId,
+        orderSummary: JSON.stringify(orderSummary),
+        customer_name: `${customerData.firstName} ${customerData.lastName}`,
+        customer_email: customerData.email || '',
+        customer_phone: customerData.phone || '',
+      },
+      shipping: {
+        name: `${customerData.firstName} ${customerData.lastName}`,
+        address: {
+          line1: customerData.address,
+          city: customerData.city,
+          state: customerData.state,
+          postal_code: customerData.zip,
+          country: 'US',
+        },
+        phone: customerData.phone || '',
+      },
+      receipt_email: customerData.email || undefined,
     });
-
-    return res.json({
-      success: true,
-      clientSecret: paymentIntent.client_secret,
-    });
-  } catch (error: any) {
+    
+    console.log(`Payment intent created: ${paymentIntent.id}`);
+    return paymentIntent.client_secret as string;
+  } catch (error) {
     console.error('Error creating payment intent:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to create payment intent',
-    });
+    throw error;
   }
 }
 
-// Confirm payment after successful card payment
-export async function confirmPayment(req: Request, res: Response) {
+/**
+ * Confirm a payment intent has been successful
+ * @param paymentIntentId The ID of the payment intent to confirm
+ * @returns The updated payment intent
+ */
+export async function confirmPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
   try {
-    const { paymentIntentId } = req.body;
-    
-    if (!paymentIntentId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Payment intent ID is required',
-      });
-    }
-
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     
     if (paymentIntent.status !== 'succeeded') {
-      return res.status(400).json({
-        success: false,
-        message: `Payment not successful. Status: ${paymentIntent.status}`,
-      });
+      throw new Error(`Payment is not successful. Status: ${paymentIntent.status}`);
     }
+    
+    return paymentIntent;
+  } catch (error) {
+    console.error('Error confirming payment intent:', error);
+    throw error;
+  }
+}
 
-    return res.json({
-      success: true,
-      paymentIntent,
-    });
-  } catch (error: any) {
-    console.error('Error confirming payment:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Failed to confirm payment',
-    });
+/**
+ * Process a payment intent confirmation from the client
+ * This is called when the client has confirmed a payment
+ * @param paymentIntentId The ID of the payment intent to process
+ * @returns True if processing was successful
+ */
+export async function processPaymentConfirmation(paymentIntentId: string): Promise<boolean> {
+  try {
+    // Get the payment intent details from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    
+    if (paymentIntent.status !== 'succeeded') {
+      console.error(`Payment not successful. Status: ${paymentIntent.status}`);
+      return false;
+    }
+    
+    console.log(`Processing successful payment: ${paymentIntentId}`);
+    
+    // Record the order in Airtable
+    try {
+      const { recordPaymentToAirtable } = await import('./airtable-orders');
+      await recordPaymentToAirtable(paymentIntent);
+    } catch (error) {
+      console.error('Error recording payment to Airtable:', error);
+      // Continue even if Airtable recording fails - payment was successful
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error processing payment confirmation:', error);
+    return false;
   }
 }

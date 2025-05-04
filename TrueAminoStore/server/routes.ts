@@ -3,14 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, Product } from "@shared/schema";
 import { z } from "zod";
-import * as expressSession from 'express-session';
+import expressSession from 'express-session';
 import MemoryStore from 'memorystore';
 import fetch from 'node-fetch';
 import path from 'path';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
 import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
-import { createPaymentIntent, confirmPayment } from './stripe-controller';
+import { createPaymentIntent, confirmPaymentIntent } from './stripe-controller';
 
 // Define a new type that extends Express Request to include session
 interface Request extends ExpressRequest {
@@ -58,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // No Stripe initialization - using direct payment methods instead
   // Set up session middleware for cart management
   const MemoryStoreSession = MemoryStore(expressSession);
-  app.use(expressSession.default({
+  app.use(expressSession({
     secret: 'trueaminos-secret-key',
     resave: false,
     saveUninitialized: true,
@@ -547,8 +547,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Stripe payment routes
-  app.post('/api/create-payment-intent', createPaymentIntent);
-  app.post('/api/confirm-payment', confirmPayment);
+  app.post('/api/create-payment-intent', async (req: Request, res: Response) => {
+    try {
+      const { amount, customerInfo, metadata } = req.body;
+      
+      if (!amount || !customerInfo) {
+        return res.status(400).json({ message: "Amount and customer information are required" });
+      }
+      
+      // Create a payment intent
+      const clientSecret = await createPaymentIntent(
+        req.session.id,
+        amount,
+        customerInfo,
+        metadata || {}
+      );
+      
+      res.json({ clientSecret });
+    } catch (error: any) {
+      console.error('Error creating payment intent:', error);
+      res.status(500).json({ 
+        message: "Error creating payment intent", 
+        error: error.message
+      });
+    }
+  });
+  app.post('/api/confirm-payment', async (req: Request, res: Response) => {
+    try {
+      const { paymentIntentId } = req.body;
+      
+      if (!paymentIntentId) {
+        return res.status(400).json({ message: "Payment intent ID is required" });
+      }
+      
+      // Confirm payment with Stripe
+      const paymentIntent = await confirmPaymentIntent(paymentIntentId);
+      
+      res.json({
+        success: true,
+        paymentIntent: {
+          id: paymentIntent.id,
+          status: paymentIntent.status
+        }
+      });
+    } catch (error: any) {
+      console.error('Error confirming payment:', error);
+      res.status(500).json({ 
+        message: "Error confirming payment", 
+        error: error.message
+      });
+    }
+  });
   
   // FedEx address validation endpoint
   app.post('/api/validate-address', async (req: Request, res: Response) => {
