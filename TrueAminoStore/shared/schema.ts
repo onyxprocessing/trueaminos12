@@ -106,6 +106,11 @@ export interface Product {
   price750mg?: string; // Price specific to 750mg weight (MK-677)
   price100mg?: string; // Price specific to 100mg weight (NAD+)
   price500mg?: string; // Price specific to 500mg weight (NAD+)
+  price1mg?: string; // Price specific to 1mg weight
+  price30mg?: string; // Price specific to 30mg weight
+  price300mg?: string; // Price specific to 300mg weight
+  price600mg?: string; // Price specific to 600mg weight
+  price1500mg?: string; // Price specific to 1500mg weight
   categoryId: number;
   imageUrl: string | null;
   image2Url?: string | null;

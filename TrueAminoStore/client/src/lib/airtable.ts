@@ -50,6 +50,11 @@ interface AirtableProductFields {
   price750mg?: number // Price specific to 750mg weight (MK-677)
   price100mg?: number // Price specific to 100mg weight (NAD+)
   price500mg?: number // Price specific to 500mg weight (NAD+)
+  price1mg?: number // Price specific to 1mg weight
+  price30mg?: number // Price specific to 30mg weight
+  price300mg?: number // Price specific to 300mg weight
+  price600mg?: number // Price specific to 600mg weight
+  price1500mg?: number // Price specific to 1500mg weight
   categoryId?: number
   image?: AirtableImage[] // Image is an array of attachment objects
   image2?: AirtableImage[] // Certificate of Analysis (old field name)
@@ -150,7 +155,12 @@ function processProductPrices(record: AirtableRecord<AirtableProductFields>) {
     price2mg: record.fields.price2mg,
     price750mg: record.fields.price750mg,
     price100mg: price100mg,
-    price500mg: price500mg
+    price500mg: price500mg,
+    price1mg: record.fields.price1mg,
+    price30mg: record.fields.price30mg,
+    price300mg: record.fields.price300mg,
+    price600mg: record.fields.price600mg,
+    price1500mg: record.fields.price1500mg
   });
   
   return {
