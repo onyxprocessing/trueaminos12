@@ -41,6 +41,33 @@ export async function setupVite(app: Express, server: Server) {
     res.set('Content-Type', 'application/xml');
     res.sendFile(path.resolve(publicPath, "sitemap.xml"));
   });
+  
+  // Handle SVG files with correct content type
+  app.get('/favicon.svg', (req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.resolve(publicPath, "favicon.svg"));
+  });
+  
+  app.get('/facebook-card.svg', (req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.resolve(publicPath, "facebook-card.svg"));
+  });
+  
+  app.get('/twitter-card.svg', (req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.resolve(publicPath, "twitter-card.svg"));
+  });
+  
+  app.get('/apple-touch-icon.svg', (req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.resolve(publicPath, "apple-touch-icon.svg"));
+  });
+  
+  // Handle manifest.json with correct content type
+  app.get('/manifest.json', (req, res) => {
+    res.set('Content-Type', 'application/json');
+    res.sendFile(path.resolve(publicPath, "manifest.json"));
+  });
 
   const vite = await createViteServer({
     ...viteConfig,
@@ -105,6 +132,33 @@ export function serveStatic(app: Express) {
     res.set('Content-Type', 'application/xml');
     res.sendFile(path.resolve(publicPath, "sitemap.xml"));
   });
+  
+  // Handle SVG files with correct content type
+  app.get('/favicon.svg', (req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.resolve(publicPath, "favicon.svg"));
+  });
+  
+  app.get('/facebook-card.svg', (req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.resolve(publicPath, "facebook-card.svg"));
+  });
+  
+  app.get('/twitter-card.svg', (req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.resolve(publicPath, "twitter-card.svg"));
+  });
+  
+  app.get('/apple-touch-icon.svg', (req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.resolve(publicPath, "apple-touch-icon.svg"));
+  });
+  
+  // Handle manifest.json with correct content type
+  app.get('/manifest.json', (req, res) => {
+    res.set('Content-Type', 'application/json');
+    res.sendFile(path.resolve(publicPath, "manifest.json"));
+  });
 
   // Enable aggressive caching for static assets with different strategies per asset type
   app.use(express.static(distPath, {
@@ -148,8 +202,18 @@ export function serveStatic(app: Express) {
     lastModified: true,
     maxAge: '7d',
     setHeaders: (res, filePath) => {
-      // Special handling for important files
-      if (filePath.endsWith('robots.txt') || filePath.endsWith('sitemap.xml')) {
+      // Special handling for important files with proper MIME types
+      if (filePath.endsWith('robots.txt')) {
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+      } else if (filePath.endsWith('sitemap.xml')) {
+        res.setHeader('Content-Type', 'application/xml');
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+      } else if (filePath.endsWith('.svg')) {
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=604800'); // 1 week
+      } else if (filePath.endsWith('manifest.json')) {
+        res.setHeader('Content-Type', 'application/json');
         res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
       } else if (filePath.match(/favicon/)) {
         res.setHeader('Cache-Control', 'public, max-age=604800'); // 1 week
