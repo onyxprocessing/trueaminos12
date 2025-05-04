@@ -162,73 +162,73 @@ export default defineConfig({
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: 'assets/[name].[hash].[ext]',
         
-        // Implement more precise code splitting
+        // Dynamic chunks - break down large features to load only what's needed 
         manualChunks: (id) => {
-          // Critical vendor packages for faster loading of core functionality
+          // Core vendor packages - used immediately, should be loaded right away
           if (id.includes('node_modules')) {
-            // React core - the most essential package
             if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler/')) {
-              return 'critical-vendor-react-core';
+              return 'vendor-react-core';
             }
             
-            // UI component libraries
-            if (id.includes('lucide-react') || id.includes('@radix-ui') || id.includes('tailwind')) {
-              return 'vendor-ui-components';
+            if (id.includes('@radix-ui') || id.includes('class-variance-authority') || 
+                id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'vendor-ui-core';
             }
             
-            // Network and data handling
-            if (id.includes('axios') || id.includes('stripe') || id.includes('fetch') || id.includes('query')) {
-              return 'vendor-network';
-            }
-            
-            // Form handling and validation
-            if (id.includes('formik') || id.includes('yup') || id.includes('validator') || id.includes('form')) {
-              return 'vendor-forms';
-            }
-            
-            // Router (critical navigation)
             if (id.includes('react-router')) {
               return 'vendor-router';
             }
             
-            // State management
-            if (id.includes('redux') || id.includes('zustand') || id.includes('mobx') || id.includes('recoil')) {
-              return 'vendor-state';
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
             }
             
-            // Everything else (less critical)
+            if (id.includes('axios') || id.includes('@tanstack/react-query')) {
+              return 'vendor-data';
+            }
+            
+            if (id.includes('@stripe/')) {
+              return 'vendor-stripe';
+            }
+            
             return 'vendor-other';
           }
           
-          // Application code splitting for better code organization and loading
+          // Application chunks - load features on demand
           
-          // Core UI components (buttons, inputs, etc)
-          if (id.includes('/components/ui/') || id.includes('/components/common/')) {
-            return 'app-ui-core';
+          // MultiStepCheckout is a large component that should be loaded only when needed
+          if (id.includes('/pages/checkout/MultiStepCheckout') || id.includes('/pages/checkout/PaymentForm')) {
+            return 'app-checkout';
           }
           
-          // Pages by feature area for better lazy loading
-          if (id.includes('/pages/')) {
-            if (id.includes('/pages/checkout/')) {
-              return 'app-pages-checkout';
-            }
-            if (id.includes('/pages/product')) {
-              return 'app-pages-product';
-            }
-            if (id.includes('/pages/account')) {
-              return 'app-pages-account';
-            }
-            return 'app-pages-other';
+          // Core UI components used throughout the app - loaded early 
+          if (id.includes('/components/ui/')) {
+            return 'app-ui-components';
           }
           
-          // Utility code
-          if (id.includes('/hooks/') || id.includes('/lib/') || id.includes('/utils/')) {
+          // Product-related code - defer loading until needed
+          if (id.includes('/components/ProductCard') || id.includes('/pages/product')) {
+            return 'app-product';
+          }
+          
+          // Home page - loaded immediately but kept small
+          if (id.includes('/pages/Home')) {
+            return 'app-home';
+          }
+          
+          // Cart functionality - loaded on demand
+          if (id.includes('/components/Cart') || id.includes('/hooks/useCart')) {
+            return 'app-cart';
+          }
+          
+          // Authentication - loaded on demand
+          if (id.includes('/auth/') || id.includes('/login/') || id.includes('/register/')) {
+            return 'app-auth';
+          }
+          
+          // Utility functions - grouped to avoid tiny modules  
+          if (id.includes('/lib/') || id.includes('/utils/') || id.includes('/hooks/')) {
             return 'app-utils';
-          }
-          
-          // API and data services
-          if (id.includes('/api/') || id.includes('/services/')) {
-            return 'app-services';
           }
         }
       }
@@ -246,6 +246,8 @@ export default defineConfig({
   
   // Optimize dev server for faster reloads
   server: {
+    port: 5000,
+    host: '0.0.0.0', // Required for Replit
     hmr: {
       overlay: true
     },
@@ -259,6 +261,7 @@ export default defineConfig({
   // Optimize preview mode
   preview: {
     port: 5000,
+    host: '0.0.0.0', // Required for Replit
     open: false,
     cors: true
   },
@@ -275,41 +278,28 @@ export default defineConfig({
       'axios',
       'react-helmet-async',
       'tailwind-merge',
-      '@tanstack/react-query'
+      '@tanstack/react-query',
+      'wouter',
+      'clsx',
+      'class-variance-authority',
+      '@radix-ui/react-slot'
     ],
     // Force-included deps that might have dynamic imports
     force: [
       'react-helmet-async',
-      'lucide-react'
-    ],
-    // Exclude content-heavy packages from optimization
-    exclude: [
-      'sharp'
-    ]
-  },
-  
-  // Optimizations for dependencies
-  optimizeDeps: {
-    include: [
-      'react', 
-      'react-dom', 
-      'react-router-dom',
-      '@radix-ui/react-select',
-      '@radix-ui/react-dialog',
       'lucide-react',
-      'axios',
-      'react-helmet-async',
-      'tailwind-merge',
-      '@tanstack/react-query'
-    ],
-    // Force-included deps that might have dynamic imports
-    force: [
-      'react-helmet-async',
-      'lucide-react'
+      'wouter'
     ],
     // Exclude content-heavy packages from optimization
     exclude: [
       'sharp'
-    ]
+    ],
+    // Optimize entries faster
+    esbuildOptions: {
+      target: 'es2020',
+      treeShaking: true,
+      legalComments: 'none',
+      logLevel: 'error'
+    }
   }
 });

@@ -1,30 +1,38 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/empty-toaster"; // Using empty toaster to disable notifications
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/hooks/useCart";
+
+// Only import the Home component directly for fast initial load - it's our landing page
 import Home from "@/pages/Home";
-import ProductPage from "@/pages/ProductPage";
-import CategoryPage from "@/pages/CategoryPage";
-import Cart from "@/pages/Cart";
-import Checkout from "@/pages/Checkout";
-// Import the new checkout pages
-import CheckoutPage from "@/pages/checkout/CheckoutPage";
-import MultiStepCheckout from "@/pages/checkout/MultiStepCheckout";
-import SuccessPage from "@/pages/checkout/SuccessPage";
-import SuccessOrderPage from "@/pages/checkout/SuccessOrderPage";
-import ProductsPage from "@/pages/ProductsPage";
-import AboutPage from "@/pages/AboutPage";
-import ContactPage from "@/pages/ContactPage";
-import CertificationsPage from "@/pages/CertificationsPage";
-import PrivacyPolicy from "@/pages/PrivacyPolicy";
-import TermsOfService from "@/pages/TermsOfService";
-import ShippingPolicy from "@/pages/ShippingPolicy";
-import AdminOrdersPage from "@/pages/AdminOrdersPage";
-import AdminOrderDetailPage from "@/pages/AdminOrderDetailPage";
-import NotFound from "@/pages/not-found";
+
+// Lazy load all other page components to reduce initial bundle size
+const ProductPage = lazy(() => import("@/pages/ProductPage"));
+const CategoryPage = lazy(() => import("@/pages/CategoryPage"));
+const Cart = lazy(() => import("@/pages/Cart"));
+const MultiStepCheckout = lazy(() => import("@/pages/checkout/MultiStepCheckout"));
+const SuccessOrderPage = lazy(() => import("@/pages/checkout/SuccessOrderPage"));
+const ProductsPage = lazy(() => import("@/pages/ProductsPage"));
+const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const CertificationsPage = lazy(() => import("@/pages/CertificationsPage"));
+const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("@/pages/TermsOfService"));
+const ShippingPolicy = lazy(() => import("@/pages/ShippingPolicy"));
+const AdminOrdersPage = lazy(() => import("@/pages/AdminOrdersPage"));
+const AdminOrderDetailPage = lazy(() => import("@/pages/AdminOrderDetailPage"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full" 
+         aria-label="Loading page content..."></div>
+  </div>
+);
 
 function Router() {
   return (
