@@ -123,6 +123,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     
     // For other products or other NAD+ weight options, use regular weight-price mapping
     switch(selectedWeight) {
+      case "1mg":
+        return product.price1mg ? parseFloat(product.price1mg) : 0;
       case "2mg":
         return product.price2mg ? parseFloat(product.price2mg) : 0;
       case "5mg":
@@ -133,12 +135,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         return product.price15mg ? parseFloat(product.price15mg) : 0;
       case "20mg":
         return product.price20mg ? parseFloat(product.price20mg) : 0;
-      case "750mg":
-        return product.price750mg ? parseFloat(product.price750mg) : 0;
+      case "30mg":
+        return product.price30mg ? parseFloat(product.price30mg) : 0;
       case "100mg":
         return product.price100mg ? parseFloat(product.price100mg) : 0;
+      case "300mg":
+        return product.price300mg ? parseFloat(product.price300mg) : 0;
       case "500mg":
         return product.price500mg ? parseFloat(product.price500mg) : 0;
+      case "600mg":
+        return product.price600mg ? parseFloat(product.price600mg) : 0;
+      case "750mg":
+        return product.price750mg ? parseFloat(product.price750mg) : 0;
+      case "1500mg":
+        return product.price1500mg ? parseFloat(product.price1500mg) : 0;
       default:
         // Fallback to generic price if no specific price for the weight
         return parseFloat(product.price || "0");

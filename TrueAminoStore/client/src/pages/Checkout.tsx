@@ -17,21 +17,37 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
     return parseFloat(product.price);
   }
   
-  if (selectedWeight === "2mg" && product.price2mg) {
-    return parseFloat(product.price2mg);
-  } else if (selectedWeight === "5mg" && product.price5mg) {
-    return parseFloat(product.price5mg);
-  } else if (selectedWeight === "10mg" && product.price10mg) {
-    return parseFloat(product.price10mg);
-  } else if (selectedWeight === "15mg" && product.price15mg) {
-    return parseFloat(product.price15mg);
-  } else if (selectedWeight === "20mg" && product.price20mg) {
-    return parseFloat(product.price20mg);
-  } else if (selectedWeight === "750mg" && product.price750mg) {
-    return parseFloat(product.price750mg);
+  // Use switch statement for better readability
+  switch(selectedWeight) {
+    case "1mg":
+      return product.price1mg ? parseFloat(product.price1mg) : parseFloat(product.price);
+    case "2mg":
+      return product.price2mg ? parseFloat(product.price2mg) : parseFloat(product.price);
+    case "5mg":
+      return product.price5mg ? parseFloat(product.price5mg) : parseFloat(product.price);
+    case "10mg":
+      return product.price10mg ? parseFloat(product.price10mg) : parseFloat(product.price);
+    case "15mg":
+      return product.price15mg ? parseFloat(product.price15mg) : parseFloat(product.price);
+    case "20mg":
+      return product.price20mg ? parseFloat(product.price20mg) : parseFloat(product.price);
+    case "30mg":
+      return product.price30mg ? parseFloat(product.price30mg) : parseFloat(product.price);
+    case "100mg":
+      return product.price100mg ? parseFloat(product.price100mg) : parseFloat(product.price);
+    case "300mg":
+      return product.price300mg ? parseFloat(product.price300mg) : parseFloat(product.price);
+    case "500mg":
+      return product.price500mg ? parseFloat(product.price500mg) : parseFloat(product.price);
+    case "600mg":
+      return product.price600mg ? parseFloat(product.price600mg) : parseFloat(product.price);
+    case "750mg":
+      return product.price750mg ? parseFloat(product.price750mg) : parseFloat(product.price);
+    case "1500mg":
+      return product.price1500mg ? parseFloat(product.price1500mg) : parseFloat(product.price);
+    default:
+      return parseFloat(product.price);
   }
-  
-  return parseFloat(product.price);
 }
 
 const Checkout: React.FC = () => {

@@ -177,6 +177,12 @@ function processProductPrices(record: AirtableRecord<AirtableProductFields>) {
     price750mg: record.fields.price750mg ? record.fields.price750mg.toString() : "0",
     price100mg: price100mg ? price100mg.toString() : "0",
     price500mg: price500mg ? price500mg.toString() : "0",
+    // New weight-specific prices
+    price1mg: record.fields.price1mg ? record.fields.price1mg.toString() : "0",
+    price30mg: record.fields.price30mg ? record.fields.price30mg.toString() : "0",
+    price300mg: record.fields.price300mg ? record.fields.price300mg.toString() : "0",
+    price600mg: record.fields.price600mg ? record.fields.price600mg.toString() : "0",
+    price1500mg: record.fields.price1500mg ? record.fields.price1500mg.toString() : "0",
   };
 }
 
@@ -289,6 +295,12 @@ export async function fetchProducts(): Promise<Product[]> {
         price750mg: record.fields.price750mg ? record.fields.price750mg.toString() : "0",
         price100mg: record.fields.price100mg ? record.fields.price100mg.toString() : "0",
         price500mg: record.fields.price500mg ? record.fields.price500mg.toString() : "0",
+        // New weight-specific prices
+        price1mg: record.fields.price1mg ? record.fields.price1mg.toString() : "0",
+        price30mg: record.fields.price30mg ? record.fields.price30mg.toString() : "0",
+        price300mg: record.fields.price300mg ? record.fields.price300mg.toString() : "0",
+        price600mg: record.fields.price600mg ? record.fields.price600mg.toString() : "0",
+        price1500mg: record.fields.price1500mg ? record.fields.price1500mg.toString() : "0",
         categoryId: record.fields.categoryId || 1,
         imageUrl: getImageUrlFromAirtable(record.fields.image),
         image2Url: record.fields.COA 
