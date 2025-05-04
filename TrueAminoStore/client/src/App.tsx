@@ -37,28 +37,111 @@ const PageLoader = () => (
 function Router() {
   return (
     <Switch>
+      {/* Home is directly imported for fast initial render */}
       <Route path="/" component={Home} />
-      <Route path="/products" component={ProductsPage} />
-      <Route path="/products/:slug" component={ProductPage} />
-      <Route path="/category/:slug" component={CategoryPage} />
-      <Route path="/cart" component={Cart} />
-      <Route path="/checkout/multi-step" component={MultiStepCheckout} />
-      <Route path="/checkout" component={MultiStepCheckout} />
-      <Route path="/checkout/confirmation" component={SuccessOrderPage} />
-      <Route path="/about" component={AboutPage} />
-      <Route path="/contact" component={ContactPage} />
-      <Route path="/certifications" component={CertificationsPage} />
-      <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/terms-of-service" component={TermsOfService} />
-      <Route path="/shipping-policy" component={ShippingPolicy} />
-      <Route path="/stripe-test">
-        <React.Suspense fallback={<div className="container py-10 text-center">Loading Stripe test tools...</div>}>
-          {React.createElement(React.lazy(() => import("./pages/StripeTest")))}
-        </React.Suspense>
+      
+      {/* All other routes are lazy loaded with Suspense */}
+      <Route path="/products">
+        <Suspense fallback={<PageLoader />}>
+          <ProductsPage />
+        </Suspense>
       </Route>
-      <Route path="/admin/orders" component={AdminOrdersPage} />
-      <Route path="/admin/orders/:id" component={AdminOrderDetailPage} />
-      <Route component={NotFound} />
+      
+      <Route path="/products/:slug">
+        <Suspense fallback={<PageLoader />}>
+          <ProductPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/category/:slug">
+        <Suspense fallback={<PageLoader />}>
+          <CategoryPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/cart">
+        <Suspense fallback={<PageLoader />}>
+          <Cart />
+        </Suspense>
+      </Route>
+      
+      <Route path="/checkout/multi-step">
+        <Suspense fallback={<PageLoader />}>
+          <MultiStepCheckout />
+        </Suspense>
+      </Route>
+      
+      <Route path="/checkout">
+        <Suspense fallback={<PageLoader />}>
+          <MultiStepCheckout />
+        </Suspense>
+      </Route>
+      
+      <Route path="/checkout/confirmation">
+        <Suspense fallback={<PageLoader />}>
+          <SuccessOrderPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/about">
+        <Suspense fallback={<PageLoader />}>
+          <AboutPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/contact">
+        <Suspense fallback={<PageLoader />}>
+          <ContactPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/certifications">
+        <Suspense fallback={<PageLoader />}>
+          <CertificationsPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/privacy-policy">
+        <Suspense fallback={<PageLoader />}>
+          <PrivacyPolicy />
+        </Suspense>
+      </Route>
+      
+      <Route path="/terms-of-service">
+        <Suspense fallback={<PageLoader />}>
+          <TermsOfService />
+        </Suspense>
+      </Route>
+      
+      <Route path="/shipping-policy">
+        <Suspense fallback={<PageLoader />}>
+          <ShippingPolicy />
+        </Suspense>
+      </Route>
+      
+      <Route path="/stripe-test">
+        <Suspense fallback={<PageLoader />}>
+          {React.createElement(React.lazy(() => import("./pages/StripeTest")))}
+        </Suspense>
+      </Route>
+      
+      <Route path="/admin/orders">
+        <Suspense fallback={<PageLoader />}>
+          <AdminOrdersPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/admin/orders/:id">
+        <Suspense fallback={<PageLoader />}>
+          <AdminOrderDetailPage />
+        </Suspense>
+      </Route>
+      
+      <Route>
+        <Suspense fallback={<PageLoader />}>
+          <NotFound />
+        </Suspense>
+      </Route>
     </Switch>
   );
 }

@@ -1,11 +1,19 @@
-import React, { useState } from 'react'
-import Header from './Header'
-import Footer from './Footer'
-import CartSidebar from './CartSidebar'
-import SearchOverlay from './SearchOverlay'
-import MobileMenu from './MobileMenu'
+import React, { useState, lazy, Suspense } from 'react'
+// Core components needed for initial render
 import PageMeta from './PageMeta'
 import StructuredData from './StructuredData'
+
+// Eagerly load the Header since it's visible immediately
+import Header from './Header'
+
+// Lazy load components that aren't needed for initial render
+const Footer = lazy(() => import('./Footer'))
+const CartSidebar = lazy(() => import('./CartSidebar'))
+const SearchOverlay = lazy(() => import('./SearchOverlay'))
+const MobileMenu = lazy(() => import('./MobileMenu'))
+
+// Simple fallback loader for lazy-loaded components
+const ComponentLoader = () => <div className="animate-pulse bg-gray-200 h-10"></div>
 
 interface LayoutProps {
   children: React.ReactNode
@@ -60,12 +68,29 @@ const Layout: React.FC<LayoutProps> = ({
           {children}
         </main>
         
-        <Footer />
+        <Suspense fallback={<ComponentLoader />}>
+          <Footer />
+        </Suspense>
       </div>
       
-      <CartSidebar isOpen={cartOpen} onClose={toggleCart} />
-      <SearchOverlay isOpen={searchOpen} onClose={toggleSearch} />
-      <MobileMenu isOpen={mobileMenuOpen} onClose={toggleMobileMenu} />
+      {/* Lazy-load UI components that aren't needed immediately */}
+      {cartOpen && (
+        <Suspense fallback={<ComponentLoader />}>
+          <CartSidebar isOpen={cartOpen} onClose={toggleCart} />
+        </Suspense>
+      )}
+      
+      {searchOpen && (
+        <Suspense fallback={<ComponentLoader />}>
+          <SearchOverlay isOpen={searchOpen} onClose={toggleSearch} />
+        </Suspense>
+      )}
+      
+      {mobileMenuOpen && (
+        <Suspense fallback={<ComponentLoader />}>
+          <MobileMenu isOpen={mobileMenuOpen} onClose={toggleMobileMenu} />
+        </Suspense>
+      )}
     </>
   )
 }
