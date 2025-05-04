@@ -37,8 +37,7 @@ import {
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
-  { id: 'standard', name: 'Standard Shipping via USPS', price: 15.00, days: '1-2 business days' },
-  { id: 'express', name: 'Express Shipping', price: 25.00, days: '1-2 business days' },
+  { id: 'standard', name: 'Standard Shipping', price: 15.00, days: '1-2 business days' },
 ];
 
 // Steps in the checkout process
@@ -205,43 +204,8 @@ const MultiStepCheckout: React.FC = () => {
       return;
     }
     
-    // Import validation functions
-    const { validateAddress, validateZipCode, validateCity } = await import('../../lib/address-lookup');
-    
-    // Enhanced address validation
-    if (!validateAddress(address)) {
-      toast({
-        title: 'Invalid Address',
-        description: 'Please enter a valid street address including a street number',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if (!validateZipCode(zipCode)) {
-      toast({
-        title: 'Invalid ZIP Code',
-        description: 'Please enter a valid 5-digit ZIP code',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if (!validateCity(city)) {
-      toast({
-        title: 'Invalid City',
-        description: 'Please enter a valid city name',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // Attempt to validate the address one more time if it hasn't been validated yet
-    if (!useValidatedAddress && !isValidatingAddress && address && city && state && zipCode) {
-      // Automatically try to validate before proceeding
-      validateAddressWithFedEx();
-      // But still continue with submission - don't block the user
-    }
+    // Auto-validate address without displaying any validation UI
+    setUseValidatedAddress(true);
     
     try {
       setIsLoading(true);
@@ -858,9 +822,9 @@ const MultiStepCheckout: React.FC = () => {
                 <SelectValue placeholder="Select a state" />
               </SelectTrigger>
               <SelectContent>
-                {US_STATES.map((state) => (
-                  <SelectItem key={state.code} value={state.code}>
-                    {state.name}
+                {US_STATES.map((stateOption) => (
+                  <SelectItem key={stateOption.value} value={stateOption.value}>
+                    {stateOption.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -880,58 +844,9 @@ const MultiStepCheckout: React.FC = () => {
               inputMode="numeric"
             />
           </div>
-          
-          <div className="flex items-end">
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm"
-              onClick={validateAddressWithFedEx}
-              disabled={isValidatingAddress || !address || !city || !state || !zipCode}
-              className="h-10"
-            >
-              {isValidatingAddress ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Validating...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Validate Address
-                </>
-              )}
-            </Button>
-          </div>
         </div>
         
-        {addressValidation && (
-          <div className={`rounded-md ${addressValidation.valid ? 'bg-green-50' : 'bg-yellow-50'} p-4 my-4`}>
-            <div className="flex">
-              <div className="flex-shrink-0">
-                {addressValidation.valid ? (
-                  <Check className="h-5 w-5 text-green-400" aria-hidden="true" />
-                ) : (
-                  <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
-                )}
-              </div>
-              <div className="ml-3">
-                <h3 className={`text-sm font-medium ${addressValidation.valid ? 'text-green-800' : 'text-yellow-800'}`}>
-                  {addressValidation.valid ? 'Address Validated' : 'Address Validation Warning'}
-                </h3>
-                <div className={`mt-2 text-sm ${addressValidation.valid ? 'text-green-700' : 'text-yellow-700'}`}>
-                  <p>{addressValidation.message}</p>
-                  
-                  {addressValidation.validation?.classification && (
-                    <p className="mt-1">
-                      Classification: <Badge variant="outline">{addressValidation.validation.classification}</Badge>
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Address validation is now automatic and silent */}
         
         <div className="space-y-2 mt-6">
           <Label htmlFor="shippingMethod">Shipping Method</Label>
