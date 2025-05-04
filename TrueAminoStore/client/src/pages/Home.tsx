@@ -65,27 +65,54 @@ const Home: React.FC = () => {
       />
       
       {/* Hero Banner - Optimized for faster LCP */}
-      <section className="bg-gradient-to-r from-primary to-accent py-16 md:py-24">
+      <section 
+        className="bg-gradient-to-r from-primary to-accent py-16 md:py-24"
+        style={{
+          willChange: 'auto',
+          content: 'auto'
+        }}
+      >
         <div className="container px-6 md:px-8 mx-auto max-w-7xl">
           <div className="max-w-2xl text-white">
-            {/* Add priority heading with preload styles for faster LCP */}
+            {/* Add priority heading with optimized styles for faster LCP */}
             <h1 
               className="font-heading font-bold text-4xl md:text-5xl mb-4"
-              style={{contain: 'paint', contentVisibility: 'auto'}}
+              style={{
+                contain: 'layout style paint',
+                contentVisibility: 'auto',
+                fontSize: 'clamp(2rem, 5vw, 3rem)',
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', Segoe UI, Arial, sans-serif"
+              }}
             >
               Advanced Research Peptides & SARMs
             </h1>
-            <p className="text-lg mb-8">
+            <p 
+              className="text-lg mb-8"
+              style={{
+                contain: 'content',
+                contentVisibility: 'auto'
+              }}
+            >
               Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.
             </p>
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <Link href="/products">
-                <Button variant="secondary" size="lg" className="px-6 py-3 text-center">
+                <Button 
+                  variant="secondary" 
+                  size="lg" 
+                  className="px-6 py-3 text-center"
+                  style={{ contain: 'layout style' }}
+                >
                   Shop Products
                 </Button>
               </Link>
               <Link href="/about">
-                <Button variant="outline" size="lg" className="px-6 py-3 bg-white text-primary hover:bg-gray-100 text-center">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="px-6 py-3 bg-white text-primary hover:bg-gray-100 text-center"
+                  style={{ contain: 'layout style' }}
+                >
                   About TrueAmino Research
                 </Button>
               </Link>
