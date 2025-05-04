@@ -630,6 +630,7 @@ const MultiStepCheckout: React.FC = () => {
     try {
       setIsValidatingAddress(true);
       setAddressValidation(null);
+      setUseValidatedAddress(false); // Reset validation state before checking
       
       // Import address validation function
       const { validateAddressWithFedEx } = await import('../../lib/address-lookup');
@@ -637,15 +638,29 @@ const MultiStepCheckout: React.FC = () => {
       // Call the validation function
       const validationResult = await validateAddressWithFedEx(address, city, state, zipCode);
       
+      console.log('Address validation result:', JSON.stringify(validationResult, null, 2));
+      
       if (validationResult && validationResult.success) {
         setAddressValidation(validationResult);
         
-        // If there's a suggested address, we'll show it to the user
-        if (validationResult.validation?.suggestedAddress) {
-          setUseValidatedAddress(false); // User needs to explicitly choose to use it
+        // If there's a suggested address different from current address, we'll show it to the user
+        if (validationResult.validation?.suggestedAddress &&
+            (validationResult.validation.suggestedAddress.streetLines.join(', ').toLowerCase() !== address.toLowerCase() ||
+             validationResult.validation.suggestedAddress.city.toLowerCase() !== city.toLowerCase() ||
+             validationResult.validation.suggestedAddress.state.toLowerCase() !== state.toLowerCase() ||
+             validationResult.validation.suggestedAddress.zipCode !== zipCode)) {
+          
+          // Address is different, prompt user to use the suggested one
+          setUseValidatedAddress(false);
+          
+          toast({
+            title: 'Address Suggestions Available',
+            description: 'We found a suggested address format. Please review it below.',
+          });
         } else if (validationResult.validation?.isValid) {
-          // If the address is valid as-is, we'll mark it as validated
+          // Current address is valid, mark it as validated
           setUseValidatedAddress(true);
+          
           toast({
             title: 'Address Validated',
             description: 'Your address has been validated successfully.',
@@ -662,6 +677,7 @@ const MultiStepCheckout: React.FC = () => {
         });
       }
     } catch (err: any) {
+      console.error('Address validation error:', err);
       toast({
         title: 'Validation Error',
         description: err.message || 'Could not validate address',

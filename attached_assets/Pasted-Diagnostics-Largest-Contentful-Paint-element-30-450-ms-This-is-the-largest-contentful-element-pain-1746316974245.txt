@@ -1,0 +1,268 @@
+Diagnostics
+Largest Contentful Paint element 30,450 ms
+This is the largest contentful element painted within the viewport. Learn more about the Largest Contentful Paint elementLCP
+Element
+Advanced Research Peptides & SARMs
+<h1 data-replit-metadata="client/src/pages/Home.tsx:71:12" data-component-name="h1" class="font-heading font-bold text-4xl md:text-5xl mb-4">
+Phase
+% of LCP
+Timing
+TTFB
+2%
+610 ms
+Load Delay
+0%
+0 ms
+Load Time
+0%
+0 ms
+Render Delay
+98%
+29,830 ms
+Enable text compression Est savings of 3,890 KiB
+Text-based resources should be served with compression (gzip, deflate or brotli) to minimize total network bytes. Learn more about text compression.LCPFCP
+URL
+Transfer Size
+Est Savings
+replit.dev 1st party
+4,806.4 KiB	3,890.0 KiB
+…deps/lucide-react.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+1,126.2 KiB
+966.5 KiB
+…deps/chunk-RPCDYKBN.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+906.4 KiB
+767.0 KiB
+…checkout/MultiStepCheckout.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+245.5 KiB
+201.6 KiB
+…pages/Home.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+173.5 KiB
+147.3 KiB
+…pages/ProductPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+152.8 KiB
+122.6 KiB
+/@vite/client(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+134.7 KiB
+107.7 KiB
+/src/index.css?v=3zq82sXUr…(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+121.4 KiB
+103.3 KiB
+…deps/@tanstack_react-query.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+113.8 KiB
+92.4 KiB
+…deps/chunk-QCHXOAYK.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+76.0 KiB
+60.3 KiB
+…deps/tailwind-merge.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+71.0 KiB
+58.9 KiB
+…deps/axios.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+79.2 KiB
+58.2 KiB
+…pages/ContactPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+71.8 KiB
+57.6 KiB
+…pages/CertificationsPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+70.8 KiB
+56.2 KiB
+…deps/chunk-JUJBFU43.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+70.5 KiB
+54.8 KiB
+…pages/Cart.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+59.4 KiB
+47.7 KiB
+…pages/ShippingPolicy.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+55.8 KiB
+46.0 KiB
+…pages/AdminOrdersPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+59.9 KiB
+46.0 KiB
+…pages/AboutPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+55.5 KiB
+45.7 KiB
+…checkout/SuccessOrderPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+56.6 KiB
+44.7 KiB
+/@react-refresh(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+62.7 KiB
+43.8 KiB
+…deps/@radix-ui_react-select.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+50.7 KiB
+40.3 KiB
+…pages/AdminOrderDetailPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+49.6 KiB
+40.0 KiB
+…components/ProductCard.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+50.8 KiB
+37.6 KiB
+…pages/PrivacyPolicy.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+43.8 KiB
+34.5 KiB
+…pages/TermsOfService.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+45.9 KiB
+34.5 KiB
+…components/Footer.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+37.7 KiB
+31.3 KiB
+…deps/chunk-UCQXZEIE.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+38.4 KiB
+28.9 KiB
+…deps/chunk-KBTYAULA.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+36.6 KiB
+28.7 KiB
+…deps/react_jsx-dev-runtime.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+36.2 KiB
+28.4 KiB
+…components/CartSidebar.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+34.7 KiB
+26.3 KiB
+…deps/react-helmet-async.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+32.3 KiB
+24.2 KiB
+…pages/ProductsPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+29.1 KiB
+22.0 KiB
+https://d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev
+33.7 KiB
+21.3 KiB
+…ui/select.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+27.8 KiB
+20.6 KiB
+…pages/CategoryPage.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+24.0 KiB
+17.3 KiB
+…components/Header.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+22.3 KiB
+16.8 KiB
+…components/MobileMenu.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+21.5 KiB
+16.2 KiB
+…deps/@radix-ui_react-tooltip.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+20.1 KiB
+15.7 KiB
+…hooks/useCart.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+22.4 KiB
+15.3 KiB
+/src/App.tsx?v=3zq82sXUr…(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+19.7 KiB
+15.0 KiB
+…ui/dialog.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+19.2 KiB
+13.5 KiB
+/src/main.tsx?v=3zq82sXUr…(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+16.0 KiB
+12.2 KiB
+…components/ProductSEO.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+15.9 KiB
+11.7 KiB
+…deps/wouter.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+16.1 KiB
+11.1 KiB
+…deps/@radix-ui_react-dialog.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+13.9 KiB
+10.8 KiB
+…products/featured(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+16.0 KiB
+10.6 KiB
+…components/PageMeta.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+13.6 KiB
+9.8 KiB
+…components/Newsletter.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+14.6 KiB
+9.4 KiB
+…components/SearchOverlay.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+13.2 KiB
+8.8 KiB
+…deps/chunk-74C3U4JN.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+11.4 KiB
+8.8 KiB
+…lib/queryClient.ts(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+13.2 KiB
+8.5 KiB
+…components/Layout.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+12.8 KiB
+8.4 KiB
+…ui/card.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+11.9 KiB
+8.2 KiB
+…deps/@radix-ui_react-radio-group.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+10.3 KiB
+7.7 KiB
+…deps/chunk-JCDARZYO.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+9.6 KiB
+7.1 KiB
+…hooks/use-toast.ts(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+11.0 KiB
+6.8 KiB
+…ui/tabs.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+9.8 KiB
+6.5 KiB
+…components/FDADisclaimer.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+9.8 KiB
+6.4 KiB
+…lib/constants.ts(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+8.2 KiB
+6.0 KiB
+…ui/alert.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+9.3 KiB
+5.8 KiB
+…components/StructuredData.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+9.4 KiB
+5.8 KiB
+…ui/radio-group.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+8.8 KiB
+5.6 KiB
+…deps/@radix-ui_react-tabs.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+7.3 KiB
+5.5 KiB
+…ui/button.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+8.6 KiB
+5.1 KiB
+…deps/chunk-M3NVYRND.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+6.3 KiB
+4.6 KiB
+…pages/not-found.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+6.7 KiB
+4.3 KiB
+…ui/tooltip.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+6.8 KiB
+3.9 KiB
+…deps/chunk-BKU5K62D.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+5.3 KiB
+3.8 KiB
+…deps/chunk-EVLBUYTV.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+5.3 KiB
+3.7 KiB
+…lib/api-client.ts(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+6.4 KiB
+3.7 KiB
+…ui/badge.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+6.5 KiB
+3.7 KiB
+…ui/separator.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+5.5 KiB
+3.1 KiB
+…ui/label.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+5.4 KiB
+3.0 KiB
+…ui/input.tsx(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+5.4 KiB
+3.0 KiB
+…deps/chunk-V4TB3EZ5.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+3.8 KiB
+2.7 KiB
+…client/env.mjs(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+3.9 KiB
+2.7 KiB
+…deps/chunk-WOOG5QLI.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+2.8 KiB
+1.7 KiB
+…lib/utils.ts(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+3.3 KiB
+1.6 KiB
+…deps/class-variance-authority.js?v=804d9f97(d3647039-a8ab-4432-8e75-37a47add67ea-00-nz4zy52sx2oe.spock.replit.dev)
+2.4 KiB
+1.6 KiB
+Minify JavaScript Est savings of 1,880 KiB
+Reduce unused JavaScript Est savings of 1,203 KiB
+Eliminate render-blocking resources Est savings of 300 ms
