@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
-import { useCart } from '@/hooks/use-cart';
+import { useLocation, Link } from 'wouter';
+import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
+import { useCart } from '@/hooks/useCart';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -12,213 +13,137 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import Layout from '@/components/Layout';
-import { Check } from 'lucide-react';
-import { CardPaymentForm } from '@/components/payment/CardPaymentForm';
-import { VisaIcon, MastercardIcon, AmexIcon, DiscoverIcon } from '@/components/payment-icons';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/api-client';
+import { Separator } from '@/components/ui/separator';
+import { US_STATES } from '@/lib/constants';
+import { useToast } from '@/hooks/empty-toast'; // Using silent toast implementation
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Check, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ShippingRateOption, getShippingRates, formatShippingPrice } from '@/lib/shipping-rates';
+import { 
+  VisaIcon, 
+  MastercardIcon, 
+  AmexIcon, 
+  DiscoverIcon
+} from '@/components/payment-icons';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
 
-const US_STATES = [
-  { value: 'AL', label: 'Alabama' },
-  { value: 'AK', label: 'Alaska' },
-  { value: 'AZ', label: 'Arizona' },
-  { value: 'AR', label: 'Arkansas' },
-  { value: 'CA', label: 'California' },
-  { value: 'CO', label: 'Colorado' },
-  { value: 'CT', label: 'Connecticut' },
-  { value: 'DE', label: 'Delaware' },
-  { value: 'FL', label: 'Florida' },
-  { value: 'GA', label: 'Georgia' },
-  { value: 'HI', label: 'Hawaii' },
-  { value: 'ID', label: 'Idaho' },
-  { value: 'IL', label: 'Illinois' },
-  { value: 'IN', label: 'Indiana' },
-  { value: 'IA', label: 'Iowa' },
-  { value: 'KS', label: 'Kansas' },
-  { value: 'KY', label: 'Kentucky' },
-  { value: 'LA', label: 'Louisiana' },
-  { value: 'ME', label: 'Maine' },
-  { value: 'MD', label: 'Maryland' },
-  { value: 'MA', label: 'Massachusetts' },
-  { value: 'MI', label: 'Michigan' },
-  { value: 'MN', label: 'Minnesota' },
-  { value: 'MS', label: 'Mississippi' },
-  { value: 'MO', label: 'Missouri' },
-  { value: 'MT', label: 'Montana' },
-  { value: 'NE', label: 'Nebraska' },
-  { value: 'NV', label: 'Nevada' },
-  { value: 'NH', label: 'New Hampshire' },
-  { value: 'NJ', label: 'New Jersey' },
-  { value: 'NM', label: 'New Mexico' },
-  { value: 'NY', label: 'New York' },
-  { value: 'NC', label: 'North Carolina' },
-  { value: 'ND', label: 'North Dakota' },
-  { value: 'OH', label: 'Ohio' },
-  { value: 'OK', label: 'Oklahoma' },
-  { value: 'OR', label: 'Oregon' },
-  { value: 'PA', label: 'Pennsylvania' },
-  { value: 'RI', label: 'Rhode Island' },
-  { value: 'SC', label: 'South Carolina' },
-  { value: 'SD', label: 'South Dakota' },
-  { value: 'TN', label: 'Tennessee' },
-  { value: 'TX', label: 'Texas' },
-  { value: 'UT', label: 'Utah' },
-  { value: 'VT', label: 'Vermont' },
-  { value: 'VA', label: 'Virginia' },
-  { value: 'WA', label: 'Washington' },
-  { value: 'WV', label: 'West Virginia' },
-  { value: 'WI', label: 'Wisconsin' },
-  { value: 'WY', label: 'Wyoming' },
+// Define shipping options
+const SHIPPING_OPTIONS = [
+  { id: 'standard', name: 'Standard Shipping via USPS', price: 15.00, days: '1-2 business days' },
+  { id: 'express', name: 'Express Shipping', price: 25.00, days: '1-2 business days' },
 ];
 
-// Component for multi-step checkout process
+// Steps in the checkout process
+const CHECKOUT_STEPS = [
+  { id: 'personal_info', label: 'Personal Info' },
+  { id: 'shipping_info', label: 'Shipping Info' },
+  { id: 'payment_method', label: 'Payment' },
+  { id: 'confirmation', label: 'Confirmation' },
+];
+
 const MultiStepCheckout: React.FC = () => {
-  const navigate = useNavigate();
-  const toast = useToast();
+  const [, navigate] = useLocation();
   const cart = useCart();
+  const { toast } = useToast(); // Using silent toast implementation
   
   // State for checkout steps
   const [currentStep, setCurrentStep] = useState('personal_info');
-  const [checkoutId, setCheckoutId] = useState('');
+  const [checkoutId, setCheckoutId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // State for payment
-  const [paymentMethod, setPaymentMethod] = useState('card');
-  const [clientSecret, setClientSecret] = useState('');
-  const [paymentAmount, setPaymentAmount] = useState(0);
-  const [orderIds, setOrderIds] = useState<string[]>([]);
-  
-  // State for personal information
+  // State for personal info
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   
-  // State for shipping information
+  // State for shipping info
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [zipCode, setZipCode] = useState('');
-  const [shippingMethod, setShippingMethod] = useState('standard');
-  const [addressSuggestion, setAddressSuggestion] = useState<any>(null);
-  const [useValidatedAddress, setUseValidatedAddress] = useState(false);
-  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
-  const [shippingMethods, setShippingMethods] = useState<any[]>([
-    { id: 'standard', name: 'Standard Shipping', price: 5.99, daysMin: 3, daysMax: 7 },
-    { id: 'express', name: 'Express Shipping', price: 12.99, daysMin: 1, daysMax: 3 },
-  ]);
+  const [shippingMethod, setShippingMethod] = useState(SHIPPING_OPTIONS[0].id);
   
-  // Initialize checkout on component mount
+  // State for address validation
+  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
+  const [addressValidation, setAddressValidation] = useState<any>(null);
+  const [useValidatedAddress, setUseValidatedAddress] = useState(false);
+  
+  // State for shipping rates
+  const [shippingRates, setShippingRates] = useState<ShippingRateOption[]>([]);
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+  const [dynamicShippingOptions, setDynamicShippingOptions] = useState(SHIPPING_OPTIONS);
+  
+  // State for payment
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [orderIds, setOrderIds] = useState<number[]>([]);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  
+  // Initialize checkout process
   useEffect(() => {
     if (cart.items.length === 0) {
       navigate('/cart');
       return;
     }
     
-    const initCheckout = async () => {
-      try {
-        const response = await apiRequest('POST', '/api/checkout/initialize', {});
-        
-        if (response.ok) {
-          const data = await response.json();
-          setCheckoutId(data.checkoutId);
-          setCurrentStep('personal_info');
-          
-          // Calculate order total
-          const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          setPaymentAmount(subtotal);
-        } else {
-          const errorData = await response.json();
-          setError(errorData.message || 'Could not initialize checkout');
-        }
-      } catch (err: any) {
-        setError(err.message || 'Network error');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    initCheckout();
-  }, [cart.items, navigate]);
+    initializeCheckout();
+  }, [cart.items.length]);
   
-  // Address validation with FedEx/USPS API
-  const validateAddressWithFedEx = async () => {
-    if (!address || !city || !state || !zipCode) return;
-    
-    setIsValidatingAddress(true);
-    
+  // Initialize the checkout and get a checkout ID
+  const initializeCheckout = async () => {
     try {
-      const response = await apiRequest('POST', '/api/validate-address', {
-        address,
-        city,
-        state,
-        zipCode
-      });
+      setIsLoading(true);
       
+      console.log('Initializing checkout and creating Airtable entry...');
+      const response = await apiRequest('POST', '/api/checkout/initialize', {});
       if (response.ok) {
         const data = await response.json();
-        
-        if (data.valid) {
-          setUseValidatedAddress(true);
-          toast({
-            title: 'Address Validated',
-            description: 'Your shipping address has been validated.',
-          });
-          
-          if (data.suggestion && data.suggestion !== address) {
-            setAddressSuggestion(data.suggestion);
-          }
-        } else {
-          setUseValidatedAddress(false);
-          toast({
-            title: 'Address Validation Issue',
-            description: data.message || 'Please check your shipping address.',
-            variant: 'destructive',
-          });
-        }
+        console.log('Checkout initialized with ID:', data.checkoutId);
+        setCheckoutId(data.checkoutId);
+        setCurrentStep('personal_info');
+        toast({
+          title: 'Checkout Started',
+          description: 'Please fill in your personal information to continue.',
+        });
       } else {
-        console.error('Address validation failed:', await response.text());
+        const errorData = await response.json();
+        setError(errorData.message || 'Could not initialize checkout');
+        toast({
+          title: 'Checkout Error',
+          description: errorData.message || 'Could not initialize checkout',
+          variant: 'destructive',
+        });
       }
-    } catch (err) {
-      console.error('Address validation error:', err);
+    } catch (err: any) {
+      setError(err.message || 'Network error');
+      toast({
+        title: 'Network Error',
+        description: err.message || 'Could not connect to server',
+        variant: 'destructive',
+      });
     } finally {
-      setIsValidatingAddress(false);
+      setIsLoading(false);
     }
   };
   
-  // Use suggested address from validation
-  const useSuggestedAddress = () => {
-    if (addressSuggestion) {
-      setAddress(addressSuggestion.street);
-      setCity(addressSuggestion.city);
-      setState(addressSuggestion.state);
-      setZipCode(addressSuggestion.zipCode);
-      setAddressSuggestion(null);
-      setUseValidatedAddress(true);
-    }
-  };
-  
-  // Handle personal info form submission
+  // Step 1: Handle personal info submission
   const handlePersonalInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate fields
-    if (!firstName || !lastName || !email) {
+    if (!firstName || !lastName) {
       toast({
         title: 'Missing Information',
-        description: 'Please fill in all required fields',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    // Basic email validation
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-    if (!emailPattern.test(email)) {
-      toast({
-        title: 'Invalid Email',
-        description: 'Please enter a valid email address',
+        description: 'First name and last name are required',
         variant: 'destructive',
       });
       return;
@@ -235,10 +160,18 @@ const MultiStepCheckout: React.FC = () => {
       });
       
       if (response.ok) {
-        setCurrentStep('shipping_info');
+        const data = await response.json();
+        
+        // Save to sessionStorage for later use on the success page
+        sessionStorage.setItem('checkout_first_name', firstName);
+        sessionStorage.setItem('checkout_last_name', lastName);
+        sessionStorage.setItem('checkout_email', email || '');
+        sessionStorage.setItem('checkout_phone', phone || '');
+        
+        setCurrentStep(data.nextStep);
         toast({
           title: 'Personal Information Saved',
-          description: 'Please enter your shipping details',
+          description: 'Please enter your shipping information',
         });
       } else {
         const errorData = await response.json();
@@ -259,41 +192,88 @@ const MultiStepCheckout: React.FC = () => {
     }
   };
   
-  // Handle shipping info form submission
+  // Step 2: Handle shipping info submission
   const handleShippingInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate fields
     if (!address || !city || !state || !zipCode || !shippingMethod) {
       toast({
         title: 'Missing Information',
-        description: 'Please fill in all required shipping fields',
+        description: 'All shipping fields are required',
         variant: 'destructive',
       });
       return;
     }
     
+    // Import validation functions
+    const { validateAddress, validateZipCode, validateCity } = await import('../../lib/address-lookup');
+    
+    // Enhanced address validation
+    if (!validateAddress(address)) {
+      toast({
+        title: 'Invalid Address',
+        description: 'Please enter a valid street address including a street number',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!validateZipCode(zipCode)) {
+      toast({
+        title: 'Invalid ZIP Code',
+        description: 'Please enter a valid 5-digit ZIP code',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!validateCity(city)) {
+      toast({
+        title: 'Invalid City',
+        description: 'Please enter a valid city name',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Attempt to validate the address one more time if it hasn't been validated yet
+    if (!useValidatedAddress && !isValidatingAddress && address && city && state && zipCode) {
+      // Automatically try to validate before proceeding
+      validateAddressWithFedEx();
+      // But still continue with submission - don't block the user
+    }
+    
     try {
       setIsLoading(true);
       
+      // Find the selected shipping option
+      const selectedShippingOption = dynamicShippingOptions.find(opt => opt.id === shippingMethod);
+      
+      // Include validation status and shipping rate information in the request
       const response = await apiRequest('POST', '/api/checkout/shipping-info', {
         address,
         city,
         state,
         zipCode,
         shippingMethod,
-        addressValidated: useValidatedAddress,
+        shippingDetails: {
+          method: selectedShippingOption?.name || 'Standard Shipping',
+          price: selectedShippingOption?.price || 0,
+          estimatedDelivery: selectedShippingOption?.days || '5-7 business days',
+          addressValidated: useValidatedAddress,
+          addressClassification: addressValidation?.validation?.classification || 'unknown'
+        },
+        isAddressValidated: useValidatedAddress,
+        addressValidationDetails: addressValidation ? {
+          classification: addressValidation.validation?.classification || 'unknown',
+          suggestedAddress: addressValidation.validation?.suggestedAddress || null
+        } : null
       });
       
       if (response.ok) {
         const data = await response.json();
-        
-        // Update payment amount to include shipping
-        if (data.totalWithShipping) {
-          setPaymentAmount(data.totalWithShipping);
-        }
-        
-        setCurrentStep('payment_method');
+        setCurrentStep(data.nextStep);
+        setPaymentAmount(data.cartTotal);
         toast({
           title: 'Shipping Information Saved',
           description: 'Please select your payment method',
@@ -317,7 +297,7 @@ const MultiStepCheckout: React.FC = () => {
     }
   };
   
-  // Handle payment method selection
+  // Step 3: Handle payment method selection
   const handlePaymentMethodSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -327,7 +307,7 @@ const MultiStepCheckout: React.FC = () => {
       console.log(`Selected payment method: ${paymentMethod}`);
       
       const response = await apiRequest('POST', '/api/checkout/payment-method', {
-        paymentMethod: 'card', // Always set to card as we only support card payments
+        paymentMethod,
       });
       
       if (response.ok) {
@@ -337,6 +317,8 @@ const MultiStepCheckout: React.FC = () => {
         console.log('Card payment selected, preparing Stripe elements');
         setClientSecret(data.clientSecret);
         setCurrentStep('card_payment');
+        setPaymentAmount(data.amount);
+        
         toast({
           title: 'Credit Card Payment',
           description: 'Please enter your card details to complete your payment',
@@ -344,8 +326,8 @@ const MultiStepCheckout: React.FC = () => {
       } else {
         const errorData = await response.json();
         toast({
-          title: 'Payment Error',
-          description: errorData.message || 'Could not process payment selection',
+          title: 'Error',
+          description: errorData.message || 'Could not process payment method',
           variant: 'destructive',
         });
       }
@@ -360,352 +342,377 @@ const MultiStepCheckout: React.FC = () => {
     }
   };
   
-  // Handle payment confirmation for all payment methods
-  const handlePaymentConfirmation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentStep('confirmation');
+  // Validate address with FedEx
+  const validateAddressWithFedEx = async () => {
+    if (!address || !city || !state || !zipCode) {
+      toast({
+        title: 'Missing Information',
+        description: 'All address fields are required for validation',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      setIsValidatingAddress(true);
+      
+      const response = await apiRequest('POST', '/api/validate-address', {
+        address,
+        city,
+        state,
+        zipCode,
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAddressValidation(data);
+        
+        // Automatically use suggested address if valid
+        if (data.valid) {
+          setUseValidatedAddress(true);
+          
+          if (data.validation && data.validation.suggestedAddress) {
+            // Use suggested address components if available
+            const suggested = data.validation.suggestedAddress;
+            
+            if (suggested.street && suggested.street !== address) {
+              setAddress(suggested.street);
+            }
+            
+            if (suggested.city && suggested.city !== city) {
+              setCity(suggested.city);
+            }
+            
+            if (suggested.state && suggested.state !== state) {
+              setState(suggested.state);
+            }
+            
+            if (suggested.zipCode && suggested.zipCode !== zipCode) {
+              setZipCode(suggested.zipCode);
+            }
+            
+            toast({
+              title: 'Address Validated',
+              description: 'We\'ve updated your address with the standardized format',
+            });
+          } else {
+            toast({
+              title: 'Address Validated',
+              description: 'Your address has been validated successfully',
+            });
+          }
+        } else {
+          setUseValidatedAddress(false);
+          toast({
+            title: 'Address Validation Issue',
+            description: data.message || 'There may be an issue with your address',
+            variant: 'destructive',
+          });
+        }
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: 'Validation Error',
+          description: errorData.message || 'Could not validate address',
+          variant: 'destructive',
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Network Error',
+        description: err.message || 'Could not connect to validation service',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsValidatingAddress(false);
+    }
   };
   
-  // Render step indicator
-  const renderStepIndicator = () => {
-    const steps = [
-      { id: 'personal_info', name: 'Personal Info' },
-      { id: 'shipping_info', name: 'Shipping' },
-      { id: 'payment_method', name: 'Payment Method' },
-      { id: 'card_payment', name: 'Payment Details' },
-      { id: 'confirmation', name: 'Confirmation' },
-    ];
+  // Load shipping rates based on entered address
+  const loadShippingRates = async () => {
+    if (!address || !city || !state || !zipCode) {
+      return;
+    }
     
-    const currentIndex = steps.findIndex(step => step.id === currentStep);
-    
-    return (
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          {steps.map((step, index) => (
-            <div 
-              key={step.id}
-              className={`flex flex-col items-center ${index <= currentIndex ? 'text-blue-600' : 'text-gray-400'}`}
-            >
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full mb-2 ${
-                index < currentIndex ? 'bg-blue-600 text-white' : 
-                index === currentIndex ? 'border-2 border-blue-600 text-blue-600' : 
-                'border-2 border-gray-300 text-gray-300'
-              }`}>
-                {index < currentIndex ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <span>{index + 1}</span>
-                )}
-              </div>
-              <span className="text-xs md:text-sm font-medium">
-                {step.name}
-              </span>
-            </div>
-          ))}
-        </div>
+    try {
+      setIsLoadingRates(true);
+      
+      const rates = await getShippingRates({
+        address,
+        city,
+        state,
+        zipCode,
+        items: cart.items.map(item => ({
+          weight: 0.5, // Assume 0.5 lbs per item for simplicity
+          dimensions: { length: 8, width: 6, height: 2 }, // Inches
+          quantity: item.quantity
+        }))
+      });
+      
+      setShippingRates(rates);
+      
+      // Update shipping options with real rates if available
+      if (rates.length > 0) {
+        const updatedOptions = rates.map(rate => ({
+          id: rate.service_code,
+          name: rate.service_name,
+          price: rate.rate,
+          days: rate.delivery_days ? `${rate.delivery_days} days` : 'Unknown delivery time'
+        }));
         
-        <div className="relative">
-          <div className="absolute top-0 h-0.5 w-full bg-gray-200"></div>
-          <div 
-            className="absolute top-0 h-0.5 bg-blue-600"
-            style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
-          ></div>
-        </div>
-      </div>
-    );
+        setDynamicShippingOptions(updatedOptions);
+        setShippingMethod(updatedOptions[0].id);
+      }
+      
+      console.log(`Loaded ${rates.length} shipping rates`);
+    } catch (err: any) {
+      console.error('Failed to load shipping rates:', err);
+      // Fall back to default rates, don't show error
+    } finally {
+      setIsLoadingRates(false);
+    }
   };
   
-  // Render cart summary
-  const renderCartSummary = () => {
-    const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const selectedShippingMethod = shippingMethods.find(method => method.id === shippingMethod);
-    const shippingCost = selectedShippingMethod ? selectedShippingMethod.price : 0;
-    const total = subtotal + shippingCost;
-    
+  // Load shipping rates when address is complete
+  useEffect(() => {
+    if (address && city && state && zipCode) {
+      loadShippingRates();
+    }
+  }, [address, city, state, zipCode]);
+  
+  // Initialize Stripe
+  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  
+  // Stripe Card Element component
+  const CheckoutForm = ({ clientSecret, amount }: { clientSecret: string, amount: number }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [error, setError] = useState<string | null>(null);
+    const [processing, setProcessing] = useState(false);
+    const [cardComplete, setCardComplete] = useState(false);
+    const [cardholderName, setCardholderName] = useState('');
+    const { toast } = useToast();
+
+    const handleSubmit = async (event: React.FormEvent) => {
+      event.preventDefault();
+
+      if (!stripe || !elements) {
+        // Stripe.js has not loaded yet
+        return;
+      }
+
+      if (!cardholderName) {
+        setError('Please enter the cardholder name');
+        return;
+      }
+
+      const cardElement = elements.getElement(CardElement);
+      
+      if (!cardElement) {
+        setError('Card element not found');
+        return;
+      }
+
+      setProcessing(true);
+      
+      try {
+        const { error: submitError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: cardholderName,
+            },
+          }
+        });
+
+        if (submitError) {
+          setError(submitError.message || 'An error occurred with your payment');
+          toast({
+            title: 'Payment Failed',
+            description: submitError.message || 'An error occurred with your payment',
+            variant: 'destructive',
+          });
+        } else if (paymentIntent.status === 'succeeded') {
+          // Clear the cart
+          cart.clearCart();
+          
+          // Store checkout information in sessionStorage for the success page
+          sessionStorage.setItem('checkout_first_name', firstName);
+          sessionStorage.setItem('checkout_last_name', lastName);
+          sessionStorage.setItem('checkout_email', email || '');
+          sessionStorage.setItem('checkout_phone', phone || '');
+          sessionStorage.setItem('checkout_address', address);
+          sessionStorage.setItem('checkout_city', city);
+          sessionStorage.setItem('checkout_state', state);
+          sessionStorage.setItem('checkout_zip', zipCode);
+          
+          toast({
+            title: 'Payment Successful',
+            description: 'Your order has been placed',
+          });
+          
+          // Redirect to confirmation page
+          const orderParams = new URLSearchParams({
+            amount: amount.toString(),
+            payment_method: 'card',
+            order_id: paymentIntent.id || '',
+          });
+          
+          window.location.href = `/checkout/confirmation?${orderParams.toString()}`;
+        }
+      } catch (error: any) {
+        setError(error.message || 'An unexpected error occurred');
+        toast({
+          title: 'Payment Error',
+          description: error.message || 'An unexpected error occurred',
+          variant: 'destructive',
+        });
+      } finally {
+        setProcessing(false);
+      }
+    };
+
     return (
-      <div className="bg-gray-50 p-6 rounded-lg sticky top-4">
-        <h2 className="text-lg font-bold mb-4">Order Summary</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <h2 className="text-xl font-bold">Card Payment</h2>
         
-        <div className="space-y-2 mb-4">
-          {cart.items.map((item) => (
-            <div key={`${item.id}-${item.selectedWeight || ''}`} className="flex justify-between">
+        <div className="flex items-center space-x-2 border p-3 rounded mb-4">
+          <div className="flex-grow">
+            <div className="flex justify-between items-center">
               <div>
-                <span className="font-medium">{item.name}</span>
-                {item.selectedWeight && (
-                  <span className="text-sm text-gray-500 ml-1">({item.selectedWeight})</span>
-                )}
-                <span className="text-gray-500 ml-2">x{item.quantity}</span>
+                <span className="font-medium">Credit/Debit Card</span>
+                <p className="text-sm text-gray-500">Pay securely with your card</p>
               </div>
-              <span>${(item.price * item.quantity).toFixed(2)}</span>
+              <div className="flex space-x-2 ml-2">
+                <VisaIcon />
+                <MastercardIcon />
+                <AmexIcon />
+                <DiscoverIcon />
+              </div>
             </div>
-          ))}
+          </div>
         </div>
         
-        <div className="border-t border-gray-200 pt-4">
-          <div className="flex justify-between mb-2">
-            <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="cardholderName">Cardholder Name</Label>
+            <Input
+              id="cardholderName"
+              value={cardholderName}
+              onChange={(e) => setCardholderName(e.target.value)}
+              placeholder="Name as it appears on the card"
+              required
+            />
           </div>
           
-          <div className="flex justify-between mb-4">
-            <span>Shipping</span>
-            <span>${shippingCost.toFixed(2)}</span>
+          <div className="space-y-2">
+            <Label htmlFor="card">Card Details</Label>
+            <div className="border p-3 rounded focus-within:ring-2 focus-within:ring-blue-500">
+              <CardElement
+                options={{
+                  style: {
+                    base: {
+                      fontSize: '16px',
+                      color: '#424770',
+                      '::placeholder': {
+                        color: '#aab7c4',
+                      },
+                    },
+                    invalid: {
+                      color: '#9e2146',
+                    },
+                  },
+                }}
+                onChange={(e) => {
+                  setCardComplete(e.complete);
+                  setError(e.error ? e.error.message : null);
+                }}
+              />
+            </div>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
           
-          <div className="flex justify-between font-bold text-lg">
-            <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+          <div className="pt-4">
+            <p className="text-base font-medium">Total Amount: ${amount.toFixed(2)}</p>
           </div>
         </div>
-      </div>
+        
+        <div className="flex justify-between mt-6">
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={() => setCurrentStep('payment_method')}
+          >
+            Back
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={processing || !cardComplete || !stripe || !elements}
+          >
+            {processing ? 'Processing...' : 'Complete Payment'}
+          </Button>
+        </div>
+      </form>
     );
   };
   
-  // Render personal information form (Step 1)
-  const renderPersonalInfoForm = () => (
-    <form onSubmit={handlePersonalInfoSubmit} className="space-y-6">
-      <h2 className="text-xl font-bold">Personal Information</h2>
-      
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">First Name *</Label>
-            <Input 
-              id="firstName" 
-              value={firstName} 
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Your first name"
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name *</Label>
-            <Input 
-              id="lastName" 
-              value={lastName} 
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Your last name"
-              required
-            />
-          </div>
+  // Card payment form with Stripe Elements wrapper
+  const CardPaymentForm = () => {
+    const [paymentIntentLoading, setPaymentIntentLoading] = useState(true);
+    
+    if (!clientSecret) {
+      return (
+        <div className="py-8 text-center">
+          <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full inline-block"></div>
+          <p className="mt-4 text-gray-600">Preparing payment form...</p>
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="email">Email Address *</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Your email address"
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
-          <Input 
-            id="phone" 
-            type="tel" 
-            value={phone} 
-            onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-            placeholder="Your phone number (optional)"
-          />
-        </div>
-      </div>
-      
-      <div className="flex justify-end mt-6">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Processing...' : 'Continue to Shipping'}
-        </Button>
-      </div>
-    </form>
+      );
+    }
+    
+    return (
+      <Elements stripe={stripePromise} options={{ clientSecret }}>
+        <CheckoutForm clientSecret={clientSecret} amount={paymentAmount} />
+      </Elements>
+    );
+  };
+  
+  // Wrapper function to render card payment
+  const renderCardPaymentForm = () => <CardPaymentForm />;
+  
+  // Bank transfer option - disabled (we only support card payments now)
+  const renderBankTransferForm = () => (
+    <div className="p-6 bg-yellow-50 rounded-lg">
+      <h2 className="text-xl font-bold mb-4 text-yellow-800">Bank Transfer Not Available</h2>
+      <p className="text-yellow-700 mb-4">
+        We currently only support credit and debit card payments.
+      </p>
+      <Button 
+        type="button" 
+        variant="outline"
+        onClick={() => setCurrentStep('payment_method')}
+        className="mt-2"
+      >
+        Return to Payment Options
+      </Button>
+    </div>
   );
   
-  // Render shipping information form (Step 2)
-  const renderShippingInfoForm = () => (
-    <form onSubmit={handleShippingInfoSubmit} className="space-y-6">
-      <h2 className="text-xl font-bold">Shipping Information</h2>
-      
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="address">Street Address *</Label>
-          <Input 
-            id="address" 
-            value={address} 
-            onChange={(e) => {
-              setAddress(e.target.value);
-              setUseValidatedAddress(false);
-            }}
-            placeholder="Your street address"
-            required
-            className={useValidatedAddress ? "border-green-500 bg-green-50" : ""}
-          />
-          {useValidatedAddress && (
-            <div className="text-xs text-green-600 flex items-center mt-1">
-              <Check className="h-3 w-3 mr-1" />
-              Address validated
-            </div>
-          )}
-        </div>
-        
-        {addressSuggestion && (
-          <div className="bg-yellow-50 p-3 rounded-lg text-sm">
-            <p className="font-medium text-yellow-800">Did you mean:</p>
-            <p className="text-yellow-800 mb-2">{addressSuggestion.street}, {addressSuggestion.city}, {addressSuggestion.state} {addressSuggestion.zipCode}</p>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm"
-              onClick={useSuggestedAddress}
-              className="bg-white hover:bg-white"
-            >
-              Use this address
-            </Button>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="city">City *</Label>
-            <Input 
-              id="city" 
-              value={city} 
-              onChange={(e) => {
-                setCity(e.target.value);
-                setUseValidatedAddress(false);
-              }}
-              placeholder="Your city"
-              required
-              className={useValidatedAddress ? "border-green-500 bg-green-50" : ""}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="state">State *</Label>
-            <Select 
-              value={state} 
-              onValueChange={(val) => {
-                setState(val);
-                setUseValidatedAddress(false);
-                
-                // Try to validate the address after state is selected
-                setTimeout(() => {
-                  if (address && city && val && zipCode && !isValidatingAddress) {
-                    validateAddressWithFedEx();
-                  }
-                }, 100);
-              }}
-              required
-            >
-              <SelectTrigger id="state" className={useValidatedAddress ? "border-green-500 bg-green-50 pr-8" : "pr-8"}>
-                <SelectValue placeholder="Select state" />
-                {useValidatedAddress && (
-                  <Check className="h-4 w-4 text-green-600 ml-auto" />
-                )}
-              </SelectTrigger>
-              <SelectContent>
-                {US_STATES.map((stateObj) => (
-                  <SelectItem key={stateObj.value} value={stateObj.value}>
-                    {stateObj.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="mt-6">
-          <Label htmlFor="zipCode">ZIP Code *</Label>
-          <div className="relative">
-            <Input 
-              id="zipCode" 
-              value={zipCode}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '').slice(0, 5);
-                setZipCode(value);
-                setUseValidatedAddress(false);
-                
-                // Try to validate the address after ZIP is entered
-                if (value.length === 5) {
-                  setTimeout(() => {
-                    if (address && city && state && value && !isValidatingAddress) {
-                      validateAddressWithFedEx();
-                    }
-                  }, 100);
-                }
-              }}
-              placeholder="5-digit ZIP code"
-              required
-              className={`${useValidatedAddress ? "border-green-500 bg-green-50" : ""} ${isValidatingAddress ? "pr-10" : ""}`}
-              maxLength={5}
-              inputMode="numeric"
-            />
-            {isValidatingAddress && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-              </div>
-            )}
-          </div>
-          {useValidatedAddress && (
-            <div className="text-xs text-green-600 flex items-center mt-1">
-              <Check className="h-3 w-3 mr-1" />
-              ZIP code validated
-            </div>
-          )}
-        </div>
-        
-        <div className="space-y-2 mt-6">
-          <Label htmlFor="shippingMethod">Shipping Method *</Label>
-          <div className="space-y-2">
-            {shippingMethods.map(method => (
-              <div 
-                key={method.id}
-                className={`border rounded-lg p-4 cursor-pointer ${
-                  shippingMethod === method.id 
-                    ? 'border-blue-600 bg-blue-50' 
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setShippingMethod(method.id)}
-              >
-                <div className="flex items-center">
-                  <div className={`w-4 h-4 rounded-full border ${
-                    shippingMethod === method.id 
-                      ? 'border-blue-600 bg-blue-600' 
-                      : 'border-gray-400'
-                  }`}>
-                    {shippingMethod === method.id && (
-                      <div className="w-2 h-2 mx-auto mt-1 rounded-full bg-white"></div>
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <div className="font-medium">{method.name}</div>
-                    <div className="text-sm text-gray-500 flex flex-wrap gap-x-4">
-                      <span>${method.price.toFixed(2)}</span>
-                      <span>Estimated delivery: {method.daysMin}-{method.daysMax} business days</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      <div className="flex justify-between mt-6">
-        <Button 
-          type="button" 
-          variant="outline"
-          onClick={() => setCurrentStep('personal_info')}
-        >
-          Back
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Processing...' : 'Continue to Payment'}
-        </Button>
-      </div>
-    </form>
+  // Cryptocurrency option - disabled (we only support card payments now)
+  const renderCryptoPaymentForm = () => (
+    <div className="p-6 bg-yellow-50 rounded-lg">
+      <h2 className="text-xl font-bold mb-4 text-yellow-800">Cryptocurrency Not Available</h2>
+      <p className="text-yellow-700 mb-4">
+        We currently only support credit and debit card payments.
+      </p>
+      <Button 
+        type="button" 
+        variant="outline"
+        onClick={() => setCurrentStep('payment_method')}
+        className="mt-2"
+      >
+        Return to Payment Options
+      </Button>
+    </div>
   );
   
   // Render payment method selection (Step 3)
@@ -751,10 +758,339 @@ const MultiStepCheckout: React.FC = () => {
     </form>
   );
   
-  // Wrapper function to render card payment
-  const renderCardPaymentForm = () => <CardPaymentForm />;
+  // Form to collect personal details (Step 1)
+  const renderPersonalInfoForm = () => (
+    <form onSubmit={handlePersonalInfoSubmit} className="space-y-6">
+      <h2 className="text-xl font-bold">Personal Information</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">First Name</Label>
+          <Input 
+            id="firstName" 
+            value={firstName} 
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="Your first name"
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Last Name</Label>
+          <Input 
+            id="lastName" 
+            value={lastName} 
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Your last name"
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="email">Email Address</Label>
+          <Input 
+            id="email" 
+            type="email"
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Your email address"
+          />
+          <p className="text-xs text-gray-500">For order confirmations and tracking updates</p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <Input 
+            id="phone" 
+            type="tel"
+            value={phone} 
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Your phone number"
+          />
+          <p className="text-xs text-gray-500">For shipping notifications</p>
+        </div>
+      </div>
+      
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Processing...' : 'Continue to Shipping'}
+        </Button>
+      </div>
+    </form>
+  );
   
-  // We've removed bank transfer and cryptocurrency payment forms since we only support card payments now
+  // Form to collect shipping details (Step 2)
+  const renderShippingInfoForm = () => (
+    <form onSubmit={handleShippingInfoSubmit} className="space-y-6">
+      <h2 className="text-xl font-bold">Shipping Information</h2>
+      
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="address">Street Address</Label>
+          <Input 
+            id="address" 
+            value={address} 
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="123 Main St"
+            required
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="city">City</Label>
+            <Input 
+              id="city" 
+              value={city} 
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="City"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="state">State</Label>
+            <Select 
+              value={state} 
+              onValueChange={setState}
+            >
+              <SelectTrigger id="state">
+                <SelectValue placeholder="Select a state" />
+              </SelectTrigger>
+              <SelectContent>
+                {US_STATES.map((state) => (
+                  <SelectItem key={state.code} value={state.code}>
+                    {state.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="zipCode">ZIP Code</Label>
+            <Input 
+              id="zipCode" 
+              value={zipCode} 
+              onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+              placeholder="12345"
+              required
+              maxLength={5}
+              pattern="[0-9]{5}"
+              inputMode="numeric"
+            />
+          </div>
+          
+          <div className="flex items-end">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={validateAddressWithFedEx}
+              disabled={isValidatingAddress || !address || !city || !state || !zipCode}
+              className="h-10"
+            >
+              {isValidatingAddress ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Validating...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Validate Address
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+        
+        {addressValidation && (
+          <div className={`rounded-md ${addressValidation.valid ? 'bg-green-50' : 'bg-yellow-50'} p-4 my-4`}>
+            <div className="flex">
+              <div className="flex-shrink-0">
+                {addressValidation.valid ? (
+                  <Check className="h-5 w-5 text-green-400" aria-hidden="true" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                )}
+              </div>
+              <div className="ml-3">
+                <h3 className={`text-sm font-medium ${addressValidation.valid ? 'text-green-800' : 'text-yellow-800'}`}>
+                  {addressValidation.valid ? 'Address Validated' : 'Address Validation Warning'}
+                </h3>
+                <div className={`mt-2 text-sm ${addressValidation.valid ? 'text-green-700' : 'text-yellow-700'}`}>
+                  <p>{addressValidation.message}</p>
+                  
+                  {addressValidation.validation?.classification && (
+                    <p className="mt-1">
+                      Classification: <Badge variant="outline">{addressValidation.validation.classification}</Badge>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div className="space-y-2 mt-6">
+          <Label htmlFor="shippingMethod">Shipping Method</Label>
+          
+          {isLoadingRates ? (
+            <div className="p-4 text-center text-gray-500">
+              <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+              <p className="mt-2 text-sm">Loading shipping options...</p>
+            </div>
+          ) : (
+            <RadioGroup 
+              id="shippingMethod" 
+              value={shippingMethod} 
+              onValueChange={setShippingMethod}
+              className="space-y-3"
+            >
+              {dynamicShippingOptions.map((option) => (
+                <div key={option.id} className="flex items-center space-x-3 border p-3 rounded-md">
+                  <RadioGroupItem value={option.id} id={option.id} />
+                  <Label htmlFor={option.id} className="flex-grow cursor-pointer">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-medium block">{option.name}</span>
+                        <span className="text-sm text-gray-500 block">{option.days}</span>
+                      </div>
+                      <div className="font-medium">{formatShippingPrice(option.price)}</div>
+                    </div>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex justify-between mt-6">
+        <Button 
+          type="button" 
+          variant="outline"
+          onClick={() => setCurrentStep('personal_info')}
+        >
+          Back
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Processing...' : 'Continue to Payment'}
+        </Button>
+      </div>
+    </form>
+  );
+  
+  // Render step indicator at the top of checkout
+  const renderStepIndicator = () => {
+    const currentStepIndex = CHECKOUT_STEPS.findIndex(step => step.id === currentStep);
+    const isCurrentOrCompleted = (index: number) => index <= currentStepIndex;
+    
+    return (
+      <div className="mb-8">
+        <div className="flex justify-between items-center">
+          {CHECKOUT_STEPS.map((step, index) => (
+            <React.Fragment key={step.id}>
+              <div className="flex flex-col items-center">
+                <div 
+                  className={`w-8 h-8 flex items-center justify-center rounded-full ${
+                    isCurrentOrCompleted(index) 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  {isCurrentOrCompleted(index) && index < currentStepIndex ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                <span className={`text-xs mt-1 ${
+                  isCurrentOrCompleted(index) ? 'text-blue-600 font-medium' : 'text-gray-500'
+                }`}>
+                  {step.label}
+                </span>
+              </div>
+              
+              {index < CHECKOUT_STEPS.length - 1 && (
+                <div 
+                  className={`h-1 flex-grow mx-1 ${
+                    isCurrentOrCompleted(index + 1) ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  // Render cart summary sidebar
+  const renderCartSummary = () => (
+    <div className="bg-gray-50 p-6 rounded-lg">
+      <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+      
+      <div className="mb-4 divide-y">
+        {cart.items.length === 0 ? (
+          <p className="text-gray-500">Your cart is empty</p>
+        ) : (
+          cart.items.map((item) => (
+            <div key={`${item.id}-${item.selectedWeight}`} className="py-2 flex justify-between">
+              <div>
+                <p className="font-medium">{item.name}</p>
+                <p className="text-sm text-gray-500">
+                  {item.selectedWeight ? `${item.selectedWeight}mg` : ''} 
+                  {item.quantity > 1 ? ` × ${item.quantity}` : ''}
+                </p>
+              </div>
+              <div className="font-medium">
+                ${(parseFloat(typeof item.price === 'string' ? item.price : '0') * item.quantity).toFixed(2)}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+      
+      <Separator className="my-4" />
+      
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>Subtotal</span>
+          <span>${cart.subtotal.toFixed(2)}</span>
+        </div>
+        
+        <div className="flex justify-between text-sm">
+          <span>Shipping</span>
+          <span>
+            {currentStep === 'shipping_info' || currentStep === 'payment_method' || currentStep === 'card_payment' || currentStep === 'confirm_payment' ? (
+              `$${(dynamicShippingOptions.find(opt => opt.id === shippingMethod)?.price || 0).toFixed(2)}`
+            ) : (
+              'Calculated at next step'
+            )}
+          </span>
+        </div>
+        
+        <Separator className="my-2" />
+        
+        <div className="flex justify-between font-bold">
+          <span>Total</span>
+          <span>
+            {currentStep === 'shipping_info' || currentStep === 'payment_method' || currentStep === 'card_payment' || currentStep === 'confirm_payment' ? (
+              `$${(cart.subtotal + (dynamicShippingOptions.find(opt => opt.id === shippingMethod)?.price || 0)).toFixed(2)}`
+            ) : (
+              `$${cart.subtotal.toFixed(2)}`
+            )}
+          </span>
+        </div>
+      </div>
+      
+      <div className="mt-6 text-sm text-gray-500">
+        <p>All orders are processed and shipped within 1-2 business days.</p>
+      </div>
+    </div>
+  );
   
   // Render order confirmation (final step)
   const renderConfirmation = () => (
@@ -839,6 +1175,8 @@ const MultiStepCheckout: React.FC = () => {
             {currentStep === 'shipping_info' && renderShippingInfoForm()}
             {currentStep === 'payment_method' && renderPaymentMethodSelection()}
             {currentStep === 'card_payment' && renderCardPaymentForm()}
+            {currentStep === 'confirm_payment' && paymentMethod === 'bank' && renderBankTransferForm()}
+            {currentStep === 'confirm_payment' && paymentMethod === 'crypto' && renderCryptoPaymentForm()}
             {currentStep === 'confirmation' && renderConfirmation()}
           </div>
           
