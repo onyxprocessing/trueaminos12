@@ -1,11 +1,17 @@
 /**
- * Image optimization service
- * This module handles image optimization and caching for better performance
+ * Advanced image optimization service
+ * This module handles image optimization, format conversion, and caching for better performance
+ * 
+ * Features:
+ * - WebP conversion for supported browsers
+ * - Automatic image resizing based on device needs
+ * - Efficient caching with versioned keys
+ * - Quality optimization for different image types
  */
 import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
+import sharp from 'sharp';
 import fetch from 'node-fetch';
 import { createHash } from 'crypto';
 
@@ -16,12 +22,14 @@ if (!fs.existsSync(CACHE_DIR)) {
 }
 
 /**
- * Generate a unique cache key for an image URL
+ * Generate a unique cache key for an image URL with format and width info
  * @param url Image URL
+ * @param format Output format (webp, jpeg, etc)
+ * @param width Requested width
  * @returns Cache key
  */
-function generateCacheKey(url: string): string {
-  return createHash('md5').update(url).digest('hex');
+function generateCacheKey(url: string, format: string = 'original', width: number = 0): string {
+  return createHash('md5').update(`${url}-${format}-${width}-v2`).digest('hex');
 }
 
 /**

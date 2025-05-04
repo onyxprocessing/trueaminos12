@@ -2,12 +2,57 @@ import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
 
 const app = express();
-// Enable compression for all responses - reduces file size and improves load time
-app.use(compression() as any);
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Advanced compression settings for better performance
+const compressFilter = (req: Request, res: Response) => {
+  if (req.headers['x-no-compression']) {
+    return false;
+  }
+  
+  // Always compress API responses and HTML
+  if (req.path.startsWith('/api') || req.path.endsWith('.html')) {
+    return true;
+  }
+  
+  // Compress JS, CSS, SVG, and JSON files (typically compressible)
+  if (req.path.match(/\.(js|css|svg|json)$/i)) {
+    return true;
+  }
+  
+  // Default compression behavior for all other responses
+  return compression.filter(req, res);
+};
+
+// Enable enhanced compression for all responses - reducing file size significantly
+app.use(compression({
+  level: 6, // Higher compression level (0-9, with 9 being max compression but slower)
+  threshold: 1024, // Only compress responses larger than 1KB
+  filter: compressFilter
+}) as any);
+
+// Enable proper JSON handling
+app.use(express.json({
+  limit: '2mb' // Increase limit for larger payloads
+}));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+// Add cache control headers for dynamic routes
+app.use((req, res, next) => {
+  // Add appropriate cache headers based on route
+  const url = req.url;
+  
+  // API responses should not be cached by default
+  if (url.startsWith('/api/')) {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

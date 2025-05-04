@@ -27,5 +27,34 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.debug', 'console.info'],
+      },
+      output: {
+        comments: false
+      }
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: [
+            '@/components/ui/button',
+            '@/components/ui/card',
+            '@/components/ui/dialog',
+            '@/components/ui/select',
+            '@/components/ui/alert'
+          ],
+          lucide: ['lucide-react']
+        }
+      }
+    },
+    cssMinify: true,
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000,
   },
 });
