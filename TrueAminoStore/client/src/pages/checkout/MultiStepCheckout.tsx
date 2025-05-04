@@ -21,6 +21,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Check, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ShippingRateOption, getShippingRates, formatShippingPrice } from '@/lib/shipping-rates';
+import { 
+  VisaIcon, 
+  MastercardIcon, 
+  AmexIcon, 
+  DiscoverIcon, 
+  BankIcon, 
+  BitcoinIcon, 
+  EthereumIcon 
+} from '@/components/payment-icons';
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
@@ -1030,8 +1039,10 @@ const MultiStepCheckout: React.FC = () => {
                   <p className="text-sm text-gray-500">Pay securely with your card</p>
                 </div>
                 <span className="flex space-x-1">
-                  <span className="w-8 h-5 bg-blue-900 rounded"></span>
-                  <span className="w-8 h-5 bg-gray-200 rounded"></span>
+                  <VisaIcon />
+                  <MastercardIcon />
+                  <AmexIcon />
+                  <DiscoverIcon />
                 </span>
               </div>
             </Label>
@@ -1045,7 +1056,7 @@ const MultiStepCheckout: React.FC = () => {
                   <span className="font-medium">Bank Transfer</span>
                   <p className="text-sm text-gray-500">Pay via bank transfer</p>
                 </div>
-                <span className="w-8 h-5 bg-green-700 rounded"></span>
+                <BankIcon />
               </div>
             </Label>
           </div>
@@ -1059,8 +1070,8 @@ const MultiStepCheckout: React.FC = () => {
                   <p className="text-sm text-gray-500">Pay with Bitcoin or Ethereum</p>
                 </div>
                 <span className="flex space-x-1">
-                  <span className="w-8 h-5 bg-orange-500 rounded"></span>
-                  <span className="w-8 h-5 bg-blue-500 rounded"></span>
+                  <BitcoinIcon />
+                  <EthereumIcon />
                 </span>
               </div>
             </Label>
