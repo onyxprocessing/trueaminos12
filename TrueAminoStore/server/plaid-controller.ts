@@ -19,9 +19,7 @@ const configuration = new Configuration({
 const plaidClient = new PlaidApi(configuration);
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 // Create a link token for Plaid to initialize the Link process
 export async function createLinkToken(req: Request, res: Response) {

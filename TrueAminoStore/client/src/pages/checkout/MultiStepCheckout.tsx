@@ -30,6 +30,13 @@ import {
   BitcoinIcon, 
   EthereumIcon 
 } from '@/components/payment-icons';
+import { loadStripe } from '@stripe/stripe-js';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
 
 // Define shipping options
 const SHIPPING_OPTIONS = [

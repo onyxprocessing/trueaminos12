@@ -546,6 +546,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await handlePaymentConfirmation(req, res);
   });
   
+  // Stripe payment routes
+  app.post('/api/create-payment-intent', createPaymentIntent);
+  app.post('/api/confirm-payment', confirmPayment);
+  
   // FedEx address validation endpoint
   app.post('/api/validate-address', async (req: Request, res: Response) => {
     try {

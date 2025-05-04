@@ -9,9 +9,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
   console.error('Missing required environment variable: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 // Create a payment intent with Stripe
 export async function createPaymentIntent(req: Request, res: Response) {
