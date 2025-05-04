@@ -29,8 +29,11 @@ const compressFilter = (req: Request, res: Response) => {
 // Enable enhanced compression for all responses - reducing file size significantly
 app.use(compression({
   level: 6, // Higher compression level (0-9, with 9 being max compression but slower)
-  threshold: 1024, // Only compress responses larger than 1KB
-  filter: compressFilter
+  threshold: 512, // Only compress responses larger than 512 bytes
+  filter: compressFilter,
+  memLevel: 8, // Memory level (1-9, where 9 uses more memory for better compression)
+  strategy: 0, // Compression strategy (0 = default, 1 = filtered, 2 = huffman only, 3 = RLE, 4 = fixed)
+  windowBits: 15 // Window size (8-15, higher values use more memory but provide better compression)
 }) as any);
 
 // Enable proper JSON handling

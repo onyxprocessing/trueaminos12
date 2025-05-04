@@ -91,19 +91,56 @@ export function serveStatic(app: Express) {
     res.sendFile(path.resolve(publicPath, "robots.txt"));
   });
 
-  // Enable aggressive caching for static assets (1 week)
+  // Enable aggressive caching for static assets with different strategies per asset type
   app.use(express.static(distPath, {
+    etag: true, // Enable ETags for conditional requests
+    lastModified: true, // Enable Last-Modified for conditional requests
     maxAge: '7d',
-    setHeaders: (res, path) => {
-      // Add cache-control headers for better performance
-      if (path.endsWith('.js') || path.endsWith('.css')) {
-        res.setHeader('Cache-Control', 'public, max-age=604800');
-      } else if (path.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
-        res.setHeader('Cache-Control', 'public, max-age=604800');
+    setHeaders: (res, filePath) => {
+      // JavaScript and CSS - longer cache with strong validation
+      if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+        // 1 week cache for JS/CSS with immutable to skip revalidation for versioned assets
+        const hash = filePath.match(/\.[a-f0-9]{8}\.(js|css)$/);
+        if (hash) {
+          // For hashed (versioned) files, set immutable to prevent unnecessary revalidation
+          res.setHeader('Cache-Control', 'public, max-age=2592000, immutable'); // 30 days
+        } else {
+          // For non-hashed files, allow revalidation after a week
+          res.setHeader('Cache-Control', 'public, max-age=604800'); // 1 week
+        }
+      } 
+      // Images - very aggressive caching 
+      else if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 days
+      }
+      // Fonts - immutable and long-lived
+      else if (filePath.match(/\.(woff|woff2|ttf|otf|eot)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
+      }
+      // JSON data - shorter cache with revalidation
+      else if (filePath.endsWith('.json')) {
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+      }
+
+      // Add performance-focused security headers
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+    }
+  }));
+  
+  // Public folder for assets like favicon, robots.txt, etc
+  app.use(express.static(publicPath, { 
+    etag: true,
+    lastModified: true,
+    maxAge: '7d',
+    setHeaders: (res, filePath) => {
+      // Special handling for important files
+      if (filePath.endsWith('robots.txt') || filePath.endsWith('sitemap.xml')) {
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+      } else if (filePath.match(/favicon/)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800'); // 1 week
       }
     }
   }));
-  app.use(express.static(publicPath, { maxAge: '7d' }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {

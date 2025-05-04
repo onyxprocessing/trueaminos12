@@ -33,23 +33,47 @@ export default defineConfig({
         drop_console: true,
         drop_debugger: true,
         pure_funcs: ['console.log', 'console.debug', 'console.info'],
+        passes: 2,
+        ecma: 2020,
+        toplevel: true,
+        unsafe_arrows: true,
+        unsafe_methods: true
       },
-      output: {
-        comments: false
+      mangle: {
+        safari10: true
+      },
+      format: {
+        comments: false,
+        ecma: 2020
       }
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: [
-            '@/components/ui/button',
-            '@/components/ui/card',
-            '@/components/ui/dialog',
-            '@/components/ui/select',
-            '@/components/ui/alert'
-          ],
-          lucide: ['lucide-react']
+        manualChunks: (id) => {
+          // Vendor chunks
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('scheduler') || id.includes('prop-types')) {
+              return 'vendor-react';
+            }
+            if (id.includes('lucide-react') || id.includes('@radix-ui')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('axios') || id.includes('stripe') || id.includes('fetch')) {
+              return 'vendor-apis';
+            }
+            return 'vendor-other';
+          }
+          
+          // App chunks
+          if (id.includes('/components/ui/')) {
+            return 'app-ui';
+          }
+          if (id.includes('/pages/')) {
+            return 'app-pages';
+          }
+          if (id.includes('/hooks/') || id.includes('/lib/')) {
+            return 'app-utils';
+          }
         }
       }
     },
