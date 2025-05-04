@@ -672,12 +672,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // No webhook or external payment service integration is needed
-  // Our multi-step checkout flow handles everything through direct form submission
+  // Stripe webhook endpoint to handle successful payments and record orders in Airtable
   app.post('/api/webhook', async (req: Request, res: Response) => {
-    // This is just a placeholder in case external systems still try to send webhooks
-    console.log('Received webhook - ignoring as direct payment processing is used');
-    return res.json({ received: true, message: 'Webhooks are not used in the direct payment version' });
+    const event = req.body;
+    
+    // Verify this is a payment_intent.succeeded event
+    if (event.type === 'payment_intent.succeeded') {
+      console.log('📦 Received payment_intent.succeeded webhook');
+      try {
+        const paymentIntent = event.data.object;
+        console.log('Payment intent ID:', paymentIntent.id);
+        
+        // Record the payment to Airtable with the specified fields
+        const { recordPaymentToAirtable } = await import('./airtable-orders');
+        const success = await recordPaymentToAirtable(paymentIntent);
+        
+        if (success) {
+          console.log('✅ Successfully recorded order in Airtable');
+          return res.json({ received: true, success: true });
+        } else {
+          console.error('❌ Failed to record order in Airtable');
+          return res.json({ received: true, success: false, error: 'Failed to record order' });
+        }
+      } catch (error) {
+        console.error('Error processing payment webhook:', error);
+        return res.status(500).json({ received: true, success: false, error: 'Internal server error' });
+      }
+    } else {
+      // For other event types, just acknowledge receipt
+      console.log(`Received webhook event: ${event.type} - not processing`);
+      return res.json({ received: true });
+    }
   });
   
   // Admin API endpoints are defined here
