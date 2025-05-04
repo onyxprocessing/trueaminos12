@@ -265,6 +265,51 @@ export default defineConfig({
   
   // Cache dependencies for faster builds
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom']
+    include: [
+      'react', 
+      'react-dom', 
+      'react-router-dom',
+      '@radix-ui/react-select',
+      '@radix-ui/react-dialog',
+      'lucide-react',
+      'axios',
+      'react-helmet-async',
+      'tailwind-merge',
+      '@tanstack/react-query'
+    ],
+    // Force-included deps that might have dynamic imports
+    force: [
+      'react-helmet-async',
+      'lucide-react'
+    ],
+    // Exclude content-heavy packages from optimization
+    exclude: [
+      'sharp'
+    ]
+  },
+  
+  // Optimizations for dependencies
+  optimizeDeps: {
+    include: [
+      'react', 
+      'react-dom', 
+      'react-router-dom',
+      '@radix-ui/react-select',
+      '@radix-ui/react-dialog',
+      'lucide-react',
+      'axios',
+      'react-helmet-async',
+      'tailwind-merge',
+      '@tanstack/react-query'
+    ],
+    // Force-included deps that might have dynamic imports
+    force: [
+      'react-helmet-async',
+      'lucide-react'
+    ],
+    // Exclude content-heavy packages from optimization
+    exclude: [
+      'sharp'
+    ]
   }
 });
