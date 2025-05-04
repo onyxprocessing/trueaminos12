@@ -46,6 +46,8 @@ const SuccessPage = () => {
     const orderId = new URLSearchParams(window.location.search).get('order_id') || formattedOrderId;
     const totalAmount = parseFloat(new URLSearchParams(window.location.search).get('amount') || '0');
     const shippingMethod = new URLSearchParams(window.location.search).get('shipping_method') || 'Standard';
+    const email = sessionStorage.getItem('checkout_email') || new URLSearchParams(window.location.search).get('email') || '';
+    const phone = sessionStorage.getItem('checkout_phone') || new URLSearchParams(window.location.search).get('phone') || '';
     
     // Retrieve session storage values for shipping info
     const firstName = sessionStorage.getItem('checkout_first_name') || '';
@@ -59,7 +61,8 @@ const SuccessPage = () => {
     const fullName = `${firstName} ${lastName}`.trim();
     const fullAddress = address && city ? `${address}, ${city}, ${state} ${zip}` : '';
     
-    setPaymentDetails({
+    // Create payment details object
+    const paymentDetailsObj = {
       id: orderId,
       paymentId: `DIRECT-${timestamp}`,
       amount: totalAmount,
@@ -69,11 +72,64 @@ const SuccessPage = () => {
         name: fullName,
         address: fullAddress,
       }
+    };
+    
+    setPaymentDetails(paymentDetailsObj);
+    
+    // Send all checkout data to Airtable via our new API endpoint
+    const checkoutSuccessData = {
+      orderId,
+      timestamp,
+      firstName,
+      lastName,
+      email,
+      phone,
+      address,
+      city,
+      state,
+      zip,
+      shippingMethod,
+      amount: totalAmount,
+      status: 'success',
+      paymentDetails: JSON.stringify(paymentDetailsObj),
+      pageUrl: window.location.href,
+      queryParams: window.location.search,
+      userAgent: navigator.userAgent,
+      sessionStorageData: {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        city,
+        state,
+        zip
+      }
+    };
+    
+    console.log('Sending checkout success data to Airtable:', checkoutSuccessData);
+    
+    // Send data to our API endpoint
+    fetch('/api/checkout/success-data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(checkoutSuccessData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Success data sent to Airtable:', data);
+    })
+    .catch(error => {
+      console.error('Error sending success data to Airtable:', error);
     });
     
     // Clear checkout session storage after retrieving
     sessionStorage.removeItem('checkout_first_name');
     sessionStorage.removeItem('checkout_last_name');
+    sessionStorage.removeItem('checkout_email');
+    sessionStorage.removeItem('checkout_phone');
     sessionStorage.removeItem('checkout_address');
     sessionStorage.removeItem('checkout_city');
     sessionStorage.removeItem('checkout_state');

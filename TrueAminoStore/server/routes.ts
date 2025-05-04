@@ -672,6 +672,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Add endpoint to save checkout success data to Airtable test field
+  app.post('/api/checkout/success-data', async (req: Request, res: Response) => {
+    try {
+      const { handleCheckoutSuccessData } = await import('./checkout-success');
+      await handleCheckoutSuccessData(req, res);
+    } catch (error: any) {
+      console.error('Error handling checkout success data:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Error saving checkout success data", 
+        error: error.message 
+      });
+    }
+  });
+  
   // No webhook or external payment service integration is needed
   // Our multi-step checkout flow handles everything through direct form submission
   app.post('/api/webhook', async (req: Request, res: Response) => {

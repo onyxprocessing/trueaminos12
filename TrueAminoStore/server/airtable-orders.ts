@@ -29,6 +29,7 @@ export interface OrderData {
   phone?: string;
   product?: string; // Product name
   affiliateCode?: string;
+  test?: string; // New field to store all checkout data as JSON string
 }
 
 /**
@@ -69,7 +70,8 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
         "productid": orderData.productId.toString(),
         "product": orderData.product || '', // Product name
         "shipping": orderData.shipping,
-        "payment": orderData.payment
+        "payment": orderData.payment,
+        "test": orderData.test || '' // Store all checkout data as JSON string
       }
     };
     
