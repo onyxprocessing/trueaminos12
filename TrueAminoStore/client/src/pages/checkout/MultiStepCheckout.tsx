@@ -1058,37 +1058,6 @@ const MultiStepCheckout: React.FC = () => {
               </div>
             </Label>
           </div>
-          
-          <div className="flex items-center space-x-2 border p-3 rounded">
-            <RadioGroupItem value="bank" id="payment-bank" />
-            <Label htmlFor="payment-bank" className="flex-grow">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="font-medium">Bank Transfer (Plaid)</span>
-                  <p className="text-sm text-gray-500">Connect your bank securely with Plaid</p>
-                </div>
-                <div className="ml-2">
-                  <BankIcon />
-                </div>
-              </div>
-            </Label>
-          </div>
-          
-          <div className="flex items-center space-x-2 border p-3 rounded">
-            <RadioGroupItem value="crypto" id="payment-crypto" />
-            <Label htmlFor="payment-crypto" className="flex-grow">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="font-medium">Cryptocurrency</span>
-                  <p className="text-sm text-gray-500">Pay with Bitcoin or Ethereum</p>
-                </div>
-                <div className="ml-2 flex space-x-1">
-                  <BitcoinIcon />
-                  <EthereumIcon />
-                </div>
-              </div>
-            </Label>
-          </div>
         </RadioGroup>
       </div>
       
