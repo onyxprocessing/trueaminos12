@@ -589,7 +589,17 @@ const MultiStepCheckout: React.FC = () => {
             id="phone" 
             type="tel" 
             value={phone} 
-            onChange={(e) => setPhone(e.target.value)} 
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+              if (value.length <= 3) {
+                setPhone(value);
+              } else if (value.length <= 6) {
+                setPhone(`(${value.slice(0, 3)}) ${value.slice(3)}`);
+              } else {
+                setPhone(`(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`);
+              }
+            }}
+            placeholder="(555) 555-5555"
           />
         </div>
       </div>
