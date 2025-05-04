@@ -10,6 +10,7 @@ import path from 'path';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
 import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
+import { createPaymentIntent, confirmPayment } from './stripe-controller';
 
 // Define a new type that extends Express Request to include session
 interface Request extends ExpressRequest {

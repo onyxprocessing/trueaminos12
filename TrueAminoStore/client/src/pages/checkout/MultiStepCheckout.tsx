@@ -1048,16 +1048,6 @@ const MultiStepCheckout: React.FC = () => {
                   <span className="font-medium">Credit/Debit Card</span>
                   <p className="text-sm text-gray-500">Pay securely with your card</p>
                 </div>
-                <div className="ml-2 flex-col">
-                  <div className="mb-2">
-                    <VisaIcon />
-                  </div>
-                  <div className="flex gap-2">
-                    <MastercardIcon />
-                    <AmexIcon />
-                    <DiscoverIcon />
-                  </div>
-                </div>
               </div>
             </Label>
           </div>
