@@ -268,26 +268,38 @@ const MolecularFormula: React.FC<{ formula: string }> = ({ formula }) => {
 
 // Get current price based on selected weight - moved outside the component body as a pure function
 function getPriceByWeightExternal(product: Product, weight: string): number {
-  // If weight-specific price exists, use it
-  if (weight === "5mg" && product.price5mg) {
-    return parseFloat(product.price5mg);
-  } else if (weight === "10mg" && product.price10mg) {
-    return parseFloat(product.price10mg);
-  } else if (weight === "15mg" && product.price15mg) {
-    return parseFloat(product.price15mg);
-  } else if (weight === "20mg" && product.price20mg) {
-    return parseFloat(product.price20mg);
-  } else if (weight === "2mg" && product.price2mg) {
-    return parseFloat(product.price2mg);
-  } else if (weight === "750mg" && product.price750mg) {
-    return parseFloat(product.price750mg);
-  } else if (weight === "100mg" && product.price100mg) {
-    return parseFloat(product.price100mg);
-  } else if (weight === "500mg" && product.price500mg) {
-    return parseFloat(product.price500mg);
+  // Use switch statement for better readability and easier maintenance
+  switch(weight) {
+    case "1mg":
+      return product.price1mg ? parseFloat(product.price1mg) : parseFloat(product.price || "0");
+    case "2mg":
+      return product.price2mg ? parseFloat(product.price2mg) : parseFloat(product.price || "0");
+    case "5mg":
+      return product.price5mg ? parseFloat(product.price5mg) : parseFloat(product.price || "0");
+    case "10mg":
+      return product.price10mg ? parseFloat(product.price10mg) : parseFloat(product.price || "0");
+    case "15mg":
+      return product.price15mg ? parseFloat(product.price15mg) : parseFloat(product.price || "0");
+    case "20mg":
+      return product.price20mg ? parseFloat(product.price20mg) : parseFloat(product.price || "0");
+    case "30mg":
+      return product.price30mg ? parseFloat(product.price30mg) : parseFloat(product.price || "0");
+    case "100mg":
+      return product.price100mg ? parseFloat(product.price100mg) : parseFloat(product.price || "0");
+    case "300mg":
+      return product.price300mg ? parseFloat(product.price300mg) : parseFloat(product.price || "0");
+    case "500mg":
+      return product.price500mg ? parseFloat(product.price500mg) : parseFloat(product.price || "0");
+    case "600mg":
+      return product.price600mg ? parseFloat(product.price600mg) : parseFloat(product.price || "0");
+    case "750mg":
+      return product.price750mg ? parseFloat(product.price750mg) : parseFloat(product.price || "0");
+    case "1500mg":
+      return product.price1500mg ? parseFloat(product.price1500mg) : parseFloat(product.price || "0");
+    default:
+      // Default fallback to the generic price
+      return parseFloat(product.price || "0");
   }
-  // Default fallback to the generic price
-  return parseFloat(product.price || "0");
 }
 
 function ProductPage() {
@@ -350,7 +362,7 @@ function ProductPage() {
       // Only set weight if we have options
       if (options && options.length > 0) {
         // Define weight priority from smallest to largest
-        const weightPriority = ["2mg", "5mg", "10mg", "15mg", "20mg", "100mg", "500mg", "750mg"];
+        const weightPriority = ["1mg", "2mg", "5mg", "10mg", "15mg", "20mg", "30mg", "100mg", "300mg", "500mg", "600mg", "750mg", "1500mg"];
         
         // Find the smallest available weight according to priority
         let selectedOption = options[0]; // Default to first option
