@@ -109,21 +109,52 @@ const SuccessPage = () => {
     
     console.log('Sending checkout success data to Airtable:', checkoutSuccessData);
     
-    // Send data to our API endpoint
-    fetch('/api/checkout/success-data', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(checkoutSuccessData)
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Success data sent to Airtable:', data);
-    })
-    .catch(error => {
-      console.error('Error sending success data to Airtable:', error);
-    });
+    // Use two different methods to ensure the data is sent
+    // Method 1: Fetch API with more robust error handling
+    const sendData = async () => {
+      try {
+        console.log('🚀 Attempting to send checkout data to Airtable...');
+        
+        const response = await fetch('/api/checkout/success-data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(checkoutSuccessData)
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Error sending data: ${response.status} ${response.statusText}`, errorText);
+          // Try alternative method on failure
+          sendWithBeacon();
+          return;
+        }
+        
+        const data = await response.json();
+        console.log('✅ Success data sent to Airtable:', data);
+      } catch (error) {
+        console.error('❌ Exception while sending success data to Airtable:', error);
+        // Try alternative method on failure
+        sendWithBeacon();
+      }
+    };
+    
+    // Method 2: Use navigator.sendBeacon as a fallback
+    // This is more reliable during page unload events
+    const sendWithBeacon = () => {
+      try {
+        console.log('🏁 Attempting to send data with beacon API...');
+        const blob = new Blob([JSON.stringify(checkoutSuccessData)], { type: 'application/json' });
+        const success = navigator.sendBeacon('/api/checkout/success-data', blob);
+        console.log('Beacon send result:', success ? '✅ Success' : '❌ Failed');
+      } catch (beaconError) {
+        console.error('❌ Beacon API failed:', beaconError);
+      }
+    };
+    
+    // Execute the primary method
+    sendData();
     
     // Clear checkout session storage after retrieving
     sessionStorage.removeItem('checkout_first_name');
