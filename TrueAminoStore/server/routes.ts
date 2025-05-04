@@ -3,15 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCartItemSchema, Product } from "@shared/schema";
 import { z } from "zod";
-// Import as ESM modules
-import session from 'express-session';
-import createMemoryStore from 'memorystore';
+import * as expressSession from 'express-session';
+import MemoryStore from 'memorystore';
 import fetch from 'node-fetch';
 import path from 'path';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
 import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
-import { createPaymentIntent, confirmPaymentIntent } from './stripe-controller';
+import { createPaymentIntent, confirmPayment } from './stripe-controller';
 
 // Define a new type that extends Express Request to include session
 interface Request extends ExpressRequest {
@@ -58,8 +57,8 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
 export async function registerRoutes(app: Express): Promise<Server> {
   // No Stripe initialization - using direct payment methods instead
   // Set up session middleware for cart management
-  const MemoryStoreSession = createMemoryStore(session);
-  app.use(session({
+  const MemoryStoreSession = MemoryStore(expressSession);
+  app.use(expressSession.default({
     secret: 'trueaminos-secret-key',
     resave: false,
     saveUninitialized: true,
@@ -548,57 +547,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Stripe payment routes
-  app.post('/api/create-payment-intent', async (req: Request, res: Response) => {
-    try {
-      const { amount, customerInfo, metadata } = req.body;
-      
-      if (!amount || !customerInfo) {
-        return res.status(400).json({ message: "Amount and customer information are required" });
-      }
-      
-      // Create a payment intent
-      const clientSecret = await createPaymentIntent(
-        req.session.id,
-        amount,
-        customerInfo,
-        metadata || {}
-      );
-      
-      res.json({ clientSecret });
-    } catch (error: any) {
-      console.error('Error creating payment intent:', error);
-      res.status(500).json({ 
-        message: "Error creating payment intent", 
-        error: error.message
-      });
-    }
-  });
-  app.post('/api/confirm-payment', async (req: Request, res: Response) => {
-    try {
-      const { paymentIntentId } = req.body;
-      
-      if (!paymentIntentId) {
-        return res.status(400).json({ message: "Payment intent ID is required" });
-      }
-      
-      // Confirm payment with Stripe
-      const paymentIntent = await confirmPaymentIntent(paymentIntentId);
-      
-      res.json({
-        success: true,
-        paymentIntent: {
-          id: paymentIntent.id,
-          status: paymentIntent.status
-        }
-      });
-    } catch (error: any) {
-      console.error('Error confirming payment:', error);
-      res.status(500).json({ 
-        message: "Error confirming payment", 
-        error: error.message
-      });
-    }
-  });
+  app.post('/api/create-payment-intent', createPaymentIntent);
+  app.post('/api/confirm-payment', confirmPayment);
   
   // FedEx address validation endpoint
   app.post('/api/validate-address', async (req: Request, res: Response) => {
@@ -722,37 +672,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Stripe webhook endpoint to handle successful payments and record orders in Airtable
+  // No webhook or external payment service integration is needed
+  // Our multi-step checkout flow handles everything through direct form submission
   app.post('/api/webhook', async (req: Request, res: Response) => {
-    const event = req.body;
-    
-    // Verify this is a payment_intent.succeeded event
-    if (event.type === 'payment_intent.succeeded') {
-      console.log('📦 Received payment_intent.succeeded webhook');
-      try {
-        const paymentIntent = event.data.object;
-        console.log('Payment intent ID:', paymentIntent.id);
-        
-        // Record the payment to Airtable with the specified fields
-        const { recordPaymentToAirtable } = await import('./airtable-orders');
-        const success = await recordPaymentToAirtable(paymentIntent);
-        
-        if (success) {
-          console.log('✅ Successfully recorded order in Airtable');
-          return res.json({ received: true, success: true });
-        } else {
-          console.error('❌ Failed to record order in Airtable');
-          return res.json({ received: true, success: false, error: 'Failed to record order' });
-        }
-      } catch (error) {
-        console.error('Error processing payment webhook:', error);
-        return res.status(500).json({ received: true, success: false, error: 'Internal server error' });
-      }
-    } else {
-      // For other event types, just acknowledge receipt
-      console.log(`Received webhook event: ${event.type} - not processing`);
-      return res.json({ received: true });
-    }
+    // This is just a placeholder in case external systems still try to send webhooks
+    console.log('Received webhook - ignoring as direct payment processing is used');
+    return res.json({ received: true, message: 'Webhooks are not used in the direct payment version' });
   });
   
   // Admin API endpoints are defined here

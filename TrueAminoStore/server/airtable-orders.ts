@@ -52,24 +52,24 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE_ID}`;
     
     // Prepare the data for Airtable with all requested fields
-    // Field names must exactly match what's specified: "order id, product, saleprice, product id, first name, last name, city, zip, mg, quanitity, shiping, payment, affiliatecode, state"
-    // Note the specific capitalizations and spellings requested by the user
+    // Field names must exactly match what's in Airtable (lowercase)
+    // Only include fields we confirmed exist in the Airtable schema
     const airtableData = {
       fields: {
         "order id": orderData.orderId,
-        "product": orderData.product || '',
-        "saleprice": orderData.salesPrice,
-        "product id": orderData.productId.toString(),
         "first name": orderData.firstName,
         "last name": orderData.lastName,
+        "address": orderData.address,
         "city": orderData.city,
+        "state": orderData.state,
         "zip": orderData.zip,
         "mg": orderData.mg || '',
-        "quanitity": orderData.quantity, // Note: Using 'quanitity' as specified (with typo)
-        "shiping": orderData.shipping, // Note: Using 'shiping' as specified (with typo)
-        "payment": orderData.payment,
-        "affiliatecode": orderData.affiliateCode || '',
-        "state": orderData.state
+        "saleprice": orderData.salesPrice,
+        "quantity": orderData.quantity,
+        "productid": orderData.productId.toString(),
+        "product": orderData.product || '', // Product name
+        "shipping": orderData.shipping,
+        "payment": orderData.payment
       }
     };
     
@@ -338,7 +338,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
             product: product.name || '',
             mg: product.weight || '',
             shipping: shippingMethod,
-            payment: "card", // Explicitly "card" for Stripe payments
+            payment: paymentDetails,
             affiliateCode: paymentIntent.metadata.affiliate_code || '' // Will be logged but not sent
           };
           
@@ -368,8 +368,7 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
           productId: 0, // Unknown product
           product: "Unknown Product", // Default product name
           shipping: shippingMethod,
-          payment: "card", // Always "card" for Stripe payments
-          mg: '', // Empty mg value when not available
+          payment: paymentDetails,
           affiliateCode: paymentIntent.metadata.affiliate_code || '' // Will be logged but not sent
         };
         
