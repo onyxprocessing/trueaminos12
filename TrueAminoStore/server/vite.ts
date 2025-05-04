@@ -20,11 +20,19 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
+  // Fix type compatibility with Vite server options
+  const serverOptions: any = {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true,
   };
+
+  // Handle robots.txt in development mode
+  const publicPath = path.resolve(import.meta.dirname, "..", "public");
+  app.get('/robots.txt', (req, res) => {
+    res.set('Content-Type', 'text/plain');
+    res.sendFile(path.resolve(publicPath, "robots.txt"));
+  });
 
   const vite = await createViteServer({
     ...viteConfig,
@@ -69,6 +77,7 @@ export async function setupVite(app: Express, server: Server) {
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "public");
+  const publicPath = path.resolve(import.meta.dirname, "..", "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -76,7 +85,14 @@ export function serveStatic(app: Express) {
     );
   }
 
+  // Serve robots.txt directly with proper content type
+  app.get('/robots.txt', (req, res) => {
+    res.set('Content-Type', 'text/plain');
+    res.sendFile(path.resolve(publicPath, "robots.txt"));
+  });
+
   app.use(express.static(distPath));
+  app.use(express.static(publicPath));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
