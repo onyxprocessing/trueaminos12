@@ -5,7 +5,7 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 // Enable compression for all responses - reduces file size and improves load time
-app.use(compression());
+app.use(compression() as any);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

@@ -64,11 +64,15 @@ const Home: React.FC = () => {
         className="sticky top-0 left-0 right-0 w-full"
       />
       
-      {/* Hero Banner */}
+      {/* Hero Banner - Optimized for faster LCP */}
       <section className="bg-gradient-to-r from-primary to-accent py-16 md:py-24">
         <div className="container px-6 md:px-8 mx-auto max-w-7xl">
           <div className="max-w-2xl text-white">
-            <h1 className="font-heading font-bold text-4xl md:text-5xl mb-4">
+            {/* Add priority heading with preload styles for faster LCP */}
+            <h1 
+              className="font-heading font-bold text-4xl md:text-5xl mb-4"
+              style={{contain: 'paint', contentVisibility: 'auto'}}
+            >
               Advanced Research Peptides & SARMs
             </h1>
             <p className="text-lg mb-8">

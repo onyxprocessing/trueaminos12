@@ -157,6 +157,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 alt={product.name}
                 className="w-full h-full object-contain object-center"
                 loading="lazy"
+                fetchpriority="high"
+                decoding="async"
+                width="240"
+                height="240"
+                style={{
+                  aspectRatio: "1/1",
+                  maxWidth: "100%", 
+                  height: "auto"
+                }}
                 onError={(e) => {
                   console.error("Product image failed to load:", product.imageUrl);
                   const imgElement = e.target as HTMLImageElement;

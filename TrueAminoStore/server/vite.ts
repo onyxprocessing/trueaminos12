@@ -91,8 +91,19 @@ export function serveStatic(app: Express) {
     res.sendFile(path.resolve(publicPath, "robots.txt"));
   });
 
-  app.use(express.static(distPath));
-  app.use(express.static(publicPath));
+  // Enable aggressive caching for static assets (1 week)
+  app.use(express.static(distPath, {
+    maxAge: '7d',
+    setHeaders: (res, path) => {
+      // Add cache-control headers for better performance
+      if (path.endsWith('.js') || path.endsWith('.css')) {
+        res.setHeader('Cache-Control', 'public, max-age=604800');
+      } else if (path.match(/\.(jpg|jpeg|png|gif|webp|svg)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800');
+      }
+    }
+  }));
+  app.use(express.static(publicPath, { maxAge: '7d' }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
