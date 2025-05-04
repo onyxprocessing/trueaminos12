@@ -42,38 +42,16 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-// Advanced caching strategy for better performance
+// Add cache control headers for dynamic routes
 app.use((req, res, next) => {
-  // Extract the URL and file extension
+  // Add appropriate cache headers based on route
   const url = req.url;
-  const fileExtension = url.split('.').pop()?.toLowerCase();
   
-  // Don't cache API responses by default
+  // API responses should not be cached by default
   if (url.startsWith('/api/')) {
-    // However, cache product and category data for 5 minutes
-    if (url.includes('/products') || url.includes('/categories')) {
-      res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
-    } else {
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
-    }
-  } 
-  // Long-term caching for static assets with hashed filenames (1 year)
-  else if (/\.[0-9a-f]{8,}\.(?:js|css|woff2|jpg|png|webp|svg|ico)$/.test(url)) {
-    res.set('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
-  }
-  // Medium-term caching for fonts and images (1 week)
-  else if (fileExtension && ['woff', 'woff2', 'ttf', 'otf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'ico'].includes(fileExtension)) {
-    res.set('Cache-Control', 'public, max-age=604800'); // 1 week
-  }
-  // Short-term caching for JS and CSS files that might change (1 hour)
-  else if (fileExtension && ['js', 'css', 'json'].includes(fileExtension)) {
-    res.set('Cache-Control', 'public, max-age=3600'); // 1 hour
-  }
-  // Default caching for HTML pages with revalidation (1 minute with must-revalidate)
-  else if (fileExtension === 'html' || url === '/' || !url.includes('.')) {
-    res.set('Cache-Control', 'public, max-age=60, must-revalidate');
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
   }
   
   next();

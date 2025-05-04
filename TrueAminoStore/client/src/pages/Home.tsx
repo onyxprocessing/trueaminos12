@@ -90,26 +90,47 @@ const Home: React.FC = () => {
         className="sticky top-0 left-0 right-0 w-full"
       />
       
-      {/* Static Hero Banner Content - Optimized for Fast LCP */}
-      <section className="bg-gradient-to-r from-primary to-accent py-16 md:py-24">
-        <div className="container px-6 md:px-8 mx-auto max-w-7xl">
-          <div className="max-w-2xl text-white">
-            <h1 className="font-heading font-bold text-4xl md:text-5xl mb-4">
-              Advanced Research Peptides &amp; SARMs
-            </h1>
-            <p className="text-lg mb-8">
-              Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.
-            </p>
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-              <Link href="/products" className="inline-block bg-secondary text-white hover:bg-secondary/90 px-6 py-3 rounded-md font-medium text-center">
-                Shop Products
-              </Link>
-              <Link href="/about" className="inline-block bg-white text-primary hover:bg-gray-100 px-6 py-3 rounded-md border border-gray-200 font-medium text-center">
-                About TrueAmino Research
-              </Link>
-            </div>
-          </div>
-        </div>
+      {/* Static Hero Banner Content - Optimized for Fast LCP - No JS Required */}
+      <section 
+        className="bg-gradient-to-r from-primary to-accent py-16 md:py-24"
+      >
+        {/* Using dangerouslySetInnerHTML for critical-path HTML */}
+        <div 
+          className="container px-6 md:px-8 mx-auto max-w-7xl"
+          dangerouslySetInnerHTML={{
+            __html: `
+              <div class="max-w-2xl text-white">
+                <h1 
+                  class="font-heading font-bold text-4xl md:text-5xl mb-4"
+                  style="font-size:clamp(2rem, 5vw, 3rem); font-family:-apple-system, BlinkMacSystemFont, 'Inter', Segoe UI, Arial, sans-serif"
+                >
+                  Advanced Research Peptides &amp; SARMs
+                </h1>
+                <p 
+                  class="text-lg mb-8"
+                >
+                  Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.
+                </p>
+                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                  <a href="/products" class="inline-block">
+                    <button 
+                      class="bg-secondary text-white hover:bg-secondary/90 px-6 py-3 rounded-md font-medium"
+                    >
+                      Shop Products
+                    </button>
+                  </a>
+                  <a href="/about" class="inline-block">
+                    <button 
+                      class="bg-white text-primary hover:bg-gray-100 px-6 py-3 rounded-md border border-gray-200 font-medium"
+                    >
+                      About TrueAmino Research
+                    </button>
+                  </a>
+                </div>
+              </div>
+            `
+          }}
+        />
       </section>
       
       {/* Trust Banners */}
@@ -204,11 +225,11 @@ const Home: React.FC = () => {
           </div>
           
           <div className="mt-10 text-center">
-            <Button variant="secondary" size="lg" className="px-6 py-3 text-center" asChild>
-              <Link href="/products">
+            <Link href="/products">
+              <Button variant="secondary" size="lg" className="px-6 py-3 text-center">
                 View All Products
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
