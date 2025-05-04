@@ -1,16 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /admin/
 
-# Important content
-Allow: /shop
-Allow: /category/
-Allow: /product/
-Allow: /about
-Allow: /contact
-
-# Block cart and checkout pages
-Disallow: /cart
-Disallow: /checkout
-
-# Sitemap location
 Sitemap: https://trueaminos.com/sitemap.xml

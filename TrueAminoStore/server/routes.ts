@@ -6,10 +6,10 @@ import { z } from "zod";
 import * as expressSession from 'express-session';
 import MemoryStore from 'memorystore';
 import fetch from 'node-fetch';
+import path from 'path';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
 import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
-import { optimizeAndServeImage } from './image-optimizer';
 
 // Define a new type that extends Express Request to include session
 interface Request extends ExpressRequest {
@@ -735,9 +735,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin API endpoints are defined here
   
   // Optimized image proxy endpoint for better performance
-  app.get('/api/image-optimize', (req, res) => {
-    const { optimizeAndServeImage } = require('./image-optimizer');
-    return optimizeAndServeImage(req, res);
+  app.get('/api/image-optimize', async (req, res) => {
+    try {
+      // Using dynamic import instead of require since we're in an ESM context
+      const imageOptimizer = await import('./image-optimizer');
+      return imageOptimizer.optimizeAndServeImage(req, res);
+    } catch (error) {
+      console.error('Error loading image optimizer:', error);
+      return res.status(500).json({ message: 'Image optimization failed' });
+    }
+  });
+  
+  // Robots.txt route with proper content type
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain');
+    res.sendFile(path.join(process.cwd(), 'public', 'robots.txt'));
+  });
+  
+  // Sitemap.xml route with proper content type
+  app.get('/sitemap.xml', (_req, res) => {
+    res.type('application/xml');
+    res.sendFile(path.join(process.cwd(), 'public', 'sitemap.xml'));
   });
   
   // Initialize HTTP server
