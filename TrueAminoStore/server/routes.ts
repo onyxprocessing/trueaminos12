@@ -5,6 +5,11 @@ import { insertCartItemSchema, Product } from "@shared/schema";
 import { z } from "zod";
 import * as expressSession from 'express-session';
 import MemoryStore from 'memorystore';
+import fetch from 'node-fetch';
+import { recordPaymentToAirtable } from './airtable-orders';
+import { recordPaymentToDatabase } from './db-orders';
+import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
+import { optimizeAndServeImage } from './image-optimizer';
 
 // Define a new type that extends Express Request to include session
 interface Request extends ExpressRequest {
@@ -18,10 +23,6 @@ interface Request extends ExpressRequest {
     touch: (callback: (err?: any) => void) => void;
   };
 }
-import fetch from 'node-fetch';
-import { recordPaymentToAirtable } from './airtable-orders';
-import { recordPaymentToDatabase } from './db-orders';
-import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
 
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
@@ -732,6 +733,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Admin API endpoints are defined here
+  
+  // Optimized image proxy endpoint for better performance
+  app.get('/api/image-optimize', (req, res) => {
+    const { optimizeAndServeImage } = require('./image-optimizer');
+    return optimizeAndServeImage(req, res);
+  });
   
   // Initialize HTTP server
   const httpServer = createServer(app);

@@ -153,11 +153,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {product.imageUrl ? (
             <div className="w-full h-full" style={{ backgroundColor: '#FDDB5B', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <img 
-                src={product.imageUrl} 
+                src={product.imageUrl ? product.imageUrl.replace('/api/image-proxy', '/api/image-optimize') : ''} 
                 alt={product.name}
                 className="w-full h-full object-contain object-center"
                 loading="lazy"
-                fetchpriority="high"
                 decoding="async"
                 width="240"
                 height="240"
