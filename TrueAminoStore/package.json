@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build:prod": "npx update-browserslist-db@latest && NODE_ENV=production ./scripts/production-build.sh",
     "start": "NODE_ENV=production PORT=5000 HOST=0.0.0.0 tsx server/index.ts",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "db:setup": "tsx scripts/db-push.ts"
+    "db:setup": "tsx scripts/db-push.ts",
+    "analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -106,5 +108,16 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
-  }
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not op_mini all",
+    "last 2 versions",
+    "chrome >= 80",
+    "firefox >= 78",
+    "safari >= 13",
+    "edge >= 88",
+    "ios >= 13"
+  ]
 }
