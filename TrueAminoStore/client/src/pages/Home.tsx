@@ -1,22 +1,48 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, Suspense, lazy } from 'react'
 import { Link } from 'wouter'
 import { useQuery } from '@tanstack/react-query'
 import Layout from '@/components/Layout'
-import ProductCard from '@/components/ProductCard'
-import CategoryCard from '@/components/CategoryCard'
-import FDADisclaimer from '@/components/FDADisclaimer'
-import Newsletter from '@/components/Newsletter'
+// Lazily load non-critical components
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Shield, Phone, Clock, CheckCircle, Beaker, Truck, Search } from 'lucide-react'
+// Import necessary icons directly to avoid lazy loading issues
+import { Shield, CheckCircle, Beaker, Truck, Clock, Phone, Search } from 'lucide-react'
 import { Product, Category } from '@shared/schema'
 import { apiRequest } from '@/lib/queryClient'
 
+// Components that can be lazy-loaded
+const ProductCard = lazy(() => import('@/components/ProductCard'))
+const CategoryCard = lazy(() => import('@/components/CategoryCard'))
+const FDADisclaimer = lazy(() => import('@/components/FDADisclaimer'))
+const Newsletter = lazy(() => import('@/components/Newsletter'))
+
+// Preload critical assets
+const preloadHeroAssets = () => {
+  if (typeof window !== 'undefined') {
+    // Add font preloading
+    const fontLink = document.createElement('link');
+    fontLink.rel = 'preload';
+    fontLink.as = 'font';
+    fontLink.type = 'font/woff2';
+    fontLink.href = '/fonts/inter-var.woff2';
+    fontLink.crossOrigin = 'anonymous';
+    document.head.appendChild(fontLink);
+  }
+}
+
 const Home: React.FC = () => {
-  // Fetch featured products
+  // Preload critical assets on component mount
+  useEffect(() => {
+    preloadHeroAssets();
+  }, []);
+  
+  // Fetch featured products with deferred loading
   const { data: rawFeaturedProducts, isLoading: loadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products/featured'],
-    queryFn: () => apiRequest<Product[]>('/api/products/featured')
+    queryFn: () => apiRequest<Product[]>('/api/products/featured'),
+    staleTime: 60 * 1000, // Cache results for 1 minute
+    refetchOnWindowFocus: false, // Don't refetch when window gets focus
+    retry: 1, // Lower retry count to avoid multiple attempts
   })
   
   // Process featured products to handle NAD+ special case
@@ -64,61 +90,47 @@ const Home: React.FC = () => {
         className="sticky top-0 left-0 right-0 w-full"
       />
       
-      {/* Hero Banner - Optimized for faster LCP */}
+      {/* Static Hero Banner Content - Optimized for Fast LCP - No JS Required */}
       <section 
         className="bg-gradient-to-r from-primary to-accent py-16 md:py-24"
-        style={{
-          willChange: 'auto',
-          content: 'auto'
-        }}
       >
-        <div className="container px-6 md:px-8 mx-auto max-w-7xl">
-          <div className="max-w-2xl text-white">
-            {/* Add priority heading with optimized styles for faster LCP */}
-            <h1 
-              className="font-heading font-bold text-4xl md:text-5xl mb-4"
-              style={{
-                contain: 'layout style paint',
-                contentVisibility: 'auto',
-                fontSize: 'clamp(2rem, 5vw, 3rem)',
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', Segoe UI, Arial, sans-serif"
-              }}
-            >
-              Advanced Research Peptides & SARMs
-            </h1>
-            <p 
-              className="text-lg mb-8"
-              style={{
-                contain: 'content',
-                contentVisibility: 'auto'
-              }}
-            >
-              Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.
-            </p>
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-              <Link href="/products">
-                <Button 
-                  variant="secondary" 
-                  size="lg" 
-                  className="px-6 py-3 text-center"
-                  style={{ contain: 'layout style' }}
+        {/* Using dangerouslySetInnerHTML for critical-path HTML */}
+        <div 
+          className="container px-6 md:px-8 mx-auto max-w-7xl"
+          dangerouslySetInnerHTML={{
+            __html: `
+              <div class="max-w-2xl text-white">
+                <h1 
+                  class="font-heading font-bold text-4xl md:text-5xl mb-4"
+                  style="font-size:clamp(2rem, 5vw, 3rem); font-family:-apple-system, BlinkMacSystemFont, 'Inter', Segoe UI, Arial, sans-serif"
                 >
-                  Shop Products
-                </Button>
-              </Link>
-              <Link href="/about">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="px-6 py-3 bg-white text-primary hover:bg-gray-100 text-center"
-                  style={{ contain: 'layout style' }}
+                  Advanced Research Peptides &amp; SARMs
+                </h1>
+                <p 
+                  class="text-lg mb-8"
                 >
-                  About TrueAmino Research
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
+                  Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.
+                </p>
+                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                  <a href="/products" class="inline-block">
+                    <button 
+                      class="bg-secondary text-white hover:bg-secondary/90 px-6 py-3 rounded-md font-medium"
+                    >
+                      Shop Products
+                    </button>
+                  </a>
+                  <a href="/about" class="inline-block">
+                    <button 
+                      class="bg-white text-primary hover:bg-gray-100 px-6 py-3 rounded-md border border-gray-200 font-medium"
+                    >
+                      About TrueAmino Research
+                    </button>
+                  </a>
+                </div>
+              </div>
+            `
+          }}
+        />
       </section>
       
       {/* Trust Banners */}

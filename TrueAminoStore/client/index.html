@@ -7,73 +7,194 @@
     <meta name="description" content="TrueAminos offers high-quality research peptides, SARMs, and supplements. Shop BPC-157, NAD+, Sermorelin, GLP1, and more. Free shipping available." />
     <meta name="keywords" content="research peptides, SARMs, BPC-157, NAD+, Sermorelin, GLP1, Semax, mk677, rad 140" />
     
-    <!-- Preload critical assets for faster rendering -->
+    <!-- Performance optimization headers -->
+    <meta http-equiv="Cache-Control" content="public, max-age=31536000, immutable" />
+    <meta http-equiv="X-DNS-Prefetch-Control" content="on" />
+    
+    <!-- Preconnect to resources for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    
+    <!-- Critical assets preloading -->
     <link rel="preload" href="/src/main.tsx" as="script" type="module" fetchpriority="high" />
     <link rel="modulepreload" href="/src/components/Layout.tsx" />
+    <link rel="preload" href="/assets/logo.svg" as="image" fetchpriority="high" />
     
     <!-- Favicon with optimized loading -->
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon-32x32.png" type="image/png" />
     <link rel="apple-touch-icon" href="/favicon-32x32.png" />
     
-    <!-- Font optimizations -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-    
     <!-- Font CSS with optimal loading strategy -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap" />
+    </noscript>
     
-    <!-- Critical above-the-fold CSS inline -->
+    <!-- Enhanced critical path CSS for faster LCP -->
     <style>
-      /* Minimal critical CSS for initial render */
+      /* Critical CSS for initial render and LCP optimization */
+      :root {
+        --primary: #0096c7;
+        --secondary: #023e8a;
+        --accent: #48cae4;
+      }
+      
       body { 
         margin: 0;
         font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         -webkit-font-smoothing: antialiased;
         background-color: #f8f9fa;
+        text-rendering: optimizeSpeed;
       }
+      
       h1, h2, h3, h4, h5, h6 {
         font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
+      
+      /* Optimized hero section styles */
+      .hero-section {
+        background: linear-gradient(to right, var(--primary), var(--accent));
+        padding: 4rem 1.5rem;
+        color: white;
+      }
+      
+      .hero-title {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      
+      .hero-text {
+        font-size: 1.125rem;
+        margin-bottom: 2rem;
+        max-width: 42rem;
+      }
+      
+      /* Core layout elements */
       #root {
         display: flex;
         flex-direction: column;
         min-height: 100vh;
       }
+      
+      .container {
+        width: 100%;
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+      }
+      
+      /* Enhanced loading state */
       .loading-placeholder {
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
         width: 100%;
+        background-color: #ffffff;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
       }
+      
       .loading-spinner {
         width: 50px;
         height: 50px;
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #3772FF;
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-top: 3px solid var(--primary);
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
+      
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
+      
+      /* High priority buttons */
+      .btn {
+        display: inline-block;
+        font-weight: 500;
+        text-align: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      
+      .btn-primary {
+        background-color: var(--secondary);
+        color: white;
+      }
+      
+      .btn-secondary {
+        background-color: white;
+        color: var(--primary);
+        border: 1px solid rgba(0,0,0,0.1);
+      }
     </style>
+    
+    <!-- Preload hero content script -->
+    <script>
+      // Immediate IIFE to optimize hero rendering before all JS loads
+      (function() {
+        if ('performance' in window) {
+          window.performance.mark('html_init');
+        }
+        
+        // Pre-render critical content
+        document.addEventListener('DOMContentLoaded', function() {
+          if ('performance' in window) {
+            window.performance.mark('dom_ready');
+            window.performance.measure('html_to_dom_ready', 'html_init', 'dom_ready');
+          }
+          
+          // Preload critical images
+          const imagesToPreload = [
+            '/assets/logo.svg', 
+            '/favicon-32x32.png'
+          ];
+          
+          imagesToPreload.forEach(src => {
+            const img = new Image();
+            img.src = src;
+          });
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root">
-      <!-- Initial loading state to improve perceived performance -->
+      <!-- Static hero content for immediate rendering -->
       <div class="loading-placeholder">
         <div class="loading-spinner"></div>
+        <!-- Inline critical hero content to eliminate render-blocking for LCP -->
+        <noscript>
+          <div class="hero-section">
+            <div class="container">
+              <h1 class="hero-title">Advanced Research Peptides &amp; SARMs</h1>
+              <p class="hero-text">Premium quality compounds for research purposes. Trusted by scientists and researchers nationwide.</p>
+              <div>
+                <a href="/products" class="btn btn-primary">Shop Products</a>
+                <a href="/about" class="btn btn-secondary">About TrueAmino Research</a>
+              </div>
+            </div>
+          </div>
+        </noscript>
       </div>
     </div>
     
-    <!-- Main application script with high priority -->
+    <!-- Main application script with high priority and optimized loading -->
     <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
     
-    <!-- Non-critical scripts loaded with low priority -->
+    <!-- Deferred non-critical scripts -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js" defer></script>
   </body>
 </html>
