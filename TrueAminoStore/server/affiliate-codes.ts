@@ -158,7 +158,7 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
         return false;
       }
       
-      const recordData = await getFieldsResponse.json();
+      const recordData = await getFieldsResponse.json() as { id: string; fields: Record<string, any> };
       console.log('Record fields:', JSON.stringify(recordData.fields, null, 2));
       
       // Determine field names available in this table
@@ -173,14 +173,15 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       
       console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "affiliatecode"');
       
-      // Use the found field name or a default - trying lowercase as Airtable often prefers lowercase field names
-      const fieldToUpdate = affiliateCodeFieldName || 'affiliatecode';
-      
-      // Update with appropriate field name
-      const updatePayload = {
-        fields: {}
+      // From the screenshots, we can see the exact field name is "affiliatecode" (all lowercase)
+      // Always use explicit field names that match exactly what's in Airtable
+      const updateFields = {
+        fields: {
+          affiliatecode: affiliateCode // Explicitly use "affiliatecode" as seen in the Airtable screenshot
+        }
       };
-      updatePayload.fields[fieldToUpdate] = affiliateCode;
+      
+      console.log('Updating record with payload:', JSON.stringify(updateFields, null, 2));
       
       const updateResponse = await fetch(`${airtableUrl}/${recordId}`, {
         method: 'PATCH',
@@ -188,20 +189,24 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
           'Authorization': `Bearer ${airtableApiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(updatePayload)
+        body: JSON.stringify(updateFields)
       });
       
       if (!updateResponse.ok) {
         const errorText = await updateResponse.text();
         console.error('Error updating affiliate code in session:', errorText);
         
-        // Try both variations if the first attempt failed
-        const updateFields = {
+        // Try with multiple variations to cover all possibilities
+        const updateFieldsAllVariations = {
           fields: {
-            affiliateCode: affiliateCode,
-            affiliatecode: affiliateCode
+            affiliatecode: affiliateCode, // Exact match to screenshot
+            "affiliate code": affiliateCode, // With space
+            "affiliateCode": affiliateCode, // CamelCase
+            "affiliate_code": affiliateCode // With underscore
           }
         };
+        
+        console.log('Trying again with multiple field variations:', JSON.stringify(updateFieldsAllVariations, null, 2));
         
         const updateResponse2 = await fetch(`${airtableUrl}/${recordId}`, {
           method: 'PATCH',
@@ -209,7 +214,7 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
             'Authorization': `Bearer ${airtableApiKey}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(updateFields)
+          body: JSON.stringify(updateFieldsAllVariations)
         });
         
         if (!updateResponse2.ok) {
@@ -227,21 +232,25 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       // Create a new record
       console.log(`No existing record found, creating new record with sessionId: ${sessionId}, affiliateCode: ${affiliateCode}`);
       
+      // Create a payload matching exactly what we see in the Airtable screenshot
+      const createPayload = {
+        records: [{
+          fields: {
+            'sessionId': sessionId,
+            'affiliatecode': affiliateCode  // Use exactly the field name from the screenshot
+          }
+        }]
+      };
+      
+      console.log('Creating new record with payload:', JSON.stringify(createPayload, null, 2));
+      
       const createResponse = await fetch(airtableUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${airtableApiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          records: [{
-            fields: {
-              sessionId: sessionId,
-              affiliateCode: affiliateCode,  // Try with capital C
-              affiliatecode: affiliateCode   // Also include lowercase version to be safe
-            }
-          }]
-        })
+        body: JSON.stringify(createPayload)
       });
       
       if (!createResponse.ok) {

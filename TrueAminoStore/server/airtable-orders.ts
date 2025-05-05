@@ -76,10 +76,10 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
       }
     };
     
-    // Try multiple field name variations for affiliate code to maximize chances of success
+    // Based on the screenshot, we know the field name is exactly "affiliatecode" (already set above)
+    // Log additional information about the affiliate code
     if (orderData.affiliateCode) {
-      airtableData.fields["affiliate code"] = orderData.affiliateCode;
-      airtableData.fields["affiliate_code"] = orderData.affiliateCode;
+      console.log(`Setting primary affiliate code field "affiliatecode" to value: "${orderData.affiliateCode}"`);
     }
     
     // Log important information about the order
