@@ -9,9 +9,14 @@ interface AirtableAffiliateCode {
   id: string;
   fields: {
     code?: string;
+    Code?: string;  // Added capital C version
     discount?: number;
     name?: string;
     active?: boolean;
+    Email?: string;  // Added other fields found in Airtable
+    "First Name"?: string;
+    "Last Name"?: string;
+    Password?: string;
   };
   createdTime: string;
 }
@@ -75,22 +80,39 @@ export async function debugValidateAffiliateCode(code: string): Promise<Affiliat
     // Log all codes from Airtable for debugging
     console.log('\n📋 All codes in Airtable:');
     data.records.forEach(record => {
+      // Cast to any to avoid type errors
+      const fields = record.fields as any;
+      
       console.log(`- ID: ${record.id}`);
-      console.log(`  Code: "${record.fields.code || 'UNDEFINED'}"`);
-      console.log(`  Discount: ${record.fields.discount || 0}%`);
-      console.log(`  Name: ${record.fields.name || 'UNNAMED'}`);
-      console.log(`  Active: ${record.fields.active !== false ? 'YES' : 'NO'}`);
+      console.log(`  code (lowercase): "${fields.code || 'UNDEFINED'}"`);
+      console.log(`  Code (capital): "${fields.Code || 'UNDEFINED'}"`);
+      console.log(`  Email: "${fields.Email || 'UNDEFINED'}"`);
+      console.log(`  First Name: "${fields["First Name"] || 'UNDEFINED'}"`);
+      console.log(`  Last Name: "${fields["Last Name"] || 'UNDEFINED'}"`);
+      console.log(`  Discount: ${fields.discount || 0}%`);
+      console.log(`  Name: ${fields.name || 'UNNAMED'}`);
+      console.log(`  Active: ${fields.active !== false ? 'YES' : 'NO'}`);
       console.log('---');
     });
     
     // Find the matching code from the results
     console.log(`\n🔍 Searching for code: "${formattedCode}"`);
     const matchingCode = data.records.find(record => {
-      const recordCode = record.fields.code?.toUpperCase().trim();
-      const isActive = record.fields.active !== false; // undefined or true means active
+      // Cast to any to access all possible field names
+      const fields = record.fields as any;
       
-      console.log(`Comparing with: "${recordCode}" (Active: ${isActive ? 'YES' : 'NO'})`);
-      const isMatch = recordCode === formattedCode && isActive;
+      // Check for code in multiple field variations (lowercase and capital C)
+      const recordCodeLower = fields.code?.toUpperCase().trim();
+      const recordCodeUpper = fields.Code?.toUpperCase().trim();
+      
+      // Use either the lowercase or uppercase version
+      const recordCode = recordCodeUpper || recordCodeLower;
+      
+      const isActive = fields.active !== false; // undefined or true means active
+      
+      console.log(`Comparing with lowercase: "${recordCodeLower}" or capital: "${recordCodeUpper}" (Active: ${isActive ? 'YES' : 'NO'})`);
+      const isMatch = (recordCode === formattedCode) && isActive;
+      
       if (recordCode === formattedCode) {
         console.log(`✅ Found code match! Active status: ${isActive ? 'YES' : 'NO'}`);
       }
@@ -102,11 +124,17 @@ export async function debugValidateAffiliateCode(code: string): Promise<Affiliat
       console.log('✅ Matching affiliate code found!');
       console.log('Details:', matchingCode);
       
+      // Cast fields to any to access all possible field names
+      const fields = matchingCode.fields as any;
+      
+      // Get the code with appropriate fallbacks
+      const codeValue = fields.Code || fields.code || formattedCode;
+      
       return {
         id: matchingCode.id,
-        code: matchingCode.fields.code || formattedCode,
-        discount: matchingCode.fields.discount || 0,
-        name: matchingCode.fields.name || '',
+        code: codeValue,
+        discount: fields.discount || 0,
+        name: fields.name || '',
         valid: true
       };
     }
