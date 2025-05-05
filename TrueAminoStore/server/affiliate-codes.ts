@@ -8,7 +8,7 @@ import fetch from "node-fetch";
 interface AirtableAffiliateCode {
   id: string;
   fields: {
-    Code?: string;
+    code?: string;
     discount?: number;
     name?: string;
     active?: boolean;
@@ -70,7 +70,7 @@ export async function validateAffiliateCode(code: string): Promise<AffiliateCode
     
     // Find the matching code from the results
     const matchingCode = data.records.find(record => {
-      const recordCode = record.fields.Code?.toUpperCase().trim();
+      const recordCode = record.fields.code?.toUpperCase().trim();
       const isActive = record.fields.active !== false; // undefined or true means active
       return recordCode === formattedCode && isActive;
     });
@@ -78,7 +78,7 @@ export async function validateAffiliateCode(code: string): Promise<AffiliateCode
     if (matchingCode) {
       return {
         id: matchingCode.id,
-        code: matchingCode.fields.Code || formattedCode,
+        code: matchingCode.fields.code || formattedCode,
         discount: matchingCode.fields.discount || 0,
         name: matchingCode.fields.name || '',
         valid: true
@@ -167,17 +167,18 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       
       // Look for affiliate code field name (case insensitive)
       const affiliateCodeFieldName = fieldNames.find(
-        name => name.toLowerCase() === 'affiliatecode' || name.toLowerCase() === 'affiliate_code' || 
-        name.toLowerCase() === 'affiliatediscount' || name.toLowerCase() === 'affiliate code'
+        name => name.toLowerCase() === 'code' || name.toLowerCase() === 'affiliatecode' || 
+        name.toLowerCase() === 'affiliate_code' || name.toLowerCase() === 'affiliatediscount' || 
+        name.toLowerCase() === 'affiliate code'
       );
       
       console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "affiliatecode"');
       
-      // From the screenshots, we can see the exact field name is "affiliatecode" (all lowercase)
+      // Based on user feedback, the exact field name in Airtable is "code"
       // Always use explicit field names that match exactly what's in Airtable
       const updateFields = {
         fields: {
-          affiliatecode: affiliateCode // Explicitly use "affiliatecode" as seen in the Airtable screenshot
+          code: affiliateCode // Use "code" as the field name per user's request
         }
       };
       
@@ -199,7 +200,8 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
         // Try with multiple variations to cover all possibilities
         const updateFieldsAllVariations = {
           fields: {
-            affiliatecode: affiliateCode, // Exact match to screenshot
+            "code": affiliateCode, // Based on our latest information
+            "affiliatecode": affiliateCode, // Original field name
             "affiliate code": affiliateCode, // With space
             "affiliateCode": affiliateCode, // CamelCase
             "affiliate_code": affiliateCode // With underscore
@@ -232,12 +234,12 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       // Create a new record
       console.log(`No existing record found, creating new record with sessionId: ${sessionId}, affiliateCode: ${affiliateCode}`);
       
-      // Create a payload matching exactly what we see in the Airtable screenshot
+      // Create a payload with the field name "code" based on user feedback
       const createPayload = {
         records: [{
           fields: {
             'sessionId': sessionId,
-            'affiliatecode': affiliateCode  // Use exactly the field name from the screenshot
+            'code': affiliateCode  // Use "code" as the field name per user's request
           }
         }]
       };
