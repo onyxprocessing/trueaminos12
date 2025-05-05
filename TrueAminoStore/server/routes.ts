@@ -762,8 +762,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`DIRECT API CALL: Adding affiliate code ${validationResult.code} to session ${sessionId}`);
         
-        // First, check if session record exists
-        const searchResponse = await fetch(`https://api.airtable.com/v0/${airtableBaseId}/${tableId}?filterByFormula=%7BsessionId%7D%3D%22${encodeURIComponent(sessionId)}%22`, {
+        // First, check if session record exists (using exact field name "session id" with space as in Airtable)
+        const searchResponse = await fetch(`https://api.airtable.com/v0/${airtableBaseId}/${tableId}?filterByFormula=%7Bsession+id%7D%3D%22${encodeURIComponent(sessionId)}%22`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${airtableApiKey}`,
@@ -815,7 +815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               body: JSON.stringify({
                 records: [{
                   fields: {
-                    "sessionId": sessionId,
+                    "session id": sessionId,
                     "Code": validationResult.code  // Using "Code" with capital C as it's the correct field name in Airtable
                   }
                 }]
