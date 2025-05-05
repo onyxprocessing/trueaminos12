@@ -168,8 +168,8 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
     const airtableUrl = `https://api.airtable.com/v0/${airtableBaseId}/${tableId}`;
     
     // First, check if a record for this session already exists
-    // Note: Correct the formula syntax for Airtable
-    const existingRecordResponse = await fetch(`${airtableUrl}?filterByFormula=%7BsessionId%7D%3D%22${encodeURIComponent(sessionId)}%22`, {
+    // Note: Correct the formula syntax for Airtable with proper field name "session id" with space
+    const existingRecordResponse = await fetch(`${airtableUrl}?filterByFormula=%7Bsession+id%7D%3D%22${encodeURIComponent(sessionId)}%22`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${airtableApiKey}`,
@@ -287,7 +287,7 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       const createPayload = {
         records: [{
           fields: {
-            'sessionId': sessionId,
+            'session id': sessionId,
             'Code': affiliateCode  // Use "Code" (with capital C) as the field name
           }
         }]
