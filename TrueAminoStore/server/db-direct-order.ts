@@ -134,6 +134,8 @@ export async function createOrderWithPaymentMethod(
 
 /**
  * Helper function to get price based on selected weight
+ * This implementation uses dynamic property access to find the price
+ * based on the selected weight, with fallbacks in case the property doesn't exist
  */
 function getPriceByWeight(product: any, selectedWeight: string | null): number {
   if (!selectedWeight) {
@@ -141,7 +143,21 @@ function getPriceByWeight(product: any, selectedWeight: string | null): number {
     return typeof price === 'string' ? parseFloat(price) : price;
   }
 
-  const priceField = `price${selectedWeight.toLowerCase()}`;
-  const price = product[priceField] || product.price || 0;
-  return typeof price === 'string' ? parseFloat(price) : price;
+  // First try the exact format from the product data
+  const priceField = `price${selectedWeight}` as keyof typeof product;
+  if (product[priceField]) {
+    const price = product[priceField];
+    return typeof price === 'string' ? parseFloat(price) : Number(price);
+  }
+  
+  // Then try lowercase version (e.g., price30mg instead of price30MG)
+  const priceLowerField = `price${selectedWeight.toLowerCase()}` as keyof typeof product;
+  if (product[priceLowerField]) {
+    const price = product[priceLowerField];
+    return typeof price === 'string' ? parseFloat(price) : Number(price);
+  }
+  
+  // As a last resort, use the default price or return 0
+  const price = product.price || 0;
+  return typeof price === 'string' ? parseFloat(price) : Number(price);
 }
