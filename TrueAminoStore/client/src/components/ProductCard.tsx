@@ -149,6 +149,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         return product.price750mg ? parseFloat(product.price750mg) : 0;
       case "1500mg":
         return product.price1500mg ? parseFloat(product.price1500mg) : 0;
+      case "5000mg":
+        return product.price5000mg ? parseFloat(product.price5000mg) : 0;
       default:
         // Fallback to generic price if no specific price for the weight
         return parseFloat(product.price || "0");

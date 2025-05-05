@@ -55,6 +55,7 @@ interface AirtableProductFields {
   price300mg?: number // Price specific to 300mg weight
   price600mg?: number // Price specific to 600mg weight
   price1500mg?: number // Price specific to 1500mg weight
+  price5000mg?: number // Price specific to 5000mg weight
   categoryId?: number
   image?: AirtableImage[] // Image is an array of attachment objects
   image2?: AirtableImage[] // Certificate of Analysis (old field name)
@@ -160,7 +161,8 @@ function processProductPrices(record: AirtableRecord<AirtableProductFields>) {
     price30mg: record.fields.price30mg,
     price300mg: record.fields.price300mg,
     price600mg: record.fields.price600mg,
-    price1500mg: record.fields.price1500mg
+    price1500mg: record.fields.price1500mg,
+    price5000mg: record.fields.price5000mg
   });
   
   return {
@@ -183,6 +185,7 @@ function processProductPrices(record: AirtableRecord<AirtableProductFields>) {
     price300mg: record.fields.price300mg ? record.fields.price300mg.toString() : "0",
     price600mg: record.fields.price600mg ? record.fields.price600mg.toString() : "0",
     price1500mg: record.fields.price1500mg ? record.fields.price1500mg.toString() : "0",
+    price5000mg: record.fields.price5000mg ? record.fields.price5000mg.toString() : "0",
   };
 }
 
@@ -274,7 +277,13 @@ export async function fetchProducts(): Promise<Product[]> {
         price2mg: record.fields.price2mg,
         price750mg: record.fields.price750mg,
         price100mg: record.fields.price100mg,
-        price500mg: record.fields.price500mg
+        price500mg: record.fields.price500mg,
+        price1mg: record.fields.price1mg,
+        price30mg: record.fields.price30mg,
+        price300mg: record.fields.price300mg,
+        price600mg: record.fields.price600mg,
+        price1500mg: record.fields.price1500mg,
+        price5000mg: record.fields.price5000mg
       });
       
       return {
@@ -301,6 +310,7 @@ export async function fetchProducts(): Promise<Product[]> {
         price300mg: record.fields.price300mg ? record.fields.price300mg.toString() : "0",
         price600mg: record.fields.price600mg ? record.fields.price600mg.toString() : "0",
         price1500mg: record.fields.price1500mg ? record.fields.price1500mg.toString() : "0",
+        price5000mg: record.fields.price5000mg ? record.fields.price5000mg.toString() : "0",
         categoryId: record.fields.categoryId || 1,
         imageUrl: getImageUrlFromAirtable(record.fields.image),
         image2Url: record.fields.COA 
