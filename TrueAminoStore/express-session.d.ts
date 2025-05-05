@@ -6,5 +6,9 @@ declare module 'express-session' {
     checkoutStep?: string;
     personalInfo?: any;
     shippingInfo?: any;
+    discountInfo?: {
+      code: string;
+      percentage: number;
+    };
   }
 }

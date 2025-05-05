@@ -390,13 +390,23 @@ export async function handlePaymentMethod(req: Request, res: Response) {
       });
     }
     
-    const { paymentMethod } = req.body;
+    const { paymentMethod, discountData } = req.body;
     
     // Validate payment method
     if (!paymentMethod || !['card', 'bank', 'crypto'].includes(paymentMethod)) {
       return res.status(400).json({ 
         message: "Invalid payment method. Please choose card, bank, or crypto." 
       });
+    }
+    
+    // Store discount information in session if provided
+    if (discountData && discountData.code) {
+      req.session.discountInfo = {
+        code: discountData.code,
+        percentage: discountData.percentage || 0
+      };
+      console.log(`Applied discount code: ${discountData.code} for ${discountData.percentage}%`);
+      await req.session.save();
     }
     
     // Update checkout step
@@ -464,9 +474,28 @@ export async function handlePaymentMethod(req: Request, res: Response) {
     
     // Add shipping cost to the total
     const shippingCost = parseFloat(shippingDetails.price || 0);
-    const totalAmount = subtotal + shippingCost;
     
-    console.log(`Payment calculation: Subtotal (${subtotal}) + Shipping (${shippingCost}) = Total (${totalAmount})`);
+    // Get discount info (if any)
+    let discountPercentage = 0;
+    let discountCode = '';
+    if (req.session.discountInfo) {
+      discountPercentage = req.session.discountInfo.percentage || 0;
+      discountCode = req.session.discountInfo.code || '';
+    }
+    
+    // Calculate discount amount
+    const discountAmount = subtotal * (discountPercentage / 100);
+    const discountedSubtotal = subtotal - discountAmount;
+    const totalAmount = discountedSubtotal + shippingCost;
+    
+    console.log(`Payment calculation: Subtotal ($${subtotal.toFixed(2)}) - Discount (${discountPercentage}%: $${discountAmount.toFixed(2)}) + Shipping ($${shippingCost.toFixed(2)}) = $${totalAmount.toFixed(2)}`);
+    
+    // Add discount info to response
+    const discountInfo = discountPercentage > 0 ? {
+      code: discountCode,
+      percentage: discountPercentage,
+      amount: discountAmount
+    } : null;
     
     // For card payments, return amount with shipping included
     if (paymentMethod === 'card') {
@@ -475,6 +504,7 @@ export async function handlePaymentMethod(req: Request, res: Response) {
         amount: totalAmount,
         subtotal: subtotal,
         shipping: shippingCost,
+        discount: discountInfo,
         nextStep: 'card_payment'
       });
     } else if (paymentMethod === 'bank') {
@@ -484,6 +514,7 @@ export async function handlePaymentMethod(req: Request, res: Response) {
         amount: totalAmount,
         subtotal: subtotal,
         shipping: shippingCost,
+        discount: discountInfo,
         bankInfo: {
           accountName: 'TrueAminos LLC',
           accountNumber: '123456789',
@@ -500,6 +531,7 @@ export async function handlePaymentMethod(req: Request, res: Response) {
         amount: totalAmount,
         subtotal: subtotal,
         shipping: shippingCost,
+        discount: discountInfo,
         cryptoInfo: {
           bitcoin: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
           ethereum: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
@@ -750,7 +782,7 @@ function calculateCartTotal(cartItems: any[]): number {
 }
 
 /**
- * Calculate total including shipping from session
+ * Calculate total including shipping from session and applying any discounts
  */
 async function calculateTotalWithShipping(sessionId: string): Promise<number> {
   // Get cart items
@@ -759,6 +791,7 @@ async function calculateTotalWithShipping(sessionId: string): Promise<number> {
   
   // Try to get shipping cost from session storage
   let shippingCost = 0;
+  let discountPercentage = 0;
   try {
     const session = await storage.getSession(sessionId);
     if (session && session.shippingInfo) {
@@ -770,12 +803,67 @@ async function calculateTotalWithShipping(sessionId: string): Promise<number> {
       const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
       shippingCost = itemCount <= 5 ? 15 : 25;
     }
+    
+    // Check for affiliate/discount code in session
+    if (session && session.discountInfo) {
+      discountPercentage = session.discountInfo.percentage || 0;
+      console.log(`Found discount in session: ${discountPercentage}%`);
+    } else {
+      // Try to get affiliate code from Airtable if not in session
+      const { validateAffiliateCode } = await import('./affiliate-codes');
+      
+      try {
+        // Check if any affiliate code is associated with this session in Airtable
+        // Use Airtable API directly since we store it there
+        const airtableApiKey = process.env.AIRTABLE_API_KEY;
+        const airtableBase = process.env.AIRTABLE_BASE;
+        
+        if (airtableApiKey && airtableBase) {
+          const airtableUrl = `https://api.airtable.com/v0/${airtableBase}/tblhjfzTX2zjf22s1`;
+          const response = await fetch(`${airtableUrl}?filterByFormula=%7BsessionId%7D%3D%22${sessionId}%22`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${airtableApiKey}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.records && data.records.length > 0) {
+              // Look for affiliate code in record fields
+              const record = data.records[0];
+              const fields = record.fields || {};
+              
+              // Check different field names that might contain the affiliate code
+              const affiliateCode = fields.affiliateCode || fields.affiliatecode || fields.affiliate_code;
+              
+              if (affiliateCode) {
+                const validationResult = await validateAffiliateCode(affiliateCode);
+                if (validationResult.valid) {
+                  discountPercentage = validationResult.discount;
+                  console.log(`Found discount from Airtable: ${discountPercentage}% for code ${validationResult.code}`);
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking for affiliate code in Airtable:', error);
+      }
+    }
   } catch (error) {
-    console.error('Error getting shipping cost:', error);
+    console.error('Error getting shipping cost or discount:', error);
     // Default to basic shipping cost
     shippingCost = 15;
   }
   
-  console.log(`Total calculation: Subtotal ($${subtotal}) + Shipping ($${shippingCost}) = $${subtotal + shippingCost}`);
-  return subtotal + shippingCost;
+  // Calculate discount amount
+  const discountAmount = subtotal * (discountPercentage / 100);
+  const discountedSubtotal = subtotal - discountAmount;
+  
+  // Log calculation steps
+  console.log(`Total calculation: Subtotal ($${subtotal.toFixed(2)}) - Discount (${discountPercentage}%: $${discountAmount.toFixed(2)}) + Shipping ($${shippingCost.toFixed(2)}) = $${(discountedSubtotal + shippingCost).toFixed(2)}`);
+  
+  return discountedSubtotal + shippingCost;
 }

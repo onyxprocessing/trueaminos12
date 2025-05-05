@@ -144,35 +144,71 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       const recordId = existingRecordData.records[0].id;
       console.log(`Found existing record with ID: ${recordId}, updating with affiliate code: ${affiliateCode}`);
       
+      // First, get the record to see the exact field name structure
+      const getFieldsResponse = await fetch(`${airtableUrl}/${recordId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${airtableApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!getFieldsResponse.ok) {
+        console.error('Error getting record fields:', await getFieldsResponse.text());
+        return false;
+      }
+      
+      const recordData = await getFieldsResponse.json();
+      console.log('Record fields:', JSON.stringify(recordData.fields, null, 2));
+      
+      // Determine field names available in this table
+      const fieldNames = Object.keys(recordData.fields || {});
+      console.log('Available field names:', fieldNames);
+      
+      // Look for affiliate code field name (case insensitive)
+      const affiliateCodeFieldName = fieldNames.find(
+        name => name.toLowerCase() === 'affiliatecode' || name.toLowerCase() === 'affiliate_code' || name.toLowerCase() === 'affiliatediscount'
+      );
+      
+      console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "affiliateCode"');
+      
+      // Use the found field name or a default
+      const fieldToUpdate = affiliateCodeFieldName || 'affiliateCode';
+      
+      // Update with appropriate field name
+      const updatePayload = {
+        fields: {}
+      };
+      updatePayload.fields[fieldToUpdate] = affiliateCode;
+      
       const updateResponse = await fetch(`${airtableUrl}/${recordId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${airtableApiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          fields: {
-            affiliateCode: affiliateCode // Correct field name if needed (could be affiliateCode or affiliatecode)
-          }
-        })
+        body: JSON.stringify(updatePayload)
       });
       
       if (!updateResponse.ok) {
         const errorText = await updateResponse.text();
         console.error('Error updating affiliate code in session:', errorText);
         
-        // Try alternative field name if the first one failed
+        // Try both variations if the first attempt failed
+        const updateFields = {
+          fields: {
+            affiliateCode: affiliateCode,
+            affiliatecode: affiliateCode
+          }
+        };
+        
         const updateResponse2 = await fetch(`${airtableUrl}/${recordId}`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${airtableApiKey}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            fields: {
-              affiliatecode: affiliateCode // Try lowercase version
-            }
-          })
+          body: JSON.stringify(updateFields)
         });
         
         if (!updateResponse2.ok) {
