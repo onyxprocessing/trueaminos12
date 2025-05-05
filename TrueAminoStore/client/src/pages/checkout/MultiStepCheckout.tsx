@@ -327,8 +327,8 @@ const MultiStepCheckout: React.FC = () => {
       // Include discount code information if a valid code has been applied
       const discountData = discountInfo.isValid 
         ? { 
-            discountCode: discountInfo.code,
-            discountPercentage: discountInfo.discount 
+            code: discountInfo.code,
+            percentage: discountInfo.discount 
           } 
         : null;
       
