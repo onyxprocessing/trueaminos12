@@ -97,6 +97,16 @@ const MultiStepCheckout: React.FC = () => {
   const [bankInfo, setBankInfo] = useState<any>(null);
   const [cryptoInfo, setCryptoInfo] = useState<any>(null);
   
+  // State for discount code
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountInfo, setDiscountInfo] = useState({
+    isValidating: false,
+    isValid: false,
+    discount: 0,
+    message: '',
+    code: ''
+  });
+  
   // Initialize checkout process
   useEffect(() => {
     if (cart.items.length === 0) {
@@ -465,9 +475,97 @@ const MultiStepCheckout: React.FC = () => {
     return option ? option.price : SHIPPING_OPTIONS[0].price;
   };
   
+  // Function to validate discount code
+  const validateDiscountCode = async () => {
+    if (!discountCode) {
+      setDiscountInfo({
+        ...discountInfo,
+        message: 'Please enter a discount code',
+        isValid: false
+      });
+      return;
+    }
+
+    try {
+      setDiscountInfo({
+        ...discountInfo,
+        isValidating: true,
+        message: ''
+      });
+
+      const response = await apiRequest('POST', '/api/affiliate-code/validate', {
+        code: discountCode
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.success) {
+          setDiscountInfo({
+            isValidating: false,
+            isValid: true,
+            discount: data.data.discount,
+            message: data.message,
+            code: data.data.code
+          });
+          toast({
+            title: 'Discount Applied',
+            description: data.message
+          });
+        } else {
+          setDiscountInfo({
+            ...discountInfo,
+            isValidating: false,
+            isValid: false,
+            message: data.message
+          });
+          toast({
+            title: 'Invalid Code',
+            description: data.message,
+            variant: 'destructive'
+          });
+        }
+      } else {
+        const errorData = await response.json();
+        setDiscountInfo({
+          ...discountInfo,
+          isValidating: false,
+          isValid: false,
+          message: errorData.message || 'Error validating code'
+        });
+        toast({
+          title: 'Error',
+          description: errorData.message || 'Could not validate discount code',
+          variant: 'destructive'
+        });
+      }
+    } catch (err: any) {
+      setDiscountInfo({
+        ...discountInfo,
+        isValidating: false,
+        isValid: false,
+        message: err.message || 'Network error'
+      });
+      toast({
+        title: 'Network Error',
+        description: err.message || 'Could not connect to server',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Helper function to get discount amount
+  const getDiscountAmount = () => {
+    if (!discountInfo.isValid) return 0;
+    return (cart.subtotal * discountInfo.discount) / 100;
+  };
+
   // Helper function to calculate total
   const calculateTotal = () => {
-    return cart.subtotal + getShippingCost();
+    const subtotal = cart.subtotal;
+    const shipping = getShippingCost();
+    const discount = getDiscountAmount();
+    return subtotal + shipping - discount;
   };
   
   // Render cart summary
@@ -508,6 +606,56 @@ const MultiStepCheckout: React.FC = () => {
               <p>Shipping</p>
               <p>${getShippingCost().toFixed(2)}</p>
             </div>
+            
+            {/* Discount Code Input */}
+            <div className="mt-4 mb-4">
+              <p className="mb-2 font-medium">Discount Code</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  placeholder="Enter discount code"
+                  disabled={discountInfo.isValidating || discountInfo.isValid}
+                  className="flex-grow"
+                />
+                <Button 
+                  type="button" 
+                  onClick={validateDiscountCode}
+                  disabled={discountInfo.isValidating || discountInfo.isValid || !discountCode}
+                  variant={discountInfo.isValid ? "outline" : "default"}
+                  size="sm"
+                  className="whitespace-nowrap"
+                >
+                  {discountInfo.isValidating ? (
+                    <span className="flex items-center">
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      Validating
+                    </span>
+                  ) : discountInfo.isValid ? (
+                    <span className="flex items-center">
+                      <Check className="mr-1 h-4 w-4" />
+                      Applied
+                    </span>
+                  ) : (
+                    'Apply'
+                  )}
+                </Button>
+              </div>
+              {discountInfo.message && (
+                <p className={`text-sm mt-1 ${discountInfo.isValid ? 'text-green-600' : 'text-red-500'}`}>
+                  {discountInfo.message}
+                </p>
+              )}
+            </div>
+            
+            {/* Display discount if applied */}
+            {discountInfo.isValid && (
+              <div className="flex justify-between mb-2 text-green-600">
+                <p>Discount ({discountInfo.discount}%)</p>
+                <p>-${getDiscountAmount().toFixed(2)}</p>
+              </div>
+            )}
             
             <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t border-gray-200">
               <p>Total</p>
