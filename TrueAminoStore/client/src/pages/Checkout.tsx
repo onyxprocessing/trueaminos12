@@ -73,13 +73,98 @@ const Checkout: React.FC = () => {
     cardNumber: '',
     cardName: '',
     cardExpiry: '',
-    cardCvc: ''
+    cardCvc: '',
+    discountCode: ''
+  })
+  
+  // Discount code state
+  const [discountInfo, setDiscountInfo] = useState({
+    isValidating: false,
+    isValid: false,
+    discount: 0,
+    message: '',
+    affiliateCode: '',
+    affiliateName: ''
   })
   
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+  
+  // Validate affiliate/discount code
+  const validateDiscountCode = async () => {
+    const code = formData.discountCode.trim()
+    
+    if (!code) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a discount code',
+        variant: 'destructive'
+      })
+      return
+    }
+    
+    setDiscountInfo(prev => ({ ...prev, isValidating: true, message: 'Validating code...' }))
+    
+    try {
+      const response = await fetch('/api/affiliate-code/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+        credentials: 'include'
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        setDiscountInfo({
+          isValidating: false,
+          isValid: true,
+          discount: data.data.discount,
+          message: data.message,
+          affiliateCode: data.data.code,
+          affiliateName: data.data.name
+        })
+        
+        toast({
+          title: 'Success',
+          description: data.message,
+          variant: 'default'
+        })
+      } else {
+        setDiscountInfo({
+          isValidating: false,
+          isValid: false,
+          discount: 0,
+          message: data.message,
+          affiliateCode: '',
+          affiliateName: ''
+        })
+        
+        toast({
+          title: 'Invalid Code',
+          description: data.message,
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      console.error('Error validating discount code:', error)
+      setDiscountInfo(prev => ({ 
+        ...prev, 
+        isValidating: false,
+        message: 'Error validating code. Please try again.'
+      }))
+      
+      toast({
+        title: 'Error',
+        description: 'Failed to validate discount code. Please try again.',
+        variant: 'destructive'
+      })
+    }
   }
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,7 +206,18 @@ const Checkout: React.FC = () => {
         cardNumber: '',
         cardName: '',
         cardExpiry: '',
-        cardCvc: ''
+        cardCvc: '',
+        discountCode: ''
+      })
+      
+      // Reset discount info
+      setDiscountInfo({
+        isValidating: false,
+        isValid: false,
+        discount: 0,
+        message: '',
+        affiliateCode: '',
+        affiliateName: ''
       })
     } catch (error) {
       console.error('Error processing order:', error)
@@ -480,11 +576,86 @@ const Checkout: React.FC = () => {
                     )}
                   </div>
 
+                  {/* Discount Code Section */}
+                  <div className="mt-4">
+                    <div className="flex items-end gap-2">
+                      <div className="flex-grow">
+                        <label htmlFor="discountCode" className="block text-sm font-medium text-gray-700 mb-1">
+                          Discount Code
+                        </label>
+                        <input
+                          type="text"
+                          id="discountCode"
+                          name="discountCode"
+                          value={formData.discountCode}
+                          onChange={handleInputChange}
+                          placeholder="Enter code"
+                          className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          disabled={discountInfo.isValidating || discountInfo.isValid}
+                        />
+                      </div>
+                      <Button 
+                        type="button" 
+                        onClick={validateDiscountCode} 
+                        disabled={discountInfo.isValidating || discountInfo.isValid || !formData.discountCode}
+                        variant={discountInfo.isValid ? "outline" : "default"}
+                        className="mb-0"
+                      >
+                        {discountInfo.isValidating ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Validating
+                          </span>
+                        ) : discountInfo.isValid ? (
+                          <span className="flex items-center">
+                            <CheckCircle className="mr-1 h-4 w-4" />
+                            Applied
+                          </span>
+                        ) : (
+                          'Apply'
+                        )}
+                      </Button>
+                    </div>
+                    {discountInfo.message && (
+                      <p className={`text-sm mt-1 ${discountInfo.isValid ? 'text-green-600' : 'text-red-500'}`}>
+                        {discountInfo.message}
+                      </p>
+                    )}
+                  </div>
+
                   <Separator className="my-4" />
+                  
+                  {/* Discount calculation */}
+                  {discountInfo.isValid && discountInfo.discount > 0 && (
+                    <>
+                      <div className="flex justify-between mb-2">
+                        <span>Subtotal</span>
+                        <span>{formatPrice(subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between mb-2 text-green-600">
+                        <span>Discount ({discountInfo.discount}%)</span>
+                        <span>-{formatPrice(subtotal * (discountInfo.discount / 100))}</span>
+                      </div>
+                      {subtotal < 175 && (
+                        <div className="flex justify-between mb-2">
+                          <span>Shipping</span>
+                          <span>{formatPrice(10)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
 
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span>{formatPrice(subtotal >= 175 ? subtotal : subtotal + 10)}</span>
+                    <span>
+                      {discountInfo.isValid && discountInfo.discount > 0 
+                        ? formatPrice((subtotal - (subtotal * (discountInfo.discount / 100))) + (subtotal >= 175 ? 0 : 10))
+                        : formatPrice(subtotal >= 175 ? subtotal : subtotal + 10)
+                      }
+                    </span>
                   </div>
                 </CardContent>
                 <CardFooter>
