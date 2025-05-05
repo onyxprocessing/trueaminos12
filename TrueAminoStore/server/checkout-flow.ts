@@ -671,6 +671,13 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
       // Get discount info from session
       const discountInfo = (req.session as any).discountInfo || null;
       console.log('Applying discount info to order:', discountInfo);
+      
+      // Enhanced logging to help debug affiliate code issues
+      if (discountInfo && discountInfo.code) {
+        console.log(`✅ Found affiliate code "${discountInfo.code}" with ${discountInfo.percentage}% discount in session`);
+      } else {
+        console.log('⚠️ No affiliate code found in session');
+      }
 
       orderIds = await createOrderWithPaymentMethod(
         req.session.id, 

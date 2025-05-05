@@ -71,6 +71,8 @@ export const orders = pgTable("orders", {
   paymentIntentId: text("payment_intent_id"), // Only needed for card payments
   paymentDetails: text("payment_details"), // JSON string of payment info
   paymentStatus: text("payment_status").notNull().default("pending"), // pending, completed, failed
+  discountCode: text("discount_code"), // Affiliate or discount code applied to order
+  discountPercentage: text("discount_percentage"), // Discount percentage as string, if any
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

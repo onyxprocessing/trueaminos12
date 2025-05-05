@@ -49,6 +49,17 @@ export async function createOrderWithPaymentMethod(
       const orderId = generateUniqueOrderId();
       
       // Create order record
+      // Calculate price considering any discount
+      let price = getPriceByWeight(item.product, item.selectedWeight);
+      let discountAmount = 0;
+      
+      // Apply discount if available
+      if (discountInfo && discountInfo.percentage > 0) {
+        discountAmount = price * (discountInfo.percentage / 100);
+        price = price - discountAmount;
+        console.log(`Applied ${discountInfo.percentage}% discount (code: ${discountInfo.code}): Original $${getPriceByWeight(item.product, item.selectedWeight).toFixed(2)} → Discounted $${price.toFixed(2)}`);
+      }
+      
       const orderData: InsertOrder = {
         orderId,
         firstName: customer.firstName,
@@ -64,12 +75,15 @@ export async function createOrderWithPaymentMethod(
         quantity: item.quantity,
         selectedWeight: item.selectedWeight || '',
         // Convert to string for database compatibility 
-        salesPrice: getPriceByWeight(item.product, item.selectedWeight).toString(),
+        salesPrice: price.toString(),
         shipping: customer.shipping,
         paymentMethod,
         paymentIntentId: paymentDetails?.id || '',
         paymentDetails: paymentDetailsString,
         paymentStatus: 'completed',
+        // Add discount information to the order record
+        discountCode: discountInfo?.code || '',
+        discountPercentage: discountInfo?.percentage?.toString() || '',
         // Remove the id field to allow the database to auto-generate it
         createdAt: new Date()
       };
@@ -88,7 +102,8 @@ export async function createOrderWithPaymentMethod(
         state: customer.state,
         zip: customer.zip,
         mg: item.selectedWeight || '',
-        salesPrice: getPriceByWeight(item.product, item.selectedWeight),
+        // Use the already discounted price
+        salesPrice: price,
         quantity: item.quantity,
         productId: item.productId,
         shipping: customer.shipping,
@@ -96,7 +111,14 @@ export async function createOrderWithPaymentMethod(
         email: customer.email || '',
         phone: customer.phone || '',
         product: item.product.name,
-        affiliateCode: discountInfo?.code || ''
+        affiliateCode: discountInfo?.code || '',
+        // Add test field to include complete order data with discount information
+        test: JSON.stringify({
+          originalPrice: getPriceByWeight(item.product, item.selectedWeight),
+          discountedPrice: price,
+          discountCode: discountInfo?.code || '',
+          discountPercentage: discountInfo?.percentage || 0
+        })
       });
     }
 

@@ -82,11 +82,29 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
       airtableData.fields["affiliate_code"] = orderData.affiliateCode;
     }
     
-    // Log any extra fields that we're not sending to Airtable
-    if (orderData.email) console.log(`Note: Customer email ${orderData.email} not stored in Airtable`);
-    if (orderData.phone) console.log(`Note: Customer phone ${orderData.phone} not stored in Airtable`);
+    // Log important information about the order
+    console.log(`📦 Order ${orderData.orderId} being created with affiliate code: "${orderData.affiliateCode || 'None'}"`);
     
-    console.log('Creating order record in Airtable:', JSON.stringify(airtableData, null, 2));
+    // Log all available information about the order data
+    console.log('📋 Complete order data before Airtable formatting:', {
+      firstName: orderData.firstName,
+      lastName: orderData.lastName,
+      email: orderData.email,
+      phone: orderData.phone,
+      address: orderData.address,
+      city: orderData.city,
+      state: orderData.state,
+      zip: orderData.zip,
+      product: orderData.product,
+      productId: orderData.productId,
+      quantity: orderData.quantity,
+      mg: orderData.mg,
+      salesPrice: orderData.salesPrice,
+      shipping: orderData.shipping,
+      affiliateCode: orderData.affiliateCode
+    });
+    
+    console.log('📤 Creating order record in Airtable:', JSON.stringify(airtableData, null, 2));
     
     const response = await fetch(url, {
       method: 'POST',
@@ -387,7 +405,13 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
           product: "Unknown Product", // Default product name
           shipping: shippingMethod,
           payment: paymentDetails,
-          affiliateCode: paymentIntent.metadata.affiliate_code || '' // Will be logged but not sent
+          // Try various possible metadata key patterns for affiliate code
+          affiliateCode: paymentIntent.metadata.affiliate_code || 
+                        paymentIntent.metadata.affiliateCode || 
+                        paymentIntent.metadata.affiliatecode || 
+                        paymentIntent.metadata.discount_code || 
+                        paymentIntent.metadata.discountCode || 
+                        ''
         };
         
         firstOrderData = orderData;
