@@ -167,13 +167,14 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       
       // Look for affiliate code field name (case insensitive)
       const affiliateCodeFieldName = fieldNames.find(
-        name => name.toLowerCase() === 'affiliatecode' || name.toLowerCase() === 'affiliate_code' || name.toLowerCase() === 'affiliatediscount'
+        name => name.toLowerCase() === 'affiliatecode' || name.toLowerCase() === 'affiliate_code' || 
+        name.toLowerCase() === 'affiliatediscount' || name.toLowerCase() === 'affiliate code'
       );
       
-      console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "affiliateCode"');
+      console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "affiliatecode"');
       
-      // Use the found field name or a default
-      const fieldToUpdate = affiliateCodeFieldName || 'affiliateCode';
+      // Use the found field name or a default - trying lowercase as Airtable often prefers lowercase field names
+      const fieldToUpdate = affiliateCodeFieldName || 'affiliatecode';
       
       // Update with appropriate field name
       const updatePayload = {

@@ -71,14 +71,20 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
         "product": orderData.product || '', // Product name
         "shipping": orderData.shipping,
         "payment": orderData.payment,
+        "affiliatecode": orderData.affiliateCode || '', // Store affiliate code - lowercase field name
         "test": orderData.test || '' // Store all checkout data as JSON string
       }
     };
     
+    // Try multiple field name variations for affiliate code to maximize chances of success
+    if (orderData.affiliateCode) {
+      airtableData.fields["affiliate code"] = orderData.affiliateCode;
+      airtableData.fields["affiliate_code"] = orderData.affiliateCode;
+    }
+    
     // Log any extra fields that we're not sending to Airtable
     if (orderData.email) console.log(`Note: Customer email ${orderData.email} not stored in Airtable`);
     if (orderData.phone) console.log(`Note: Customer phone ${orderData.phone} not stored in Airtable`);
-    if (orderData.affiliateCode) console.log(`Note: Affiliate code ${orderData.affiliateCode} not stored in Airtable`);
     
     console.log('Creating order record in Airtable:', JSON.stringify(airtableData, null, 2));
     
@@ -345,7 +351,13 @@ export async function recordPaymentToAirtable(paymentIntent: any): Promise<boole
             mg: product.weight || '',
             shipping: shippingMethod,
             payment: paymentDetails,
-            affiliateCode: paymentIntent.metadata.affiliate_code || '' // Will be logged but not sent
+            // Try various possible metadata key patterns for affiliate code
+            affiliateCode: paymentIntent.metadata.affiliate_code || 
+                          paymentIntent.metadata.affiliateCode || 
+                          paymentIntent.metadata.affiliatecode || 
+                          paymentIntent.metadata.discount_code || 
+                          paymentIntent.metadata.discountCode || 
+                          ''
           };
           
           // Save the first order data for email confirmation
