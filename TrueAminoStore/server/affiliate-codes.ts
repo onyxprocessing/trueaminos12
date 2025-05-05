@@ -112,6 +112,8 @@ export async function validateAffiliateCode(code: string): Promise<AffiliateCode
  */
 export async function addAffiliateCodeToSession(sessionId: string, affiliateCode: string): Promise<boolean> {
   try {
+    console.log(`Adding affiliate code ${affiliateCode} to session ${sessionId}`);
+    
     const airtableApiKey = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d";
     const airtableBaseId = "app3XDDBbU0ZZDBiY";
     const tableId = "tblhjfzTX2zjf22s1"; // Cart sessions table ID
@@ -120,7 +122,8 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
     const airtableUrl = `https://api.airtable.com/v0/${airtableBaseId}/${tableId}`;
     
     // First, check if a record for this session already exists
-    const existingRecordResponse = await fetch(`${airtableUrl}?filterByFormula={sessionId}="${sessionId}"`, {
+    // Note: Correct the formula syntax for Airtable
+    const existingRecordResponse = await fetch(`${airtableUrl}?filterByFormula=%7BsessionId%7D%3D%22${encodeURIComponent(sessionId)}%22`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${airtableApiKey}`,
@@ -129,15 +132,17 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
     });
     
     if (!existingRecordResponse.ok) {
-      console.error('Error checking for existing session record:', existingRecordResponse.statusText);
+      console.error('Error checking for existing session record:', await existingRecordResponse.text());
       return false;
     }
     
-    const existingRecordData = await existingRecordResponse.json() as AirtableResponse;
+    const existingRecordData = await existingRecordResponse.json() as any;
+    console.log('Existing record search results:', JSON.stringify(existingRecordData, null, 2));
     
     if (existingRecordData.records && existingRecordData.records.length > 0) {
       // Update existing record
       const recordId = existingRecordData.records[0].id;
+      console.log(`Found existing record with ID: ${recordId}, updating with affiliate code: ${affiliateCode}`);
       
       const updateResponse = await fetch(`${airtableUrl}/${recordId}`, {
         method: 'PATCH',
@@ -147,19 +152,44 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
         },
         body: JSON.stringify({
           fields: {
-            affiliatecode: affiliateCode
+            affiliateCode: affiliateCode // Correct field name if needed (could be affiliateCode or affiliatecode)
           }
         })
       });
       
       if (!updateResponse.ok) {
-        console.error('Error updating affiliate code in session:', updateResponse.statusText);
-        return false;
+        const errorText = await updateResponse.text();
+        console.error('Error updating affiliate code in session:', errorText);
+        
+        // Try alternative field name if the first one failed
+        const updateResponse2 = await fetch(`${airtableUrl}/${recordId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${airtableApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            fields: {
+              affiliatecode: affiliateCode // Try lowercase version
+            }
+          })
+        });
+        
+        if (!updateResponse2.ok) {
+          console.error('Second attempt failed too:', await updateResponse2.text());
+          return false;
+        }
+        
+        console.log('Successfully updated affiliate code (second attempt)');
+        return true;
       }
       
+      console.log('Successfully updated affiliate code');
       return true;
     } else {
       // Create a new record
+      console.log(`No existing record found, creating new record with sessionId: ${sessionId}, affiliateCode: ${affiliateCode}`);
+      
       const createResponse = await fetch(airtableUrl, {
         method: 'POST',
         headers: {
@@ -170,17 +200,21 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
           records: [{
             fields: {
               sessionId: sessionId,
-              affiliatecode: affiliateCode
+              affiliateCode: affiliateCode,  // Try with capital C
+              affiliatecode: affiliateCode   // Also include lowercase version to be safe
             }
           }]
         })
       });
       
       if (!createResponse.ok) {
-        console.error('Error creating new session record with affiliate code:', createResponse.statusText);
+        const errorText = await createResponse.text();
+        console.error('Error creating new session record with affiliate code:', errorText);
         return false;
       }
       
+      const createResult = await createResponse.json();
+      console.log('Successfully created new record with affiliate code:', createResult);
       return true;
     }
   } catch (error) {

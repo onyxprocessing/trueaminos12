@@ -324,8 +324,19 @@ const MultiStepCheckout: React.FC = () => {
       
       console.log(`Selected payment method: ${paymentMethod}`);
       
+      // Include discount code information if a valid code has been applied
+      const discountData = discountInfo.isValid 
+        ? { 
+            discountCode: discountInfo.code,
+            discountPercentage: discountInfo.discount 
+          } 
+        : null;
+      
+      console.log('Applying discount data:', discountData);
+      
       const response = await apiRequest('POST', '/api/checkout/payment-method', {
         paymentMethod,
+        discountData
       });
       
       if (response.ok) {
