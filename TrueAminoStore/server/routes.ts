@@ -792,7 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               },
               body: JSON.stringify({
                 fields: {
-                  "Code": validationResult.code  // Using "Code" with capital C as it's the correct field name in Airtable
+                  "affiliatecode": validationResult.code  // Using "affiliatecode" as it's the correct field name in Airtable
                 }
               })
             });
@@ -816,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 records: [{
                   fields: {
                     "session id": sessionId,
-                    "Code": validationResult.code  // Using "Code" with capital C as it's the correct field name in Airtable
+                    "affiliatecode": validationResult.code  // Using "affiliatecode" as it's the correct field name in Airtable
                   }
                 }]
               })

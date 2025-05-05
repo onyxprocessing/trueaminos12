@@ -222,11 +222,11 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       
       console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "Code"');
       
-      // Based on direct API inspection, the field name in Airtable is "Code" with capital C
+      // Based on direct API inspection and debugging, the field name in Airtable is "affiliatecode" (lowercase)
       // Always use explicit field names that match exactly what's in Airtable
       const updateFields = {
         fields: {
-          Code: affiliateCode // Use "Code" (with capital C) as the field name
+          affiliatecode: affiliateCode // Use "affiliatecode" (lowercase) as the field name
         }
       };
       
@@ -248,9 +248,9 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
         // Try with multiple variations to cover all possibilities
         const updateFieldsAllVariations = {
           fields: {
-            "Code": affiliateCode, // Correct field name with capital C
+            "affiliatecode": affiliateCode, // Correct field name (lowercase)
             "code": affiliateCode, // Lowercase version
-            "affiliatecode": affiliateCode, // Original field name
+            "Code": affiliateCode, // Capital C version
             "affiliate code": affiliateCode, // With space
             "affiliateCode": affiliateCode, // CamelCase
             "affiliate_code": affiliateCode // With underscore
@@ -283,12 +283,12 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       // Create a new record
       console.log(`No existing record found, creating new record with sessionId: ${sessionId}, affiliateCode: ${affiliateCode}`);
       
-      // Create a payload with the field name "Code" with capital C
+      // Create a payload with the field name "affiliatecode" (lowercase)
       const createPayload = {
         records: [{
           fields: {
             'session id': sessionId,
-            'Code': affiliateCode  // Use "Code" (with capital C) as the field name
+            'affiliatecode': affiliateCode  // Use "affiliatecode" (lowercase) as the field name
           }
         }]
       };
