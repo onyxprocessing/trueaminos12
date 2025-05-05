@@ -29,9 +29,17 @@ interface Request extends ExpressRequest {
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
   if (!selectedWeight) {
-    return parseFloat(product.price);
+    return parseFloat(product.price || "0");
   }
   
+  // Use dynamic property access with template literal to simplify code and catch all cases
+  const priceKey = `price${selectedWeight}` as keyof Product;
+  if (product[priceKey]) {
+    // If we found a matching price field, use it
+    return parseFloat(product[priceKey] as string);
+  }
+  
+  // Manual specific checks for common weights as fallback
   if (selectedWeight === "2mg" && product.price2mg) {
     return parseFloat(product.price2mg);
   } else if (selectedWeight === "5mg" && product.price5mg) {
@@ -42,15 +50,28 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
     return parseFloat(product.price15mg);
   } else if (selectedWeight === "20mg" && product.price20mg) {
     return parseFloat(product.price20mg);
-  } else if (selectedWeight === "750mg" && product.price750mg) {
-    return parseFloat(product.price750mg);
+  } else if (selectedWeight === "30mg" && product.price30mg) {
+    return parseFloat(product.price30mg);
   } else if (selectedWeight === "100mg" && product.price100mg) {
     return parseFloat(product.price100mg);
+  } else if (selectedWeight === "300mg" && product.price300mg) {
+    return parseFloat(product.price300mg);
   } else if (selectedWeight === "500mg" && product.price500mg) {
     return parseFloat(product.price500mg);
+  } else if (selectedWeight === "600mg" && product.price600mg) {
+    return parseFloat(product.price600mg);
+  } else if (selectedWeight === "750mg" && product.price750mg) {
+    return parseFloat(product.price750mg);
+  } else if (selectedWeight === "1mg" && product.price1mg) {
+    return parseFloat(product.price1mg);
+  } else if (selectedWeight === "1500mg" && product.price1500mg) {
+    return parseFloat(product.price1500mg);
+  } else if (selectedWeight === "5000mg" && product.price5000mg) {
+    return parseFloat(product.price5000mg);
   }
   
-  return parseFloat(product.price);
+  // Fallback to the default price if no specific price field found
+  return parseFloat(product.price || "0");
 }
 
 // Helper function removed - directly using fetch in the endpoint

@@ -13,41 +13,48 @@ import { Product } from '@shared/schema'
 // Helper function to get the correct price based on selected weight
 function getPriceByWeight(product: Product, selectedWeight: string | null): number {
   if (!selectedWeight) {
-    return parseFloat(product.price);
+    return parseFloat(product.price || "0");
   }
   
-  // Use switch statement for better readability
+  // Try to use the dynamic property access first
+  const priceKey = `price${selectedWeight}` as keyof Product;
+  if (product[priceKey]) {
+    // If we found a matching price field, use it
+    return parseFloat(product[priceKey] as string);
+  }
+  
+  // Fall back to the switch case if dynamic property access doesn't work
   switch(selectedWeight) {
     case "1mg":
-      return product.price1mg ? parseFloat(product.price1mg) : parseFloat(product.price);
+      return product.price1mg ? parseFloat(product.price1mg) : parseFloat(product.price || "0");
     case "2mg":
-      return product.price2mg ? parseFloat(product.price2mg) : parseFloat(product.price);
+      return product.price2mg ? parseFloat(product.price2mg) : parseFloat(product.price || "0");
     case "5mg":
-      return product.price5mg ? parseFloat(product.price5mg) : parseFloat(product.price);
+      return product.price5mg ? parseFloat(product.price5mg) : parseFloat(product.price || "0");
     case "10mg":
-      return product.price10mg ? parseFloat(product.price10mg) : parseFloat(product.price);
+      return product.price10mg ? parseFloat(product.price10mg) : parseFloat(product.price || "0");
     case "15mg":
-      return product.price15mg ? parseFloat(product.price15mg) : parseFloat(product.price);
+      return product.price15mg ? parseFloat(product.price15mg) : parseFloat(product.price || "0");
     case "20mg":
-      return product.price20mg ? parseFloat(product.price20mg) : parseFloat(product.price);
+      return product.price20mg ? parseFloat(product.price20mg) : parseFloat(product.price || "0");
     case "30mg":
-      return product.price30mg ? parseFloat(product.price30mg) : parseFloat(product.price);
+      return product.price30mg ? parseFloat(product.price30mg) : parseFloat(product.price || "0");
     case "100mg":
-      return product.price100mg ? parseFloat(product.price100mg) : parseFloat(product.price);
+      return product.price100mg ? parseFloat(product.price100mg) : parseFloat(product.price || "0");
     case "300mg":
-      return product.price300mg ? parseFloat(product.price300mg) : parseFloat(product.price);
+      return product.price300mg ? parseFloat(product.price300mg) : parseFloat(product.price || "0");
     case "500mg":
-      return product.price500mg ? parseFloat(product.price500mg) : parseFloat(product.price);
+      return product.price500mg ? parseFloat(product.price500mg) : parseFloat(product.price || "0");
     case "600mg":
-      return product.price600mg ? parseFloat(product.price600mg) : parseFloat(product.price);
+      return product.price600mg ? parseFloat(product.price600mg) : parseFloat(product.price || "0");
     case "750mg":
-      return product.price750mg ? parseFloat(product.price750mg) : parseFloat(product.price);
+      return product.price750mg ? parseFloat(product.price750mg) : parseFloat(product.price || "0");
     case "1500mg":
-      return product.price1500mg ? parseFloat(product.price1500mg) : parseFloat(product.price);
+      return product.price1500mg ? parseFloat(product.price1500mg) : parseFloat(product.price || "0");
     case "5000mg":
-      return product.price5000mg ? parseFloat(product.price5000mg) : parseFloat(product.price);
+      return product.price5000mg ? parseFloat(product.price5000mg) : parseFloat(product.price || "0");
     default:
-      return parseFloat(product.price);
+      return parseFloat(product.price || "0");
   }
 }
 

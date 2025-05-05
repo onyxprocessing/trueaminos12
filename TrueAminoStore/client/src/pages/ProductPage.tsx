@@ -268,7 +268,14 @@ const MolecularFormula: React.FC<{ formula: string }> = ({ formula }) => {
 
 // Get current price based on selected weight - moved outside the component body as a pure function
 function getPriceByWeightExternal(product: Product, weight: string): number {
-  // Use switch statement for better readability and easier maintenance
+  // Try to use the dynamic property access first for more maintainable code
+  const priceKey = `price${weight}` as keyof typeof product;
+  if (product[priceKey]) {
+    // If we found a matching price field, use it
+    return parseFloat(product[priceKey] as string);
+  }
+  
+  // Fallback to the switch statement to ensure all cases are covered
   switch(weight) {
     case "1mg":
       return product.price1mg ? parseFloat(product.price1mg) : parseFloat(product.price || "0");
