@@ -737,6 +737,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Affiliate code validation endpoint
+  app.post('/api/affiliate-code/validate', async (req: Request, res: Response) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({
+          success: false,
+          message: 'No affiliate code provided'
+        });
+      }
+      
+      console.log('Validating affiliate code:', code);
+      
+      const validationResult = await validateAffiliateCode(code);
+      
+      if (validationResult.valid) {
+        // If code is valid, associate it with the session
+        await addAffiliateCodeToSession(req.session.id, validationResult.code);
+        
+        return res.json({
+          success: true,
+          message: `Discount code "${validationResult.code}" applied successfully for ${validationResult.discount}% off`,
+          data: validationResult
+        });
+      } else {
+        return res.json({
+          success: false,
+          message: 'Invalid discount code. Please try another code.',
+          data: validationResult
+        });
+      }
+    } catch (error: any) {
+      console.error('Error validating affiliate code:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error validating affiliate code',
+        error: error.message
+      });
+    }
+  });
+
   // Add a direct Airtable endpoint specifically for creating records with test field
   app.post('/api/airtable/direct-order', async (req: Request, res: Response) => {
     try {
