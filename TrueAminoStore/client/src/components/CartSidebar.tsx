@@ -41,6 +41,8 @@ function getPriceByWeight(product: Product, selectedWeight: string | null): numb
       return product.price750mg ? parseFloat(product.price750mg) : parseFloat(product.price);
     case "1500mg":
       return product.price1500mg ? parseFloat(product.price1500mg) : parseFloat(product.price);
+    case "5000mg":
+      return product.price5000mg ? parseFloat(product.price5000mg) : parseFloat(product.price);
     default:
       return parseFloat(product.price);
   }
