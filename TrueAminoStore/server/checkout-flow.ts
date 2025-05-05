@@ -668,10 +668,15 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
     // Create orders in the database or use fallback IDs
     let orderIds: number[] = [];
     try {
+      // Get discount info from session
+      const discountInfo = (req.session as any).discountInfo || null;
+      console.log('Applying discount info to order:', discountInfo);
+
       orderIds = await createOrderWithPaymentMethod(
         req.session.id, 
         paymentMethod, 
-        paymentDetails
+        paymentDetails,
+        discountInfo
       );
       console.log('Orders created successfully with IDs:', orderIds);
       
@@ -697,7 +702,8 @@ export async function handlePaymentConfirmation(req: Request, res: Response) {
             salesPrice: paymentDetails.amount || await calculateTotalWithShipping(req.session.id),
             productId: 0,
             shipping: customer.shipping || 'Standard Shipping',
-            payment: paymentMethod
+            payment: paymentMethod,
+            affiliateCode: (req.session as any).discountInfo?.code || ''
           };
           
           console.log(`📧 Sending order confirmation email to ${customer.email}`);

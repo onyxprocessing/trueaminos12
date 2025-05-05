@@ -21,7 +21,11 @@ import { generateUniqueOrderId } from './airtable-orders';
 export async function createOrderWithPaymentMethod(
   sessionId: string,
   paymentMethod: string,
-  paymentDetails?: any
+  paymentDetails?: any,
+  discountInfo?: {
+    code: string;
+    percentage: number;
+  } | null
 ): Promise<number[]> {
   try {
     // 1. Get customer information
@@ -91,7 +95,8 @@ export async function createOrderWithPaymentMethod(
         payment: paymentDetailsString,
         email: customer.email || '',
         phone: customer.phone || '',
-        product: item.product.name
+        product: item.product.name,
+        affiliateCode: discountInfo?.code || ''
       });
     }
 

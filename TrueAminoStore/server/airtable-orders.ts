@@ -127,7 +127,11 @@ export async function createOrdersFromCart(
     phone?: string;
   },
   shipping: string,
-  paymentDetails: string
+  paymentDetails: string,
+  discountInfo?: {
+    code: string;
+    percentage: number;
+  } | null
 ): Promise<string[]> {
   const orderIds: string[] = [];
   const orderId = generateUniqueOrderId(); // Generate one unique order ID for all items
@@ -154,7 +158,7 @@ export async function createOrdersFromCart(
         product: item.product.name,
         shipping,
         payment: paymentDetails,
-        affiliateCode: ''
+        affiliateCode: discountInfo?.code || ''
       };
       
       // Save first order data for email confirmation
