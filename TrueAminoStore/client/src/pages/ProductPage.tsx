@@ -296,6 +296,8 @@ function getPriceByWeightExternal(product: Product, weight: string): number {
       return product.price750mg ? parseFloat(product.price750mg) : parseFloat(product.price || "0");
     case "1500mg":
       return product.price1500mg ? parseFloat(product.price1500mg) : parseFloat(product.price || "0");
+    case "5000mg":
+      return product.price5000mg ? parseFloat(product.price5000mg) : parseFloat(product.price || "0");
     default:
       // Default fallback to the generic price
       return parseFloat(product.price || "0");
@@ -362,7 +364,7 @@ function ProductPage() {
       // Only set weight if we have options
       if (options && options.length > 0) {
         // Define weight priority from smallest to largest
-        const weightPriority = ["1mg", "2mg", "5mg", "10mg", "15mg", "20mg", "30mg", "100mg", "300mg", "500mg", "600mg", "750mg", "1500mg"];
+        const weightPriority = ["1mg", "2mg", "5mg", "10mg", "15mg", "20mg", "30mg", "100mg", "300mg", "500mg", "600mg", "750mg", "1500mg", "5000mg"];
         
         // Find the smallest available weight according to priority
         let selectedOption = options[0]; // Default to first option

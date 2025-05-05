@@ -111,6 +111,7 @@ export interface Product {
   price300mg?: string; // Price specific to 300mg weight
   price600mg?: string; // Price specific to 600mg weight
   price1500mg?: string; // Price specific to 1500mg weight
+  price5000mg?: string; // Price specific to 5000mg weight
   categoryId: number;
   imageUrl: string | null;
   image2Url?: string | null;
