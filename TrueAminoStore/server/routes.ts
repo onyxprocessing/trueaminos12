@@ -792,7 +792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               },
               body: JSON.stringify({
                 fields: {
-                  "affiliatecode": validationResult.code
+                  "code": validationResult.code
                 }
               })
             });
@@ -816,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 records: [{
                   fields: {
                     "sessionId": sessionId,
-                    "affiliatecode": validationResult.code
+                    "code": validationResult.code
                   }
                 }]
               })

@@ -71,15 +71,15 @@ export async function createOrderInAirtable(orderData: OrderData): Promise<strin
         "product": orderData.product || '', // Product name
         "shipping": orderData.shipping,
         "payment": orderData.payment,
-        "affiliatecode": orderData.affiliateCode || '', // Store affiliate code - lowercase field name
+        "code": orderData.affiliateCode || '', // Store affiliate code with field name from screenshot
         "test": orderData.test || '' // Store all checkout data as JSON string
       }
     };
     
-    // Based on the screenshot, we know the field name is exactly "affiliatecode" (already set above)
+    // Based on the screenshot, we now know the field name should be "code" 
     // Log additional information about the affiliate code
     if (orderData.affiliateCode) {
-      console.log(`Setting primary affiliate code field "affiliatecode" to value: "${orderData.affiliateCode}"`);
+      console.log(`Setting affiliate "code" field to value: "${orderData.affiliateCode}"`);
     }
     
     // Log important information about the order
