@@ -10,6 +10,7 @@ import path from 'path';
 import { recordPaymentToAirtable } from './airtable-orders';
 import { recordPaymentToDatabase } from './db-orders';
 import { getAllOrders, getOrderById, countOrders, searchOrders } from './db-query';
+import { validateAffiliateCode, addAffiliateCodeToSession } from './affiliate-codes';
 import { createPaymentIntent, confirmPayment } from './stripe-controller';
 
 // Define a new type that extends Express Request to include session
@@ -360,6 +361,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error clearing cart:", error);
       res.status(500).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Affiliate code validation endpoint
+  app.post("/api/affiliate-code/validate", async (req: Request, res: Response) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Affiliate code is required" 
+        });
+      }
+      
+      const result = await validateAffiliateCode(code);
+      
+      if (result.valid) {
+        // If the code is valid, store it in the session
+        if (req.session && req.session.id) {
+          await addAffiliateCodeToSession(req.session.id, result.code);
+        }
+        
+        return res.status(200).json({ 
+          success: true, 
+          message: `Valid affiliate code! ${result.discount}% discount applied.`,
+          data: {
+            code: result.code,
+            discount: result.discount,
+            name: result.name
+          }
+        });
+      } else {
+        return res.status(200).json({ 
+          success: false, 
+          message: "Invalid affiliate code",
+          data: {
+            code: result.code,
+            discount: 0,
+            name: ""
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error validating affiliate code:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Error validating affiliate code" 
+      });
     }
   });
   
