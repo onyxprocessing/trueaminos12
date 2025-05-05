@@ -754,8 +754,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validationResult = await validateAffiliateCode(code);
       
       if (validationResult.valid) {
-        // If code is valid, associate it with the session
-        await addAffiliateCodeToSession(req.session.id, validationResult.code);
+        // If code is valid, directly update Airtable with the affiliate code
+        const airtableApiKey = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d";
+        const airtableBaseId = "app3XDDBbU0ZZDBiY";
+        const tableId = "tblhjfzTX2zjf22s1"; // Cart sessions table ID
+        const sessionId = req.session.id;
+        
+        console.log(`DIRECT API CALL: Adding affiliate code ${validationResult.code} to session ${sessionId}`);
+        
+        // First, check if session record exists
+        const searchResponse = await fetch(`https://api.airtable.com/v0/${airtableBaseId}/${tableId}?filterByFormula=%7BsessionId%7D%3D%22${encodeURIComponent(sessionId)}%22`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${airtableApiKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!searchResponse.ok) {
+          console.error('Error searching for session in Airtable:', await searchResponse.text());
+        } else {
+          const searchData = await searchResponse.json();
+          console.log('Search results for session in Airtable:', JSON.stringify(searchData, null, 2));
+          
+          let updateSuccess = false;
+          
+          if (searchData.records && searchData.records.length > 0) {
+            // Session record exists, update it
+            const recordId = searchData.records[0].id;
+            
+            // Update specifically using "affiliatecode" field
+            const updateResponse = await fetch(`https://api.airtable.com/v0/${airtableBaseId}/${tableId}/${recordId}`, {
+              method: 'PATCH',
+              headers: {
+                'Authorization': `Bearer ${airtableApiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                fields: {
+                  "affiliatecode": validationResult.code
+                }
+              })
+            });
+            
+            if (updateResponse.ok) {
+              const updateData = await updateResponse.json();
+              console.log('Successfully updated affiliate code in Airtable:', JSON.stringify(updateData, null, 2));
+              updateSuccess = true;
+            } else {
+              console.error('Error updating affiliate code in Airtable:', await updateResponse.text());
+            }
+          } else {
+            // Create new session record with affiliate code
+            const createResponse = await fetch(`https://api.airtable.com/v0/${airtableBaseId}/${tableId}`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${airtableApiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                records: [{
+                  fields: {
+                    "sessionId": sessionId,
+                    "affiliatecode": validationResult.code
+                  }
+                }]
+              })
+            });
+            
+            if (createResponse.ok) {
+              const createData = await createResponse.json();
+              console.log('Successfully created new record with affiliate code in Airtable:', JSON.stringify(createData, null, 2));
+              updateSuccess = true;
+            } else {
+              console.error('Error creating new record with affiliate code in Airtable:', await createResponse.text());
+            }
+          }
+          
+          if (!updateSuccess) {
+            console.error('Failed to update Airtable with affiliate code directly. Trying normal method...');
+            await addAffiliateCodeToSession(req.session.id, validationResult.code);
+          }
+        }
+        
+        // Store in session for local reference
+        if (!req.session.discountInfo) {
+          req.session.discountInfo = {
+            code: validationResult.code,
+            percentage: validationResult.discount
+          };
+        }
         
         return res.json({
           success: true,
