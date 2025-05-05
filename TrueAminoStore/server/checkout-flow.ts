@@ -401,7 +401,8 @@ export async function handlePaymentMethod(req: Request, res: Response) {
     
     // Store discount information in session if provided
     if (discountData && discountData.code) {
-      req.session.discountInfo = {
+      // Use type assertion to help TypeScript understand our custom session properties
+      (req.session as any).discountInfo = {
         code: discountData.code,
         percentage: discountData.percentage || 0
       };
@@ -478,9 +479,10 @@ export async function handlePaymentMethod(req: Request, res: Response) {
     // Get discount info (if any)
     let discountPercentage = 0;
     let discountCode = '';
-    if (req.session.discountInfo) {
-      discountPercentage = req.session.discountInfo.percentage || 0;
-      discountCode = req.session.discountInfo.code || '';
+    const sessionWithDiscount = req.session as any;
+    if (sessionWithDiscount.discountInfo) {
+      discountPercentage = sessionWithDiscount.discountInfo.percentage || 0;
+      discountCode = sessionWithDiscount.discountInfo.code || '';
     }
     
     // Calculate discount amount
@@ -805,8 +807,9 @@ async function calculateTotalWithShipping(sessionId: string): Promise<number> {
     }
     
     // Check for affiliate/discount code in session
-    if (session && session.discountInfo) {
-      discountPercentage = session.discountInfo.percentage || 0;
+    const sessionWithDiscount = session as any;
+    if (session && sessionWithDiscount.discountInfo) {
+      discountPercentage = sessionWithDiscount.discountInfo.percentage || 0;
       console.log(`Found discount in session: ${discountPercentage}%`);
     } else {
       // Try to get affiliate code from Airtable if not in session
