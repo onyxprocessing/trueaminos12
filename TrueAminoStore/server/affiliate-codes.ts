@@ -9,9 +9,14 @@ interface AirtableAffiliateCode {
   id: string;
   fields: {
     code?: string;
+    Code?: string;  // Added capital C version
     discount?: number;
     name?: string;
     active?: boolean;
+    Email?: string;  // Added other fields found in Airtable
+    "First Name"?: string;
+    "Last Name"?: string;
+    Password?: string;
   };
   createdTime: string;
 }
@@ -75,17 +80,13 @@ export async function validateAffiliateCode(code: string): Promise<AffiliateCode
       
       // Check multiple potential field names due to inconsistency in Airtable
       // Based on direct API inspection, the correct field name is "Code" with capital C
-      const recordCode = (
-        fields.Code || // This is the actual field name in Airtable (capital C)
-        fields.code || 
-        fields['Affiliate Code'] || 
-        fields['affiliate code'] || 
-        fields.affiliateCode || 
-        fields.affiliatecode || 
-        ''
-      )?.toUpperCase().trim();
+      const recordCodeLower = fields.code?.toUpperCase().trim();
+      const recordCodeUpper = fields.Code?.toUpperCase().trim();  // This is the actual field name in Airtable (capital C)
       
-      console.log(`Comparing code: "${formattedCode}" with Airtable record code: "${recordCode}"`);
+      // Use either the lowercase or uppercase version, prioritizing "Code" (with capital C)
+      const recordCode = recordCodeUpper || recordCodeLower || '';
+      
+      console.log(`Comparing code: "${formattedCode}" with Airtable record code: "${recordCode}" (from Code: "${recordCodeUpper}" or code: "${recordCodeLower}")`);
       
       const isActive = fields.active !== false; // undefined or true means active
       return recordCode === formattedCode && isActive;
@@ -96,15 +97,18 @@ export async function validateAffiliateCode(code: string): Promise<AffiliateCode
       const fields = matchingCode.fields as Record<string, any>;
       
       // Get the code and discount with appropriate fallbacks
-      const codeValue = fields.code || 
-                        fields.Code || 
+      // Prioritize the "Code" field with capital C since it's the correct field name in Airtable
+      const codeValue = fields.Code || 
+                        fields.code || 
                         fields['Affiliate Code'] || 
                         fields['affiliate code'] || 
                         fields.affiliateCode || 
                         fields.affiliatecode || 
                         formattedCode;
       
-      const discountValue = fields.discount || 
+      // Looking at the debug output, it appears the field name is "discount" (lowercase)
+      // but let's check all variations to be safe
+      const discountValue = fields.discount || // This appears to be the correct field name
                            fields.Discount || 
                            fields['Discount Percentage'] || 
                            fields['discount percentage'] || 
@@ -208,13 +212,15 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       console.log('Available field names:', fieldNames);
       
       // Look for affiliate code field name (case insensitive)
-      const affiliateCodeFieldName = fieldNames.find(
-        name => name.toLowerCase() === 'code' || name.toLowerCase() === 'affiliatecode' || 
-        name.toLowerCase() === 'affiliate_code' || name.toLowerCase() === 'affiliatediscount' || 
-        name.toLowerCase() === 'affiliate code'
-      );
+      // Prioritize the field "Code" (with capital C) as it's the correct field name in Airtable
+      const affiliateCodeFieldName = fieldNames.find(name => name === 'Code') || 
+        fieldNames.find(
+          name => name.toLowerCase() === 'code' || name.toLowerCase() === 'affiliatecode' || 
+          name.toLowerCase() === 'affiliate_code' || name.toLowerCase() === 'affiliatediscount' || 
+          name.toLowerCase() === 'affiliate code'
+        );
       
-      console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "affiliatecode"');
+      console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "Code"');
       
       // Based on direct API inspection, the field name in Airtable is "Code" with capital C
       // Always use explicit field names that match exactly what's in Airtable
@@ -242,7 +248,8 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
         // Try with multiple variations to cover all possibilities
         const updateFieldsAllVariations = {
           fields: {
-            "code": affiliateCode, // Based on our latest information
+            "Code": affiliateCode, // Correct field name with capital C
+            "code": affiliateCode, // Lowercase version
             "affiliatecode": affiliateCode, // Original field name
             "affiliate code": affiliateCode, // With space
             "affiliateCode": affiliateCode, // CamelCase
