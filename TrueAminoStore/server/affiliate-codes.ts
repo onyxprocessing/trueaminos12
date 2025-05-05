@@ -70,17 +70,59 @@ export async function validateAffiliateCode(code: string): Promise<AffiliateCode
     
     // Find the matching code from the results
     const matchingCode = data.records.find(record => {
-      const recordCode = record.fields.code?.toUpperCase().trim();
-      const isActive = record.fields.active !== false; // undefined or true means active
+      // Use type casting to access fields with various potential names
+      const fields = record.fields as Record<string, any>;
+      
+      // Check multiple potential field names due to inconsistency in Airtable
+      // Based on direct API inspection, the correct field name is "Code" with capital C
+      const recordCode = (
+        fields.Code || // This is the actual field name in Airtable (capital C)
+        fields.code || 
+        fields['Affiliate Code'] || 
+        fields['affiliate code'] || 
+        fields.affiliateCode || 
+        fields.affiliatecode || 
+        ''
+      )?.toUpperCase().trim();
+      
+      console.log(`Comparing code: "${formattedCode}" with Airtable record code: "${recordCode}"`);
+      
+      const isActive = fields.active !== false; // undefined or true means active
       return recordCode === formattedCode && isActive;
     });
     
     if (matchingCode) {
+      // Cast fields to any type to handle various field names
+      const fields = matchingCode.fields as Record<string, any>;
+      
+      // Get the code and discount with appropriate fallbacks
+      const codeValue = fields.code || 
+                        fields.Code || 
+                        fields['Affiliate Code'] || 
+                        fields['affiliate code'] || 
+                        fields.affiliateCode || 
+                        fields.affiliatecode || 
+                        formattedCode;
+      
+      const discountValue = fields.discount || 
+                           fields.Discount || 
+                           fields['Discount Percentage'] || 
+                           fields['discount percentage'] || 
+                           0;
+      
+      const nameValue = fields.name || 
+                       fields.Name || 
+                       fields['Affiliate Name'] || 
+                       fields['affiliate name'] || 
+                       '';
+      
+      console.log(`Found matching code: "${codeValue}" with discount: ${discountValue}%`);
+      
       return {
         id: matchingCode.id,
-        code: matchingCode.fields.code || formattedCode,
-        discount: matchingCode.fields.discount || 0,
-        name: matchingCode.fields.name || '',
+        code: codeValue,
+        discount: discountValue,
+        name: nameValue,
         valid: true
       };
     }
@@ -174,11 +216,11 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       
       console.log('Found field name for affiliate code:', affiliateCodeFieldName || 'Not found, using default "affiliatecode"');
       
-      // Based on user feedback, the exact field name in Airtable is "code"
+      // Based on direct API inspection, the field name in Airtable is "Code" with capital C
       // Always use explicit field names that match exactly what's in Airtable
       const updateFields = {
         fields: {
-          code: affiliateCode // Use "code" as the field name per user's request
+          Code: affiliateCode // Use "Code" (with capital C) as the field name
         }
       };
       
@@ -234,12 +276,12 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       // Create a new record
       console.log(`No existing record found, creating new record with sessionId: ${sessionId}, affiliateCode: ${affiliateCode}`);
       
-      // Create a payload with the field name "code" based on user feedback
+      // Create a payload with the field name "Code" with capital C
       const createPayload = {
         records: [{
           fields: {
             'sessionId': sessionId,
-            'code': affiliateCode  // Use "code" as the field name per user's request
+            'Code': affiliateCode  // Use "Code" (with capital C) as the field name
           }
         }]
       };
