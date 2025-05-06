@@ -22,6 +22,7 @@ const CertificationsPage = lazy(() => import("@/pages/CertificationsPage"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("@/pages/TermsOfService"));
 const ShippingPolicy = lazy(() => import("@/pages/ShippingPolicy"));
+const ReturnPolicy = lazy(() => import("@/pages/ReturnPolicy"));
 const AdminOrdersPage = lazy(() => import("@/pages/AdminOrdersPage"));
 const AdminOrderDetailPage = lazy(() => import("@/pages/AdminOrderDetailPage"));
 const NotFound = lazy(() => import("@/pages/not-found"));

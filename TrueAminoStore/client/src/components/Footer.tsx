@@ -83,6 +83,7 @@ const Footer: React.FC = () => {
             <Link href="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition">Privacy Policy</Link>
             <Link href="/terms-of-service" className="text-gray-400 hover:text-white text-sm transition">Terms of Service</Link>
             <Link href="/shipping-policy" className="text-gray-400 hover:text-white text-sm transition">Shipping Policy</Link>
+            <Link href="/return-policy" className="text-gray-400 hover:text-white text-sm transition">Return Policy</Link>
           </div>
         </div>
       </div>
