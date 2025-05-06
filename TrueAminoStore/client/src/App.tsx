@@ -120,6 +120,12 @@ function Router() {
         </Suspense>
       </Route>
       
+      <Route path="/return-policy">
+        <Suspense fallback={<PageLoader />}>
+          <ReturnPolicy />
+        </Suspense>
+      </Route>
+      
       <Route path="/stripe-test">
         <Suspense fallback={<PageLoader />}>
           {React.createElement(React.lazy(() => import("./pages/StripeTest")))}

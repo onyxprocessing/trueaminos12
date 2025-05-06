@@ -55,7 +55,7 @@ export default function TermsOfServicePage() {
             
             <h2 className="text-xl font-semibold mt-8 mb-4">Shipping and Returns</h2>
             <p>
-              Please refer to our Shipping Policy for information on shipping methods, delivery times, and costs. For our return and refund policy, please see our Returns Policy. By placing an order, you agree to these policies.
+              Please refer to our <a href="/shipping-policy" className="text-blue-600 hover:underline">Shipping Policy</a> for information on shipping methods, delivery times, and costs. For our return and refund policy, please see our <a href="/return-policy" className="text-blue-600 hover:underline">Return Policy</a>. By placing an order, you agree to these policies.
             </p>
             
             <h2 className="text-xl font-semibold mt-8 mb-4">Intellectual Property</h2>
