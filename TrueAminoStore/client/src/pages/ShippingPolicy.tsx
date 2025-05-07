@@ -50,7 +50,7 @@ export default function ShippingPolicyPage() {
                 <tr>
                   <td className="p-3 border-b">Standard Shipping</td>
                   <td className="p-3 border-b">3-5 business days</td>
-                  <td className="p-3 border-b">$7.95 (Free on orders over $175)</td>
+                  <td className="p-3 border-b">$9.99 (Free on orders over $175)</td>
                 </tr>
                 <tr>
                   <td className="p-3 border-b">Expedited Shipping</td>

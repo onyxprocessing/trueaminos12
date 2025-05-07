@@ -40,7 +40,7 @@ import {
 
 // Define shipping options
 const SHIPPING_OPTIONS = [
-  { id: 'standard', name: 'Standard Shipping via USPS', price: 15.00, days: '1-2 business days' },
+  { id: 'standard', name: 'Standard Shipping via USPS', price: 9.99, days: '1-2 business days' },
   { id: 'express', name: 'Express Shipping', price: 25.00, days: '1-2 business days' },
 ];
 

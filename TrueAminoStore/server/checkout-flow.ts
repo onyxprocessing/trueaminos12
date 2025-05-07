@@ -225,13 +225,13 @@ export async function handleShippingInfo(req: Request, res: Response) {
       console.log('Suggested address:', addressValidationDetails.suggestedAddress);
     }
     
-    // Use our flat rate shipping pricing model
-    // Standard rates: $15 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
+    // Use our flat rate shipping pricing model: $9.99 flat rate for standard shipping
+    // Standard rates: $9.99 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
     const cartItems = await storage.getCartItems(req.session.id);
     const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
     
-    // Use flat rate shipping: $15 for 1-5 items, $25 for 6+ items
-    const shippingPrice = itemCount <= 5 ? 15 : 25;
+    // Use flat rate shipping: $9.99 for 1-5 items, $25 for 6+ items
+    const shippingPrice = itemCount <= 5 ? 9.99 : 25;
     const deliveryTime = '1-2 business days';
     
     // Create shipping details
@@ -816,7 +816,7 @@ async function calculateTotalWithShipping(sessionId: string): Promise<number> {
     } else {
       // Fallback to default shipping cost based on number of items
       const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-      shippingCost = itemCount <= 5 ? 15 : 25;
+      shippingCost = itemCount <= 5 ? 9.99 : 25;
     }
     
     // Check for affiliate/discount code in session
@@ -871,7 +871,7 @@ async function calculateTotalWithShipping(sessionId: string): Promise<number> {
   } catch (error) {
     console.error('Error getting shipping cost or discount:', error);
     // Default to basic shipping cost
-    shippingCost = 15;
+    shippingCost = 9.99;
   }
   
   // Calculate discount amount
