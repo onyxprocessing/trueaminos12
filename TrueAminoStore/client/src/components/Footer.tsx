@@ -15,10 +15,10 @@ const Footer: React.FC = () => {
               Providing high-quality research peptides and SARMs for scientific research purposes.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition">
+              <a href="https://www.facebook.com/profile.php?id=61575847836967" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
                 <Facebook className="w-6 h-6" />
               </a>
-              <a href="https://www.instagram.com/trueaminos/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
+              <a href="https://www.instagram.com/trueaminosusa_/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition">
                 <Instagram className="w-6 h-6" />
               </a>
               <a href="#" className="text-gray-400 hover:text-white transition">
