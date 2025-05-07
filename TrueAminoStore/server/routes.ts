@@ -686,8 +686,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Total item quantity: ${totalQuantity}`);
       
       // Determine flat rate shipping based on item quantity
-      // $15 for 1-5 items, $25 for more than 5 items
-      const shippingPrice = totalQuantity > 5 ? 25.00 : 15.00;
+      // $9.99 for 1-5 items, $25 for more than 5 items
+      const shippingPrice = totalQuantity > 5 ? 25.00 : 9.99;
       
       // Create a single flat rate shipping option
       const flatRateShipping = {

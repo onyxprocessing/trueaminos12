@@ -1,7 +1,7 @@
 /**
  * Shipping rates API client
  * This module provides functions for getting flat rate shipping based on cart quantity
- * Standard rates: $15 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
+ * Standard rates: $9.99 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
  */
 
 import { apiRequest } from './queryClient';
@@ -22,7 +22,7 @@ export interface ShippingRateOption {
 
 /**
  * Get flat rate shipping based on cart quantity
- * Standard rates: $15 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
+ * Standard rates: $9.99 for 1-5 items, $25 for 6+ items (USPS 1-2 business days)
  * @param address Street address (needed for order processing)
  * @param city City (needed for order processing)
  * @param state State/province (needed for order processing)

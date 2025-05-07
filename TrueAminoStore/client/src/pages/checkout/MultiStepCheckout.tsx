@@ -947,7 +947,7 @@ const MultiStepCheckout: React.FC = () => {
         const defaultFlatRate = {
           id: 'usps-flat-rate',
           name: 'Standard Shipping via USPS',
-          price: 15.00,
+          price: 9.99,
           days: '1-2 business days',
           isFlatRate: true
         };
@@ -957,7 +957,7 @@ const MultiStepCheckout: React.FC = () => {
         
         toast({
           title: 'Standard Shipping Applied',
-          description: 'Standard shipping rate of $15.00 applied',
+          description: 'Standard shipping rate of $9.99 applied',
           variant: 'default'
         });
       }
@@ -967,7 +967,7 @@ const MultiStepCheckout: React.FC = () => {
       const defaultFlatRate = {
         id: 'usps-flat-rate',
         name: 'Standard Shipping via USPS',
-        price: 15.00,
+        price: 9.99,
         days: '1-2 business days',
         isFlatRate: true
       };
@@ -977,7 +977,7 @@ const MultiStepCheckout: React.FC = () => {
       
       toast({
         title: 'Standard Shipping Applied',
-        description: 'Standard shipping rate of $15.00 applied',
+        description: 'Standard shipping rate of $9.99 applied',
         variant: 'default'
       });
     } finally {
