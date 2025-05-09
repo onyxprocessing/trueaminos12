@@ -66,6 +66,7 @@ interface AirtableProductFields {
   slug?: string
   inStock?: boolean
   featured?: boolean
+  outofstock?: boolean // New field - "Out of Stock" checkbox in Airtable
   id?: number // Using the ID field from Airtable
 }
 
@@ -319,8 +320,9 @@ export async function fetchProducts(): Promise<Product[]> {
         image3Url: getImageUrlFromAirtable(record.fields.image3),
         weightOptions: record.fields.weights || record.fields.weightOptions || ["5mg", "10mg"],
         slug: record.fields.slug || `product-${record.id}`,
-        inStock: record.fields.inStock !== undefined ? record.fields.inStock : true,
-        featured: record.fields.featured || false
+        inStock: record.fields.outofstock === true ? false : (record.fields.inStock !== undefined ? record.fields.inStock : true),
+        featured: record.fields.featured || false,
+        outofstock: record.fields.outofstock || false // Add the outofstock field
       }
     })
   } catch (error) {
@@ -362,8 +364,9 @@ export async function fetchProductById(id: number): Promise<Product | null> {
       image3Url: getImageUrlFromAirtable(record.fields.image3),
       weightOptions: record.fields.weights || record.fields.weightOptions || ["5mg", "10mg"],
       slug: record.fields.slug || `product-${record.id}`,
-      inStock: record.fields.inStock !== undefined ? record.fields.inStock : true,
-      featured: record.fields.featured || false
+      inStock: record.fields.outofstock === true ? false : (record.fields.inStock !== undefined ? record.fields.inStock : true),
+      featured: record.fields.featured || false,
+      outofstock: record.fields.outofstock || false
     }
   } catch (error) {
     console.error(`Error fetching product with ID ${id}:`, error)
