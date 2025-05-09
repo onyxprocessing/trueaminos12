@@ -333,12 +333,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
 
           {/* Button */}
+          {product.outofstock && (
+            <div className="pt-1 mb-2">
+              <p className="text-amber-600 text-xs text-center font-medium">
+                * Extended shipping time: 10-15 days
+              </p>
+            </div>
+          )}
+          
           <div className="pt-2">
             <Button 
               variant="default"
               className="w-full bg-blue-500 hover:bg-blue-600 text-base font-semibold text-white py-5"
               onClick={handleAddToCart}
-              disabled={!product.inStock}
+              disabled={!product.inStock && !product.outofstock}
               aria-label={`Add ${product.name} to cart, ${selectedWeight}, quantity ${quantity}`}
             >
               ADD TO CART

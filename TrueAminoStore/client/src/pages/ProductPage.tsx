@@ -5,6 +5,7 @@ import Layout from '@/components/Layout'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AlertCircle } from 'lucide-react'
 import ProductCard from '@/components/ProductCard'
 import FDADisclaimer from '@/components/FDADisclaimer'
 import ProductSEO from '@/components/ProductSEO'
@@ -511,9 +512,21 @@ function ProductPage() {
                   <span className="text-sm text-gray-500">ORDER MORE, SAVE MORE</span>
                 </div>
                 
+                {product.outofstock && (
+                  <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded">
+                    <p className="text-amber-600 text-sm font-medium flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-2" /> 
+                      This item is temporarily out of stock
+                    </p>
+                    <p className="text-amber-600 text-xs mt-1">
+                      Orders can still be placed but will require 10-15 days for shipping rather than our standard 1-2 business day processing time.
+                    </p>
+                  </div>
+                )}
+                
                 <Button 
                   onClick={handleAddToCart}
-                  disabled={!product.inStock}
+                  disabled={!product.inStock && !product.outofstock}
                   size="lg"
                   className="w-full bg-blue-900 hover:bg-blue-800 text-white"
                 >
