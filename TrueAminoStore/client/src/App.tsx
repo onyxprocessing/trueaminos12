@@ -16,6 +16,7 @@ const Cart = lazy(() => import("@/pages/Cart"));
 const MultiStepCheckout = lazy(() => import("@/pages/checkout/MultiStepCheckout"));
 const SuccessOrderPage = lazy(() => import("@/pages/checkout/SuccessOrderPage"));
 const ProductsPage = lazy(() => import("@/pages/ProductsPage"));
+const SearchPage = lazy(() => import("@/pages/SearchPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const CertificationsPage = lazy(() => import("@/pages/CertificationsPage"));
@@ -93,6 +94,12 @@ function Router() {
       <Route path="/contact">
         <Suspense fallback={<PageLoader />}>
           <ContactPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/search">
+        <Suspense fallback={<PageLoader />}>
+          <SearchPage />
         </Suspense>
       </Route>
       
