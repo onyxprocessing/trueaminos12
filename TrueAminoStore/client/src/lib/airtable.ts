@@ -448,8 +448,9 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
       image3Url: image3Url,
       weightOptions: weightOptions,
       slug: slug,
-      inStock: record.fields.inStock !== undefined ? record.fields.inStock : true,
-      featured: record.fields.featured || false
+      inStock: record.fields.outofstock === true ? false : (record.fields.inStock !== undefined ? record.fields.inStock : true),
+      featured: record.fields.featured || false,
+      outofstock: record.fields.outofstock || false
     }
   } catch (error) {
     console.error(`Error fetching product with slug ${slug}:`, error)
@@ -513,8 +514,9 @@ export async function fetchProductsByCategory(categoryId: number): Promise<Produ
         image3Url: getImageUrlFromAirtable(record.fields.image3),
         weightOptions: record.fields.weights || record.fields.weightOptions || ["5mg", "10mg"],
         slug: record.fields.slug || `product-${record.id}`,
-        inStock: record.fields.inStock !== undefined ? record.fields.inStock : true,
-        featured: record.fields.featured || false
+        inStock: record.fields.outofstock === true ? false : (record.fields.inStock !== undefined ? record.fields.inStock : true),
+        featured: record.fields.featured || false,
+        outofstock: record.fields.outofstock || false
       };
     })
   } catch (error) {
@@ -570,8 +572,9 @@ export async function fetchFeaturedProducts(): Promise<Product[]> {
         image3Url: getImageUrlFromAirtable(record.fields.image3),
         weightOptions: weightOptions,
         slug: slug,
-        inStock: record.fields.inStock !== undefined ? record.fields.inStock : true,
-        featured: record.fields.featured || false
+        inStock: record.fields.outofstock === true ? false : (record.fields.inStock !== undefined ? record.fields.inStock : true),
+        featured: record.fields.featured || false,
+        outofstock: record.fields.outofstock || false
       };
     })
   } catch (error) {

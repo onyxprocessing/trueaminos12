@@ -229,10 +229,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
           
           {/* Out of stock overlay */}
-          {!product.inStock && (
+          {!product.inStock && !product.outofstock && (
             <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
               <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                 Out of Stock
+              </span>
+            </div>
+          )}
+          
+          {/* Temporarily out of stock but can still order */}
+          {product.outofstock && (
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+              <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                Temporarily Out of Stock
               </span>
             </div>
           )}
@@ -255,7 +264,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <Select
                 value={selectedWeight}
                 onValueChange={setSelectedWeight}
-                disabled={!product.inStock}
+                disabled={!product.inStock && !product.outofstock}
               >
                 <SelectTrigger 
                   className="w-full h-10 border border-gray-200 bg-gray-50 focus:ring-0 focus:ring-offset-0"
@@ -285,7 +294,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   size="icon"
                   className="h-10 w-10 bg-gray-400 hover:bg-gray-500 text-white rounded-r-none rounded-l-md border-0"
                   onClick={decreaseQuantity}
-                  disabled={!product.inStock || quantity <= 1}
+                  disabled={(!product.inStock && !product.outofstock) || quantity <= 1}
                   aria-label={`Decrease quantity for ${product.name}`}
                 >
                   <Minus className="h-3 w-3" />
@@ -304,7 +313,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   size="icon"
                   className="h-10 w-10 bg-blue-900 hover:bg-blue-950 text-white rounded-l-none rounded-r-md border-0"
                   onClick={increaseQuantity}
-                  disabled={!product.inStock}
+                  disabled={!product.inStock && !product.outofstock}
                   aria-label={`Increase quantity for ${product.name}`}
                 >
                   <Plus className="h-3 w-3" />

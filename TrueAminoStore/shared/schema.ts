@@ -21,6 +21,7 @@ export const products = pgTable("products", {
   slug: text("slug").notNull().unique(),
   inStock: boolean("in_stock").notNull().default(true),
   featured: boolean("featured").notNull().default(false),
+  outofstock: boolean("out_of_stock").default(false), // New field to mark if product is temporarily out of stock
 });
 
 // Cart items table (for memory storage only)
@@ -122,6 +123,7 @@ export interface Product {
   slug: string;
   inStock: boolean;
   featured: boolean;
+  outofstock?: boolean; // New field to indicate if product is out of stock but can still be ordered with extended shipping
 }
 
 export type InsertProduct = z.infer<typeof insertProductSchema>;
