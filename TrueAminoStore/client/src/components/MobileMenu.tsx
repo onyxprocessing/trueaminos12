@@ -98,6 +98,18 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
           </div>
           
           <a 
+            href="/blog" 
+            onClick={(e) => {
+              e.preventDefault();
+              handleLinkClick();
+              window.location.href = '/blog';
+            }}
+            className="py-2 font-medium text-lg border-b border-gray-100"
+          >
+            Blog
+          </a>
+          
+          <a 
             href="/about" 
             onClick={(e) => {
               e.preventDefault();
