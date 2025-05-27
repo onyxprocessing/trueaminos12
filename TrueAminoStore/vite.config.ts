@@ -8,8 +8,13 @@ import compression from 'vite-plugin-compression';
 
 // Define environment
 const isProd = process.env.NODE_ENV === "production";
+const isReplit = process.env.REPL_ID !== undefined;
 
 export default defineConfig({
+  define: {
+    __VITE_IS_PRODUCTION__: isProd,
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+  },
   plugins: [
     // Core React plugin with performance optimizations
     react({
@@ -248,8 +253,9 @@ export default defineConfig({
   server: {
     port: 5000,
     host: '0.0.0.0', // Required for Replit
-    hmr: {
-      overlay: true
+    hmr: isProd ? false : {
+      overlay: true,
+      port: 5000
     },
     watch: {
       usePolling: false,
