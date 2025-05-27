@@ -167,8 +167,8 @@ function Router() {
         </Suspense>
       </Route>
       
-      {/* Affiliate redirect route using /affiliates=code format */}
-      <Route path="/affiliates=:code">
+      {/* Affiliate redirect route using /affiliate/code format */}
+      <Route path="/affiliate/:code">
         <Suspense fallback={<PageLoader />}>
           <AffiliateRedirect />
         </Suspense>
