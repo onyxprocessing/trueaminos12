@@ -167,8 +167,8 @@ function Router() {
         </Suspense>
       </Route>
       
-      {/* Affiliate redirect route - catches any remaining single word paths */}
-      <Route path="/:code">
+      {/* Affiliate redirect route using /affiliates=code format */}
+      <Route path="/affiliates=:code">
         <Suspense fallback={<PageLoader />}>
           <AffiliateRedirect />
         </Suspense>

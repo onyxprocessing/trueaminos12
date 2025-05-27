@@ -3,6 +3,7 @@ import { useLocation, Link } from 'wouter';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/hooks/useCart';
+import { useAffiliateCode } from '@/hooks/useAffiliateCode';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
