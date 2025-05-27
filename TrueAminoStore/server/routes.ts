@@ -888,6 +888,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Affiliate URL validation endpoint for custom links like /jack, /mike, etc.
+  app.get('/api/affiliate/validate/:code', async (req: Request, res: Response) => {
+    try {
+      const { code } = req.params;
+      
+      if (!code) {
+        return res.status(400).json({
+          valid: false,
+          message: 'No affiliate code provided'
+        });
+      }
+      
+      console.log('Validating affiliate URL code:', code);
+      
+      const validationResult = await validateAffiliateCode(code);
+      
+      if (validationResult.valid) {
+        // Store in session for local reference
+        if (!req.session.discountInfo) {
+          req.session.discountInfo = {
+            code: validationResult.code,
+            percentage: validationResult.discount
+          };
+        }
+        
+        // Add to Airtable session tracking
+        await addAffiliateCodeToSession(req.session.id, validationResult.code);
+        
+        return res.json({
+          valid: true,
+          code: validationResult.code,
+          discount: validationResult.discount,
+          name: validationResult.name,
+          message: `Welcome! ${validationResult.discount}% discount applied with code ${validationResult.code}`
+        });
+      } else {
+        return res.json({
+          valid: false,
+          code: code,
+          discount: 0,
+          message: 'This affiliate link is not valid'
+        });
+      }
+    } catch (error: any) {
+      console.error('Error validating affiliate URL code:', error);
+      return res.status(500).json({
+        valid: false,
+        message: 'Error validating affiliate code',
+        error: error.message
+      });
+    }
+  });
+
   // Add a direct Airtable endpoint specifically for creating records with test field
   app.post('/api/airtable/direct-order', async (req: Request, res: Response) => {
     try {
