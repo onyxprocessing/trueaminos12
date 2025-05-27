@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react'
-import { Link } from 'wouter'
+import { Link, useLocation } from 'wouter'
 import { useQuery } from '@tanstack/react-query'
 import Layout from '@/components/Layout'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import ProductCard from '@/components/ProductCard'
 import CategoryCard from '@/components/CategoryCard'
 import FDADisclaimer from '@/components/FDADisclaimer'
 import Newsletter from '@/components/Newsletter'
+import { useAffiliateCode } from '@/hooks/useAffiliateCode'
 
 // Preload critical assets
 const preloadHeroAssets = () => {
@@ -27,6 +28,27 @@ const preloadHeroAssets = () => {
 }
 
 const Home: React.FC = () => {
+  const [location] = useLocation();
+  const { setAffiliateCode } = useAffiliateCode();
+
+  // Check for affiliate code in URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const affiliateCode = urlParams.get('ref') || urlParams.get('affiliate') || urlParams.get('code');
+    
+    if (affiliateCode) {
+      // Store the affiliate code automatically
+      setAffiliateCode(affiliateCode, 0); // Will be validated at checkout
+      
+      // Clean up the URL by removing the parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('ref');
+      newUrl.searchParams.delete('affiliate');
+      newUrl.searchParams.delete('code');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, [location, setAffiliateCode]);
+
   // Preload critical assets on component mount
   useEffect(() => {
     preloadHeroAssets();
