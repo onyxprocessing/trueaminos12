@@ -41,6 +41,7 @@ const Header: React.FC<HeaderProps> = ({ toggleCart, toggleSearch, toggleMobileM
                 </div>
               </div>
             </div>
+            <Link href="/blog" className="font-medium hover:text-primary transition">Blog</Link>
             <Link href="/about" className="font-medium hover:text-primary transition">About Us</Link>
             <Link href="/contact" className="font-medium hover:text-primary transition">Contact</Link>
           </nav>

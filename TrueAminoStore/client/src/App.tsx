@@ -17,6 +17,8 @@ const MultiStepCheckout = lazy(() => import("@/pages/checkout/MultiStepCheckout"
 const SuccessOrderPage = lazy(() => import("@/pages/checkout/SuccessOrderPage"));
 const ProductsPage = lazy(() => import("@/pages/ProductsPage"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
+const BlogPage = lazy(() => import("@/pages/BlogPage"));
+const BlogPostPage = lazy(() => import("@/pages/BlogPostPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const CertificationsPage = lazy(() => import("@/pages/CertificationsPage"));
@@ -100,6 +102,18 @@ function Router() {
       <Route path="/search">
         <Suspense fallback={<PageLoader />}>
           <SearchPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/blog">
+        <Suspense fallback={<PageLoader />}>
+          <BlogPage />
+        </Suspense>
+      </Route>
+      
+      <Route path="/blog/:slug">
+        <Suspense fallback={<PageLoader />}>
+          <BlogPostPage />
         </Suspense>
       </Route>
       
