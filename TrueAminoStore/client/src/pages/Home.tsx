@@ -1,20 +1,16 @@
-import React, { useEffect, useMemo, Suspense, lazy } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Link } from 'wouter'
 import { useQuery } from '@tanstack/react-query'
 import Layout from '@/components/Layout'
-// Lazily load non-critical components
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-// Import necessary icons directly to avoid lazy loading issues
 import { Shield, CheckCircle, Beaker, Truck, Clock, Phone, Search } from 'lucide-react'
 import { Product, Category } from '@shared/schema'
 import { apiRequest } from '@/lib/queryClient'
-
-// Components that can be lazy-loaded
-const ProductCard = lazy(() => import('@/components/ProductCard'))
-const CategoryCard = lazy(() => import('@/components/CategoryCard'))
-const FDADisclaimer = lazy(() => import('@/components/FDADisclaimer'))
-const Newsletter = lazy(() => import('@/components/Newsletter'))
+import ProductCard from '@/components/ProductCard'
+import CategoryCard from '@/components/CategoryCard'
+import FDADisclaimer from '@/components/FDADisclaimer'
+import Newsletter from '@/components/Newsletter'
 
 // Preload critical assets
 const preloadHeroAssets = () => {

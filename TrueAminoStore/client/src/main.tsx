@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { Suspense, lazy, useEffect, Fragment } from 'react';
+import { useEffect, Fragment } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import "./index.css";
 
@@ -54,8 +54,8 @@ function initPerformanceOptimizations() {
   }, 5000); // 5-second delay to prioritize initial render
 }
 
-// Lazy load main app component to reduce initial bundle size
-const App = lazy(() => import("./App"));
+// Import app component directly to prevent unnecessary loading screens
+import App from "./App";
 
 // Performance metrics tracking
 if (process.env.NODE_ENV === 'production') {
@@ -193,8 +193,6 @@ createRoot(document.getElementById("root")!).render(
       {/* Performance optimizations - Cache control */}
       <meta httpEquiv="Cache-Control" content="public, max-age=31536000, immutable" />
     </Helmet>
-    <Suspense fallback={<OptimizedLoadingIndicator />}>
-      <App />
-    </Suspense>
+    <App />
   </HelmetProvider>
 );
