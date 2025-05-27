@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/empty-toaster"; // Using empty toaster to disable notifications
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/hooks/useCart";
+import { AffiliateProvider } from "@/hooks/useAffiliateCode";
 
 // Only import the Home component directly for fast initial load - it's our landing page
 import Home from "@/pages/Home";
@@ -28,6 +29,7 @@ const ShippingPolicy = lazy(() => import("@/pages/ShippingPolicy"));
 const ReturnPolicy = lazy(() => import("@/pages/ReturnPolicy"));
 const AdminOrdersPage = lazy(() => import("@/pages/AdminOrdersPage"));
 const AdminOrderDetailPage = lazy(() => import("@/pages/AdminOrderDetailPage"));
+const AffiliateRedirect = lazy(() => import("@/pages/AffiliateRedirect"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Loading fallback component
@@ -165,6 +167,13 @@ function Router() {
         </Suspense>
       </Route>
       
+      {/* Affiliate redirect route - catches any remaining single word paths */}
+      <Route path="/:code">
+        <Suspense fallback={<PageLoader />}>
+          <AffiliateRedirect />
+        </Suspense>
+      </Route>
+      
       <Route>
         <Suspense fallback={<PageLoader />}>
           <NotFound />
@@ -178,10 +187,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CartProvider>
-          <Toaster />
-          <Router />
-        </CartProvider>
+        <AffiliateProvider>
+          <CartProvider>
+            <Toaster />
+            <Router />
+          </CartProvider>
+        </AffiliateProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
