@@ -94,6 +94,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setItemCount(data.cart.itemCount || 0)
       setSubtotal(data.cart.subtotal || 0)
       
+      // Track Google Analytics "Add to cart" conversion
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'conversion', {'send_to': 'AW-17056802242/BMaQCPW1ls8aEMLLqMU_'});
+      }
+      
       // Show success notification
       toast({
         title: 'Added to Cart',

@@ -1,0 +1,36 @@
+nstructions
+To set up conversion tracking for Add to cart, you must have the Google tag and an event snippet in the code your page uses. To add the tag and snippet, select the framework your page uses and follow the instructions.
+See code for 
+HTML
+Google tag
+The Google tag adds visitors to your basic remarketing lists and sets new cookies on your domain, which will store information about the ad click that brought a user to your website. You must install this tag on every page of your website.
+The Google tag isn't installed on all your HTML pages
+The Google tag is already installed on all pages, but comes from another Google product (such as Google Analytics) or from another Google Ads account
+The Google tag on all pages was installed already when you created another conversion action in this Google Ads account (158-658-1799)
+Copy the tag below and paste it in between the <head></head> tags of every page of your website. You only need to install the Google tag once per account, even if you are tracking multiple actions.
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-17056802242"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-17056802242');
+</script>
+
+Event snippet
+The event snippet will work with the Google tag to measure actions that should be counted as conversions.
+Page load
+Add the snippet to the page a customer reaches after completing a conversion
+Click
+Add the snippet to the page that has a button or a link to measure for clicks before a conversion happens
+To use the snippet
+ 1. Copy the snippet below.
+ 2. Paste it in between the <head></head> tags of the page(s) you'd like to track, right after the Google tag.
+
+<!-- Event snippet for Add to cart conversion page -->
+<script>
+  gtag('event', 'conversion', {'send_to': 'AW-17056802242/BMaQCPW1ls8aEMLLqMU_'});
+</script>
+
