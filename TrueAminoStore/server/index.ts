@@ -29,10 +29,10 @@ const rateLimit = (options: { windowMs: number; max: number }) => {
   };
 };
 
-// Apply rate limiting to reduce abuse
-app.use('/api/cart', rateLimit({ windowMs: 5 * 60 * 1000, max: 20 }));
-app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, max: 50 }));
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+// Apply rate limiting to reduce abuse - more reasonable limits
+app.use('/api/cart', rateLimit({ windowMs: 5 * 60 * 1000, max: 100 }));
+app.use('/api', rateLimit({ windowMs: 5 * 60 * 1000, max: 200 }));
+app.use(rateLimit({ windowMs: 5 * 60 * 1000, max: 500 }));
 
 // Advanced compression settings for better performance
 const compressFilter = (req: Request, res: Response) => {
