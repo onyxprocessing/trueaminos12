@@ -1,37 +1,38 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
-import rateLimit from "express-rate-limit";
-import slowDown from "express-slow-down";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 
 const app = express();
 
-// Rate limiting to prevent abuse and reduce compute usage
-app.use('/api/cart', rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 20, // Very restrictive for cart operations
-  message: { error: 'Too many cart requests, please slow down.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-}));
+// Rate limiting middleware - simple implementation to reduce compute usage
+const rateLimitMap = new Map();
 
-app.use('/api', rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // More restrictive for API routes
-  message: { error: 'Too many API requests from this IP, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-}));
+const rateLimit = (options: { windowMs: number; max: number }) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowStart = now - options.windowMs;
+    
+    // Clean old entries
+    const requests = rateLimitMap.get(ip) || [];
+    const validRequests = requests.filter((time: number) => time > windowStart);
+    
+    if (validRequests.length >= options.max) {
+      return res.status(429).json({ error: 'Too many requests' });
+    }
+    
+    validRequests.push(now);
+    rateLimitMap.set(ip, validRequests);
+    next();
+  };
+};
 
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // General limit
-  message: { error: 'Too many requests from this IP, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-}));
+// Apply rate limiting to reduce abuse
+app.use('/api/cart', rateLimit({ windowMs: 5 * 60 * 1000, max: 20 }));
+app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, max: 50 }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 // Advanced compression settings for better performance
 const compressFilter = (req: Request, res: Response) => {

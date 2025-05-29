@@ -70,7 +70,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addItem = async (item: { productId: number; quantity: number; selectedWeight?: string }) => {
     try {
       setIsLoading(true)
-      console.log('Adding item to cart:', item)
+      // Removed console.log for production performance
       
       // Ensure we have proper values for all fields
       const validatedItem = {
@@ -88,15 +88,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Invalid response from server')
       }
       
-      console.log('Item added successfully:', data.addedItem)
+      // Removed console.log for production performance
       
       setItems(data.cart.items || [])
       setItemCount(data.cart.itemCount || 0)
       setSubtotal(data.cart.subtotal || 0)
       
       // Track Google Analytics "Add to cart" conversion
-      if (typeof gtag !== 'undefined') {
-        gtag('event', 'conversion', {'send_to': 'AW-17056802242/BMaQCPW1ls8aEMLLqMU_'});
+      if (typeof (window as any).gtag !== 'undefined') {
+        (window as any).gtag('event', 'conversion', {'send_to': 'AW-17056802242/BMaQCPW1ls8aEMLLqMU_'});
       }
       
       // Show success notification
