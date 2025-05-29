@@ -7,6 +7,13 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-[#212529] text-white pt-12 pb-6">
       <div className="container mx-auto px-4">
+        {/* Trustpilot Review Collector Widget */}
+        <div className="mb-8">
+          <div className="trustpilot-widget" data-locale="en-US" data-template-id="56278e9abfbbba0bdcd568bc" data-businessunit-id="68389a012eb7cb9db7b73feb" data-style-height="52px" data-style-width="100%">
+            <a href="https://www.trustpilot.com/review/trueaminos.com" target="_blank" rel="noopener">Trustpilot</a>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* Company Info */}
           <div>
