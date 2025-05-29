@@ -70,16 +70,29 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
-// Add cache control headers for dynamic routes
+// Add intelligent cache control headers for API routes
 app.use((req, res, next) => {
-  // Add appropriate cache headers based on route
   const url = req.url;
   
-  // API responses should not be cached by default
   if (url.startsWith('/api/')) {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
+    // Cache static content like products, categories for better performance
+    if (url.startsWith('/api/products') || url.startsWith('/api/categories')) {
+      res.set('Cache-Control', 'public, max-age=300, s-maxage=300'); // 5 minutes
+    }
+    // Cache image proxy responses aggressively
+    else if (url.startsWith('/api/image-proxy')) {
+      res.set('Cache-Control', 'public, max-age=86400, s-maxage=86400'); // 1 day
+    }
+    // Don't cache dynamic user-specific content
+    else if (url.startsWith('/api/cart') || url.startsWith('/api/checkout')) {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+    }
+    // Default: short cache for other API responses
+    else {
+      res.set('Cache-Control', 'public, max-age=60'); // 1 minute
+    }
   }
   
   next();

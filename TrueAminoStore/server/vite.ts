@@ -164,25 +164,18 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath, {
     etag: true, // Enable ETags for conditional requests
     lastModified: true, // Enable Last-Modified for conditional requests
-    maxAge: '7d',
+    maxAge: '1y', // Default to 1 year for immutable assets
     setHeaders: (res, filePath) => {
-      // JavaScript and CSS - longer cache with strong validation
+      // JavaScript and CSS - very aggressive caching for performance
       if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
-        // 1 week cache for JS/CSS with immutable to skip revalidation for versioned assets
-        const hash = filePath.match(/\.[a-f0-9]{8}\.(js|css)$/);
-        if (hash) {
-          // For hashed (versioned) files, set immutable to prevent unnecessary revalidation
-          res.setHeader('Cache-Control', 'public, max-age=2592000, immutable'); // 30 days
-        } else {
-          // For non-hashed files, allow revalidation after a week
-          res.setHeader('Cache-Control', 'public, max-age=604800'); // 1 week
-        }
+        // Always use 1 year cache for JS/CSS since Vite handles versioning
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
       } 
       // Images - very aggressive caching 
       else if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg|ico)$/)) {
-        res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 days
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
       }
-      // Fonts - immutable and long-lived
+      // Fonts - immutable and long-lived (most important for performance)
       else if (filePath.match(/\.(woff|woff2|ttf|otf|eot)$/)) {
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
       }
@@ -200,7 +193,7 @@ export function serveStatic(app: Express) {
   app.use(express.static(publicPath, { 
     etag: true,
     lastModified: true,
-    maxAge: '7d',
+    maxAge: '1y', // Default to 1 year for static assets
     setHeaders: (res, filePath) => {
       // Special handling for important files with proper MIME types
       if (filePath.endsWith('robots.txt')) {
@@ -211,12 +204,15 @@ export function serveStatic(app: Express) {
         res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
       } else if (filePath.endsWith('.svg')) {
         res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Cache-Control', 'public, max-age=604800'); // 1 week
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
       } else if (filePath.endsWith('manifest.json')) {
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
       } else if (filePath.match(/favicon/)) {
-        res.setHeader('Cache-Control', 'public, max-age=604800'); // 1 week
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
+      } else {
+        // Default for other static assets
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
       }
     }
   }));
