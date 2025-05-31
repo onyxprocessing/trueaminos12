@@ -268,11 +268,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if there's an affiliate code in the session and save it to Airtable cart record
       console.log('Session data:', JSON.stringify(req.session, null, 2));
-      if (req.session.discountInfo && req.session.discountInfo.code) {
-        console.log(`✅ Found affiliate code in session: ${req.session.discountInfo.code}, adding to Airtable cart record`);
+      const session = req.session as any;
+      if (session.discountInfo && session.discountInfo.code) {
+        console.log(`✅ Found affiliate code in session: ${session.discountInfo.code}, adding to Airtable cart record`);
         try {
           const { addAffiliateCodeToSession } = await import('./affiliate-codes');
-          const result = await addAffiliateCodeToSession(req.session.id, req.session.discountInfo.code);
+          const result = await addAffiliateCodeToSession(req.session.id, session.discountInfo.code);
           console.log(`✅ Affiliate code added to Airtable: ${result}`);
         } catch (error) {
           console.error('❌ Error adding affiliate code to cart record:', error);
@@ -791,8 +792,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (validationResult.valid) {
         // If code is valid, directly update Airtable with the affiliate code
-        const airtableApiKey = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d";
-        const airtableBaseId = "app3XDDBbU0ZZDBiY";
+        const airtableApiKey = process.env.AIRTABLE_API_KEY;
+        const airtableBaseId = process.env.AIRTABLE_BASE_ID || "appQbeYz1b0YDv6oJ";
         const tableId = "tblhjfzTX2zjf22s1"; // Cart sessions table ID
         const sessionId = req.session.id;
         

@@ -172,8 +172,8 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
   try {
     console.log(`Adding affiliate code ${affiliateCode} to session ${sessionId}`);
     
-    const airtableApiKey = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d";
-    const airtableBaseId = "app3XDDBbU0ZZDBiY";
+    const airtableApiKey = process.env.AIRTABLE_API_KEY;
+    const airtableBaseId = process.env.AIRTABLE_BASE_ID || "appQbeYz1b0YDv6oJ";
     const tableId = "tblhjfzTX2zjf22s1"; // Cart sessions table ID
     
     // Base Airtable API URL
