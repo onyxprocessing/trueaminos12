@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/empty-toaster"; // Using empty toaster 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/hooks/useCart";
 import { AffiliateProvider } from "@/hooks/useAffiliateCode";
+import AffiliateNotification from "@/components/AffiliateNotification";
 
 // Only import the Home component directly for fast initial load - it's our landing page
 import Home from "@/pages/Home";
@@ -185,6 +186,7 @@ function App() {
         <AffiliateProvider>
           <CartProvider>
             <Toaster />
+            <AffiliateNotification />
             <Router />
           </CartProvider>
         </AffiliateProvider>
