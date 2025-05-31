@@ -875,12 +875,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Store in session for local reference
-        if (!req.session.discountInfo) {
-          req.session.discountInfo = {
-            code: validationResult.code,
-            percentage: validationResult.discount
-          };
-        }
+        req.session.discountInfo = {
+          code: validationResult.code,
+          percentage: validationResult.discount
+        };
+        
+        // Save session to ensure it persists
+        req.session.save((err) => {
+          if (err) {
+            console.error('Error saving session:', err);
+          } else {
+            console.log('✅ Session saved with affiliate code:', validationResult.code);
+          }
+        });
         
         return res.json({
           success: true,
