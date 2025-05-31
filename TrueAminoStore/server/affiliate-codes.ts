@@ -40,6 +40,9 @@ interface AffiliateCodeResponse {
  */
 export async function validateAffiliateCode(code: string): Promise<AffiliateCodeResponse> {
   try {
+    // Format code for comparison (uppercase and trim)
+    const formattedCode = code.toUpperCase().trim();
+    
     const airtableApiKey = process.env.AIRTABLE_API_KEY;
     const airtableBaseId = process.env.AIRTABLE_BASE_ID;
     
@@ -54,10 +57,7 @@ export async function validateAffiliateCode(code: string): Promise<AffiliateCode
       };
     }
     
-    const tableId = "tblbQbjX0RQbguX5e"; // Affiliate codes table ID
-    
-    // Format code for comparison (uppercase and trim)
-    const formattedCode = code.toUpperCase().trim();
+    const tableId = "Affiliates"; // Affiliate codes table name
     
     // Base Airtable API URL
     const airtableUrl = `https://api.airtable.com/v0/${airtableBaseId}/${tableId}`;
