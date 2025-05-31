@@ -1,0 +1,43 @@
+1:57:31 AM [express] GET /api/cart 200 in 16ms :: {"items":[],"itemCount":0,"subtotal":0}                                                                                                                  01:57:31
+1:57:31 AM [express] GET /api/categories 304 in 17ms :: [{"id":1,"name":"Peptides","slug":"peptides"…                                                                                                      01:57:31
+
+ ERROR  Error fetching from Airtable: Airtable API error: 429 Too Many Requests                                                                                                                            01:57:32
+
+  at fetchFromAirtable (client/src/lib/airtable.ts:93:13)
+  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  at async fetchFeaturedProducts (client/src/lib/airtable.ts:532:19)
+  at async AirtableMemStorage.getFeaturedProducts (server/storage.ts:151:24)
+  at async <anonymous> (server/routes.ts:165:24)
+
+
+ ERROR  Error fetching featured products: Airtable API error: 429 Too Many Requests                                                                                                                        01:57:32
+
+  at fetchFromAirtable (client/src/lib/airtable.ts:93:13)
+  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  at async fetchFeaturedProducts (client/src/lib/airtable.ts:532:19)
+  at async AirtableMemStorage.getFeaturedProducts (server/storage.ts:151:24)
+  at async <anonymous> (server/routes.ts:165:24)
+
+1:57:32 AM [express] GET /api/products/featured 304 in 366ms :: []                                                                                                                                         01:57:32
+1:59:06 AM [express] GET /api/cart 200 in 1ms :: {"items":[],"itemCount":0,"subtotal":0}                                                                                                                   01:59:06
+1:59:06 AM [express] GET /api/categories 304 in 1ms :: [{"id":1,"name":"Peptides","slug":"peptides",…                                                                                                      01:59:06
+
+ ERROR  Error fetching from Airtable: Airtable API error: 429 Too Many Requests                                                                                                                            01:59:06
+
+  at fetchFromAirtable (client/src/lib/airtable.ts:93:13)
+  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  at async fetchFeaturedProducts (client/src/lib/airtable.ts:532:19)
+  at async AirtableMemStorage.getFeaturedProducts (server/storage.ts:151:24)
+  at async <anonymous> (server/routes.ts:165:24)
+
+
+ ERROR  Error fetching featured products: Airtable API error: 429 Too Many Requests                                                                                                                        01:59:06
+
+  at fetchFromAirtable (client/src/lib/airtable.ts:93:13)
+  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  at async fetchFeaturedProducts (client/src/lib/airtable.ts:532:19)
+  at async AirtableMemStorage.getFeaturedProducts (server/storage.ts:151:24)
+  at async <anonymous> (server/routes.ts:165:24)
+
+1:59:06 AM [express] GET /api/products/featured 304 in 287ms :: []                                                                                                                                         01:59:06
+1:59:28 AM [express] GET /api/cart 200 in 1ms :: {"items":[],"itemCount":0,"subtotal":0}                                                                                                                   01:59:28
