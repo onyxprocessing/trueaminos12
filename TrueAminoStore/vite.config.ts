@@ -254,7 +254,7 @@ export default defineConfig({
     port: 5000,
     host: '0.0.0.0', // Required for Replit
     hmr: isProd ? false : {
-      overlay: true,
+      overlay: false,
       port: 5000
     },
     watch: {

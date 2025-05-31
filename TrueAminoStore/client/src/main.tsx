@@ -1,5 +1,4 @@
 import { createRoot } from "react-dom/client";
-import { useEffect, Fragment } from 'react';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import "./index.css";
 import "./hmr-fix";
