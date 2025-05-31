@@ -77,44 +77,109 @@ interface AirtableCategoryFields {
   id?: number
 }
 
-// Generic function to fetch data from Airtable
-async function fetchFromAirtable<T>(tableId: string, params: Record<string, string> = {}): Promise<AirtableRecord<T>[]> {
-  const queryParams = new URLSearchParams(params)
-  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}?${queryParams.toString()}`
-  
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-      },
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Airtable API error: ${response.status} ${response.statusText}`)
-    }
-    
-    const data = await response.json() as AirtableResponse<T>
-    
-    // Examine each record specifically for image fields
-    data.records.forEach((record, index) => {
-      const fields = record.fields as any;
-      if (fields) {
-        console.log(`Record ${index} id=${record.id}:`);
-        console.log(`  Fields: ${Object.keys(fields).join(', ')}`);
-        
-        // Specifically check image fields
-        if (fields.image) console.log(`  image field exists with ${fields.image.length} items`);
-        if (fields.image2) console.log(`  image2 field exists with ${fields.image2.length} items`);
-        if (fields.COA) console.log(`  COA field exists with ${fields.COA.length} items`);
-        if (fields.image3) console.log(`  image3 field exists with ${fields.image3.length} items`);
-      }
+// Request queue and rate limiting
+class RequestQueue {
+  private queue: Array<() => Promise<any>> = [];
+  private processing = false;
+  private readonly delay = 200; // 200ms between requests
+
+  async add<T>(request: () => Promise<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.queue.push(async () => {
+        try {
+          const result = await request();
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      });
+      this.process();
     });
-    
-    return data.records
-  } catch (error) {
-    console.error("Error fetching from Airtable:", error)
-    throw error
   }
+
+  private async process() {
+    if (this.processing || this.queue.length === 0) return;
+    
+    this.processing = true;
+    while (this.queue.length > 0) {
+      const request = this.queue.shift()!;
+      await request();
+      if (this.queue.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, this.delay));
+      }
+    }
+    this.processing = false;
+  }
+}
+
+// Global request queue instance
+const requestQueue = new RequestQueue();
+
+// Cache with expiry
+class Cache<T> {
+  private cache = new Map<string, { data: T; expiry: number }>();
+  private readonly ttl = 5 * 60 * 1000; // 5 minutes
+
+  set(key: string, data: T): void {
+    this.cache.set(key, { data, expiry: Date.now() + this.ttl });
+  }
+
+  get(key: string): T | null {
+    const item = this.cache.get(key);
+    if (!item || Date.now() > item.expiry) {
+      this.cache.delete(key);
+      return null;
+    }
+    return item.data;
+  }
+
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+// Global cache instances
+const responseCache = new Cache<any>();
+
+// Generic function to fetch data from Airtable with rate limiting and caching
+async function fetchFromAirtable<T>(tableId: string, params: Record<string, string> = {}): Promise<AirtableRecord<T>[]> {
+  const cacheKey = `${tableId}:${JSON.stringify(params)}`;
+  
+  // Check cache first
+  const cached = responseCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const queryParams = new URLSearchParams(params);
+  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}?${queryParams.toString()}`;
+  
+  // Add to request queue to prevent rate limiting
+  const result = await requestQueue.add(async () => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Airtable API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json() as AirtableResponse<T>;
+      
+      // Cache the result
+      responseCache.set(cacheKey, data.records);
+      
+      return data.records;
+    } catch (error) {
+      console.error("Error fetching from Airtable:", error);
+      throw error;
+    }
+  });
+
+  return result;
 }
 
 // Helper function to process weight-specific prices from Airtable record
