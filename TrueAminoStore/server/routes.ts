@@ -267,14 +267,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const addedItem = await storage.addToCart(cartItem);
       
       // Check if there's an affiliate code in the session and save it to Airtable cart record
+      console.log('Session data:', JSON.stringify(req.session, null, 2));
       if (req.session.discountInfo && req.session.discountInfo.code) {
-        console.log(`Found affiliate code in session: ${req.session.discountInfo.code}, adding to Airtable cart record`);
+        console.log(`✅ Found affiliate code in session: ${req.session.discountInfo.code}, adding to Airtable cart record`);
         try {
           const { addAffiliateCodeToSession } = await import('./affiliate-codes');
-          await addAffiliateCodeToSession(req.session.id, req.session.discountInfo.code);
+          const result = await addAffiliateCodeToSession(req.session.id, req.session.discountInfo.code);
+          console.log(`✅ Affiliate code added to Airtable: ${result}`);
         } catch (error) {
-          console.error('Error adding affiliate code to cart record:', error);
+          console.error('❌ Error adding affiliate code to cart record:', error);
         }
+      } else {
+        console.log('⚠️ No affiliate code found in session when adding to cart');
       }
       
       // Get updated cart
