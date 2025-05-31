@@ -40,8 +40,20 @@ interface AffiliateCodeResponse {
  */
 export async function validateAffiliateCode(code: string): Promise<AffiliateCodeResponse> {
   try {
-    const airtableApiKey = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d";
-    const airtableBaseId = "app3XDDBbU0ZZDBiY";
+    const airtableApiKey = process.env.AIRTABLE_API_KEY;
+    const airtableBaseId = process.env.AIRTABLE_BASE_ID;
+    
+    if (!airtableApiKey || !airtableBaseId) {
+      console.error('Missing Airtable credentials');
+      return {
+        id: '',
+        code: formattedCode,
+        discount: 0,
+        name: '',
+        valid: false
+      };
+    }
+    
     const tableId = "tblbQbjX0RQbguX5e"; // Affiliate codes table ID
     
     // Format code for comparison (uppercase and trim)
