@@ -26,7 +26,7 @@ export default defineConfig({
           "@babel/plugin-transform-react-inline-elements"
         ] : []
       },
-      // Fast refresh in development
+      // Fast refresh in development only
       fastRefresh: !isProd
     }),
     
@@ -89,9 +89,9 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-      // Optimize for faster module resolution
-      "react": isProd ? "react/prod-index" : "react",
-      "react-dom": isProd ? "react-dom/profiling" : "react-dom"
+      // Keep standard React imports for compatibility
+      "react": "react",
+      "react-dom": "react-dom"
     },
   },
   
