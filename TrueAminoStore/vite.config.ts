@@ -17,7 +17,18 @@ export default defineConfig({
   },
   plugins: [
     // Core React plugin with performance optimizations
-    react(),
+    react({
+      babel: {
+        // Apply additional Babel optimizations in production
+        plugins: isProd ? [
+          ["transform-remove-console", { exclude: ["error", "warn"] }],
+          "@babel/plugin-transform-react-constant-elements",
+          "@babel/plugin-transform-react-inline-elements"
+        ] : []
+      },
+      // Fast refresh in development only
+      fastRefresh: !isProd
+    }),
     
     // Development-specific plugins
     runtimeErrorOverlay(),

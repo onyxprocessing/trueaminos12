@@ -158,8 +158,7 @@ export async function validateAffiliateCode(code: string): Promise<AffiliateCode
  */
 export async function addAffiliateCodeToSession(sessionId: string, affiliateCode: string): Promise<boolean> {
   try {
-    console.log(`DISABLED: Affiliate code session creation blocked to prevent spam`);
-    return true; // Return success without creating records
+    console.log(`Adding affiliate code ${affiliateCode} to session ${sessionId}`);
     
     const airtableApiKey = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d";
     const airtableBaseId = "app3XDDBbU0ZZDBiY";

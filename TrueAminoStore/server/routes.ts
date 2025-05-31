@@ -83,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(expressSession.default({
     secret: 'trueaminos-secret-key',
     resave: false,
-    saveUninitialized: false, // Prevent session creation until needed
+    saveUninitialized: true,
     store: new MemoryStoreSession({
       checkPeriod: 86400000 // prune expired entries every 24h
     }),
@@ -220,16 +220,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart
   app.get("/api/cart", async (req: Request, res: Response) => {
     try {
-      // Only create session if it doesn't exist and we actually need one
-      if (!req.session.id) {
-        // Return empty cart for visitors without sessions
-        return res.json({
-          items: [],
-          itemCount: 0,
-          subtotal: 0
-        });
-      }
-      
       const sessionId = req.session.id;
       const cartItems = await storage.getCartItems(sessionId);
       
@@ -836,14 +826,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error('Error updating affiliate code in Airtable:', await updateResponse.text());
             }
           } else {
-            // DISABLED: Do not create Airtable records automatically
-            console.log('Affiliate code session creation disabled to prevent spam');
-            updateSuccess = true;
+            // Create new session record with affiliate code
+            const createResponse = await fetch(`https://api.airtable.com/v0/${airtableBaseId}/${tableId}`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${airtableApiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                records: [{
+                  fields: {
+                    "session id": sessionId,
+                    "affiliatecode": validationResult.code  // Using "affiliatecode" as it's the correct field name in Airtable
+                  }
+                }]
+              })
+            });
+            
+            if (createResponse.ok) {
+              const createData = await createResponse.json();
+              console.log('Successfully created new record with affiliate code in Airtable:', JSON.stringify(createData, null, 2));
+              updateSuccess = true;
+            } else {
+              console.error('Error creating new record with affiliate code in Airtable:', await createResponse.text());
+            }
           }
           
           if (!updateSuccess) {
-            console.log('Airtable session creation disabled to prevent spam');
-            // await addAffiliateCodeToSession(req.session.id, validationResult.code);
+            console.error('Failed to update Airtable with affiliate code directly. Trying normal method...');
+            await addAffiliateCodeToSession(req.session.id, validationResult.code);
           }
         }
         
