@@ -836,35 +836,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.error('Error updating affiliate code in Airtable:', await updateResponse.text());
             }
           } else {
-            // Create new session record with affiliate code
-            const createResponse = await fetch(`https://api.airtable.com/v0/${airtableBaseId}/${tableId}`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${airtableApiKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                records: [{
-                  fields: {
-                    "session id": sessionId,
-                    "affiliatecode": validationResult.code  // Using "affiliatecode" as it's the correct field name in Airtable
-                  }
-                }]
-              })
-            });
-            
-            if (createResponse.ok) {
-              const createData = await createResponse.json();
-              console.log('Successfully created new record with affiliate code in Airtable:', JSON.stringify(createData, null, 2));
-              updateSuccess = true;
-            } else {
-              console.error('Error creating new record with affiliate code in Airtable:', await createResponse.text());
-            }
+            // DISABLED: Do not create Airtable records automatically
+            console.log('Affiliate code session creation disabled to prevent spam');
+            updateSuccess = true;
           }
           
           if (!updateSuccess) {
-            console.error('Failed to update Airtable with affiliate code directly. Trying normal method...');
-            await addAffiliateCodeToSession(req.session.id, validationResult.code);
+            console.log('Airtable session creation disabled to prevent spam');
+            // await addAffiliateCodeToSession(req.session.id, validationResult.code);
           }
         }
         
