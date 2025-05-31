@@ -37,6 +37,9 @@ const Home: React.FC = () => {
     const affiliateCode = urlParams.get('ref') || urlParams.get('affiliate') || urlParams.get('code');
     
     if (affiliateCode) {
+      // Set a flag in sessionStorage to indicate an affiliate code was just applied
+      sessionStorage.setItem('affiliateCodeJustApplied', 'true');
+      
       // Validate affiliate code with server immediately
       fetch(`/api/affiliate/validate/${affiliateCode}`)
         .then(response => response.json())

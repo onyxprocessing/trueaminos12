@@ -13,18 +13,20 @@ const AffiliateNotification: React.FC<AffiliateNotificationProps> = ({ onClose }
   const [hasShownForCurrentCode, setHasShownForCurrentCode] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if there's a ref parameter in the current URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasRefParam = urlParams.has('ref') || urlParams.has('affiliate') || urlParams.has('code');
+    // Check if an affiliate code was just applied from a URL parameter
+    const wasJustApplied = sessionStorage.getItem('affiliateCodeJustApplied') === 'true';
     
     // Only show notification if:
     // 1. There's an affiliate code with a discount
-    // 2. There was a ref parameter in the URL (meaning they came from an affiliate link)
+    // 2. It was just applied from a URL parameter
     // 3. We haven't already shown the notification for this specific code
-    if (affiliateCode && discountPercentage > 0 && hasRefParam && hasShownForCurrentCode !== affiliateCode) {
+    if (affiliateCode && discountPercentage > 0 && wasJustApplied && hasShownForCurrentCode !== affiliateCode) {
       setShowNotification(true);
       setIsVisible(true);
       setHasShownForCurrentCode(affiliateCode);
+      
+      // Clear the flag so notification doesn't show again
+      sessionStorage.removeItem('affiliateCodeJustApplied');
       
       // Auto-hide after 8 seconds
       const timer = setTimeout(() => {
