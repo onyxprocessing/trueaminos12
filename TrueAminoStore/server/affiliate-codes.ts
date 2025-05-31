@@ -292,10 +292,37 @@ export async function addAffiliateCodeToSession(sessionId: string, affiliateCode
       console.log('Successfully updated affiliate code');
       return true;
     } else {
-      // Don't automatically create new records - only store affiliate code in session
-      console.log(`No existing cart record found for session ${sessionId}. Affiliate code will be stored in session only.`);
-      console.log(`Affiliate code ${affiliateCode} will be applied when user adds items to cart.`);
-      return false; // Return false to indicate no Airtable record was created
+      // Create new cart record with affiliate code
+      console.log(`No existing cart record found for session ${sessionId}. Creating new record with affiliate code.`);
+      
+      const createResponse = await fetch(airtableUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${airtableApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          records: [{
+            fields: {
+              "session id": sessionId,
+              "affiliatecode": affiliateCode,
+              "status": "started",
+              "createdat": new Date().toISOString(),
+              "updatedat": new Date().toISOString()
+            }
+          }]
+        })
+      });
+      
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        console.error('Error creating new cart record with affiliate code:', errorText);
+        return false;
+      }
+      
+      const createData = await createResponse.json();
+      console.log('Successfully created new cart record with affiliate code:', JSON.stringify(createData, null, 2));
+      return true;
     }
   } catch (error) {
     console.error('Error adding affiliate code to session:', error);
