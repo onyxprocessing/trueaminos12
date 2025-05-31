@@ -1,7 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import "./index.css";
-import "./hmr-fix";
 
 // Preload critical assets
 function preloadAssets() {
