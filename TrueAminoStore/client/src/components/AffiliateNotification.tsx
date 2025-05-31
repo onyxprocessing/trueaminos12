@@ -39,35 +39,40 @@ const AffiliateNotification: React.FC<AffiliateNotificationProps> = ({ onClose }
   }
 
   return (
-    <div className={`fixed top-6 right-6 z-50 transition-all duration-300 ease-in-out ${
-      isVisible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none transition-all duration-300 ease-in-out ${
+      isVisible ? 'opacity-100' : 'opacity-0'
     }`}>
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow-xl p-4 max-w-sm border border-green-400">
+      <div className={`bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-auto border border-green-400 pointer-events-auto transform transition-all duration-300 ease-in-out ${
+        isVisible ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'
+      }`}>
         <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start space-x-4 flex-1">
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                <Tag className="w-4 h-4" />
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <Tag className="w-5 h-5" />
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold mb-1">
+              <h3 className="text-lg font-bold mb-2">
                 Discount Code Applied!
               </h3>
-              <p className="text-sm opacity-90">
-                Use code <span className="font-bold text-white bg-white/20 px-2 py-1 rounded text-xs uppercase">{affiliateCode}</span> for <span className="font-bold">{discountPercentage}% off</span> your order
+              <p className="text-base opacity-95 mb-1">
+                Use code <span className="font-bold text-white bg-white/30 px-3 py-1 rounded-md text-sm uppercase tracking-wide">{affiliateCode}</span>
               </p>
-              <p className="text-xs opacity-75 mt-1">
-                Discount will be applied at checkout
+              <p className="text-lg font-semibold mb-2">
+                Get <span className="text-yellow-200">{discountPercentage}% OFF</span> your order
+              </p>
+              <p className="text-sm opacity-80">
+                Discount will be applied automatically at checkout
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="flex-shrink-0 ml-2 text-white/70 hover:text-white transition-colors"
+            className="flex-shrink-0 ml-3 text-white/70 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
             aria-label="Close notification"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
       </div>
