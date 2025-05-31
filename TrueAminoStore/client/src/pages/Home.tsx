@@ -31,14 +31,31 @@ const Home: React.FC = () => {
   const [location] = useLocation();
   const { setAffiliateCode } = useAffiliateCode();
 
-  // Check for affiliate code in URL parameters
+  // Check for affiliate code in URL parameters and validate with server
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const affiliateCode = urlParams.get('ref') || urlParams.get('affiliate') || urlParams.get('code');
     
     if (affiliateCode) {
-      // Store the affiliate code automatically
-      setAffiliateCode(affiliateCode, 0); // Will be validated at checkout
+      // Validate affiliate code with server immediately
+      fetch(`/api/affiliate/validate/${affiliateCode}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.valid) {
+            // Store the validated affiliate code with proper discount
+            setAffiliateCode(data.code, data.discount);
+            console.log(`✅ Affiliate code "${data.code}" applied with ${data.discount}% discount`);
+          } else {
+            // Store the code anyway for manual validation later
+            setAffiliateCode(affiliateCode, 0);
+            console.log(`⚠️ Affiliate code "${affiliateCode}" will be validated at checkout`);
+          }
+        })
+        .catch(error => {
+          console.error('Error validating affiliate code:', error);
+          // Store the code anyway for manual validation later
+          setAffiliateCode(affiliateCode, 0);
+        });
       
       // Clean up the URL by removing the parameter
       const newUrl = new URL(window.location.href);
