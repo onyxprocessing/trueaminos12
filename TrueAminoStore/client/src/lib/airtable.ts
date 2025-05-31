@@ -141,6 +141,9 @@ class Cache<T> {
 // Global cache instances
 const responseCache = new Cache<any>();
 
+// Track ongoing requests to prevent duplicates
+const ongoingRequests = new Map<string, Promise<any>>();
+
 // Generic function to fetch data from Airtable with rate limiting and caching
 async function fetchFromAirtable<T>(tableId: string, params: Record<string, string> = {}): Promise<AirtableRecord<T>[]> {
   const cacheKey = `${tableId}:${JSON.stringify(params)}`;
@@ -148,15 +151,23 @@ async function fetchFromAirtable<T>(tableId: string, params: Record<string, stri
   // Check cache first
   const cached = responseCache.get(cacheKey);
   if (cached) {
+    console.log(`Using cached data for ${tableId}`);
     return cached;
+  }
+
+  // Check if request is already in progress
+  if (ongoingRequests.has(cacheKey)) {
+    console.log(`Request already in progress for ${tableId}, waiting...`);
+    return await ongoingRequests.get(cacheKey);
   }
 
   const queryParams = new URLSearchParams(params);
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}?${queryParams.toString()}`;
   
-  // Add to request queue to prevent rate limiting
-  const result = await requestQueue.add(async () => {
+  // Create the request promise and store it
+  const requestPromise = requestQueue.add(async () => {
     try {
+      console.log(`Making single request to ${tableId}`);
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${AIRTABLE_API_KEY}`,
@@ -169,22 +180,28 @@ async function fetchFromAirtable<T>(tableId: string, params: Record<string, stri
       
       const data = await response.json() as AirtableResponse<T>;
       
-      // Cache the result
+      // Cache the result for 30 minutes
       responseCache.set(cacheKey, data.records);
       
       return data.records;
     } catch (error) {
       console.error("Error fetching from Airtable:", error);
       // For rate limiting errors, return empty array instead of throwing
-      if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+      if (error instanceof Error && (error.message.includes('429') || error.message.includes('Too Many Requests'))) {
         console.log("Rate limited - returning empty array");
         return [];
       }
       throw error;
+    } finally {
+      // Remove from ongoing requests when done
+      ongoingRequests.delete(cacheKey);
     }
   });
 
-  return result;
+  // Store the ongoing request
+  ongoingRequests.set(cacheKey, requestPromise);
+  
+  return await requestPromise;
 }
 
 // Helper function to process weight-specific prices from Airtable record
