@@ -83,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(expressSession.default({
     secret: 'trueaminos-secret-key',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Prevent session creation until needed
     store: new MemoryStoreSession({
       checkPeriod: 86400000 // prune expired entries every 24h
     }),
@@ -220,6 +220,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cart
   app.get("/api/cart", async (req: Request, res: Response) => {
     try {
+      // Only create session if it doesn't exist and we actually need one
+      if (!req.session.id) {
+        // Return empty cart for visitors without sessions
+        return res.json({
+          items: [],
+          itemCount: 0,
+          subtotal: 0
+        });
+      }
+      
       const sessionId = req.session.id;
       const cartItems = await storage.getCartItems(sessionId);
       
