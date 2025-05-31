@@ -2,7 +2,7 @@ import { Product, Category } from "@shared/schema"
 
 // Airtable API key from environment variable
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d"
-const AIRTABLE_BASE_ID = "app3XDDBbU0ZZDBiY"
+const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID || "appQbeYz1b0YDv6oJ"
 const PRODUCTS_TABLE_ID = "tbl4pJbIUvWA53Arr"
 const CATEGORIES_TABLE_ID = "tblCategories" // Assuming we'll create this table
 
@@ -81,7 +81,7 @@ interface AirtableCategoryFields {
 class RequestQueue {
   private queue: Array<() => Promise<any>> = [];
   private processing = false;
-  private readonly delay = 200; // 200ms between requests
+  private readonly delay = 2000; // 2 seconds between requests
 
   async add<T>(request: () => Promise<T>): Promise<T> {
     return new Promise((resolve, reject) => {
@@ -118,7 +118,7 @@ const requestQueue = new RequestQueue();
 // Cache with expiry
 class Cache<T> {
   private cache = new Map<string, { data: T; expiry: number }>();
-  private readonly ttl = 5 * 60 * 1000; // 5 minutes
+  private readonly ttl = 30 * 60 * 1000; // 30 minutes
 
   set(key: string, data: T): void {
     this.cache.set(key, { data, expiry: Date.now() + this.ttl });
@@ -175,6 +175,11 @@ async function fetchFromAirtable<T>(tableId: string, params: Record<string, stri
       return data.records;
     } catch (error) {
       console.error("Error fetching from Airtable:", error);
+      // For rate limiting errors, return empty array instead of throwing
+      if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
+        console.log("Rate limited - returning empty array");
+        return [];
+      }
       throw error;
     }
   });
