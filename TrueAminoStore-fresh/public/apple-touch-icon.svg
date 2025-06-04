@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <rect width="180" height="180" rx="45" fill="url(#grad)" />
+  
+  <!-- TA letters for TrueAminos -->
+  <path d="M50 60H130" stroke="white" stroke-width="10" stroke-linecap="round" />
+  <path d="M90 60V120" stroke="white" stroke-width="10" stroke-linecap="round" />
+  
+  <path d="M100 80H130" stroke="white" stroke-width="8" stroke-linecap="round" />
+  <path d="M100 80L85 120" stroke="white" stroke-width="8" stroke-linecap="round" />
+  <path d="M130 80L145 120" stroke="white" stroke-width="8" stroke-linecap="round" />
+  
+  <!-- DNA helix symbol -->
+  <path d="M40 130C50 130 50 140 60 140C70 140 70 130 80 130C90 130 90 140 100 140" stroke="white" stroke-width="5" stroke-linecap="round" />
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4169E1" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+  </defs>
+</svg>

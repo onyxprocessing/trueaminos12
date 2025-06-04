@@ -1,0 +1,17 @@
+# TrueAminos Robots.txt
+# Last Updated: May 04, 2025
+
+User-agent: *
+Allow: /
+
+# Disallow checkout and cart URLs to prevent crawling of personal/checkout pages
+Disallow: /checkout/
+Disallow: /cart/success
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://trueaminos.com/sitemap.xml
+
+# Crawl-delay to prevent overwhelming the server
+Crawl-delay: 5

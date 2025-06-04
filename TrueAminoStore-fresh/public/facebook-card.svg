@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <rect width="1200" height="630" fill="url(#grad)" />
+  
+  <!-- Brand logo -->
+  <circle cx="600" cy="240" r="120" fill="white" fill-opacity="0.1" />
+  <circle cx="600" cy="240" r="90" fill="white" fill-opacity="0.2" />
+  <path d="M520 180H680" stroke="white" stroke-width="14" stroke-linecap="round" />
+  <path d="M600 180V300" stroke="white" stroke-width="14" stroke-linecap="round" />
+  
+  <path d="M700 220H760" stroke="white" stroke-width="12" stroke-linecap="round" />
+  <path d="M700 220L670 300" stroke="white" stroke-width="12" stroke-linecap="round" />
+  <path d="M760 220L790 300" stroke="white" stroke-width="12" stroke-linecap="round" />
+  
+  <!-- Brand name and tagline -->
+  <text x="600" y="400" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="white" text-anchor="middle">TrueAminos</text>
+  <text x="600" y="480" font-family="Arial, sans-serif" font-size="32" fill="white" text-anchor="middle">Premium Research Peptides &amp; SARMs</text>
+  
+  <!-- DNA Helix for peptides -->
+  <path d="M500 550C540 550 540 530 580 530C620 530 620 550 660 550C700 550 700 530 740 530" stroke="white" stroke-width="8" stroke-linecap="round" />
+  <path d="M500 510C540 510 540 530 580 530C620 530 620 510 660 510C700 510 700 530 740 530" stroke="white" stroke-width="8" stroke-linecap="round" />
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4169E1" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+  </defs>
+</svg>
