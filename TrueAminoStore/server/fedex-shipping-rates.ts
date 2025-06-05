@@ -114,7 +114,6 @@ export async function getShippingRates(request: ShippingRateRequest): Promise<Sh
   try {
     // For development/testing mode, return mock data if no API key
     if (process.env.NODE_ENV === 'development' && (!process.env.FEDEX_API_KEY || !process.env.FEDEX_API_SECRET)) {
-      console.log('Using mock shipping rates in development mode');
       return getMockShippingRates();
     }
 

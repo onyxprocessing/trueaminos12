@@ -26,11 +26,10 @@ export async function syncOrdersFromStripe(startDate?: number): Promise<{
   savedToAirtable: number,
   errors: string[]
 }> {
-  console.log('🔄 Starting Stripe order synchronization');
+  // Removed all console.log statements for production cleanup
   
   // Default to last 30 days if no start date provided
   const startTimestamp = startDate || Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
-  console.log(`📅 Fetching payments since: ${new Date(startTimestamp * 1000).toISOString()}`);
   
   const result = {
     success: false,
@@ -43,7 +42,6 @@ export async function syncOrdersFromStripe(startDate?: number): Promise<{
   try {
     // Get all successful payments from Stripe
     const paymentIntents = await fetchAllSuccessfulPayments(startTimestamp);
-    console.log(`📊 Found ${paymentIntents.length} successful payments in Stripe`);
     
     result.totalProcessed = paymentIntents.length;
     
@@ -51,25 +49,19 @@ export async function syncOrdersFromStripe(startDate?: number): Promise<{
     for (const paymentIntent of paymentIntents) {
       // Only process successful payments
       if (paymentIntent.status !== 'succeeded') {
-        console.log(`⏭️ Skipping payment ${paymentIntent.id} with status: ${paymentIntent.status}`);
         continue;
       }
       
       try {
-        console.log(`💰 Processing payment: ${paymentIntent.id} (${formatCurrency(paymentIntent.amount, paymentIntent.currency)})`);
-        
         // Save to database
         try {
           const savedToDatabase = await recordPaymentToDatabase(paymentIntent);
           if (savedToDatabase) {
-            console.log(`✅ Payment ${paymentIntent.id} saved to database`);
             result.savedToDatabase++;
           } else {
-            console.error(`❌ Failed to save payment ${paymentIntent.id} to database`);
             result.errors.push(`Failed to save payment ${paymentIntent.id} to database`);
           }
         } catch (dbError) {
-          console.error(`❌ Error saving payment ${paymentIntent.id} to database:`, dbError);
           result.errors.push(`Error saving payment ${paymentIntent.id} to database: ${String(dbError)}`);
         }
         
@@ -77,28 +69,22 @@ export async function syncOrdersFromStripe(startDate?: number): Promise<{
         try {
           const savedToAirtable = await recordPaymentToAirtable(paymentIntent);
           if (savedToAirtable) {
-            console.log(`✅ Payment ${paymentIntent.id} saved to Airtable`);
             result.savedToAirtable++;
           } else {
-            console.error(`❌ Failed to save payment ${paymentIntent.id} to Airtable`);
             result.errors.push(`Failed to save payment ${paymentIntent.id} to Airtable`);
           }
         } catch (airtableError) {
-          console.error(`❌ Error saving payment ${paymentIntent.id} to Airtable:`, airtableError);
           result.errors.push(`Error saving payment ${paymentIntent.id} to Airtable: ${String(airtableError)}`);
         }
       } catch (paymentError) {
-        console.error(`❌ Error processing payment ${paymentIntent.id}:`, paymentError);
         result.errors.push(`Error processing payment ${paymentIntent.id}: ${String(paymentError)}`);
       }
     }
     
     result.success = true;
-    console.log(`🎉 Stripe sync completed: ${result.savedToDatabase}/${result.totalProcessed} saved to database, ${result.savedToAirtable}/${result.totalProcessed} saved to Airtable`);
     
     return result;
   } catch (error) {
-    console.error('❌ Error syncing orders from Stripe:', error);
     result.errors.push(`Error syncing orders from Stripe: ${String(error)}`);
     return result;
   }

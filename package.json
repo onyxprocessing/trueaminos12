@@ -37,7 +37,7 @@
     "react-plaid-link": "^4.0.1",
     "react-router-dom": "^7.5.3",
     "rollup-plugin-visualizer": "^5.14.0",
-    "sharp": "^0.34.1",
+    "sharp": "^0.34.2",
     "stripe": "^18.1.0",
     "terser": "^5.39.0",
     "tsx": "^4.19.4",

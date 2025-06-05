@@ -1,1 +1,0 @@
-// Temporary file for saving the attached image content

@@ -16,24 +16,18 @@ async function checkAffiliateRecords() {
   });
 
   const data = await response.json();
-  console.log('Total records:', data.records.length);
   
   let affiliateCount = 0;
-  data.records.forEach((record, index) => {
+  data.records.forEach((record) => {
     const fields = record.fields || {};
     const hasAffiliate = fields.affiliatecode || fields.affiliateCode || fields['affiliate code'] || fields.code;
     
     if (hasAffiliate) {
       affiliateCount++;
-      console.log(`\nRecord ${index + 1} HAS affiliate code:`);
-      console.log('  ID:', record.id);
-      console.log('  Session ID:', fields['session id']);
-      console.log('  Affiliate Code:', fields.affiliatecode || fields.affiliateCode || fields['affiliate code'] || fields.code);
-      console.log('  Created:', fields.createdat);
     }
   });
   
-  console.log(`\nFound ${affiliateCount} records with affiliate codes out of ${data.records.length} total records`);
+  return `Found ${affiliateCount} records with affiliate codes out of ${data.records.length} total records`;
 }
 
-checkAffiliateRecords().catch(console.error);
+checkAffiliateRecords().then(console.log).catch(console.error);

@@ -1,8 +1,16 @@
 import { Product, Category } from "@shared/schema"
 
 // Airtable API key from environment variable
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY || "patGluqUFquVBabLM.0bfa03c32c10c95942ec14a72b95c7afa9a4910a5ca4c648b22308fa0b86217d"
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID || "appQbeYz1b0YDv6oJ"
+const AIRTABLE_API_KEY =
+  typeof window === "undefined"
+    ? process.env.AIRTABLE_API_KEY
+    : import.meta.env.VITE_AIRTABLE_API_KEY;
+
+const AIRTABLE_BASE_ID =
+  typeof window === "undefined"
+    ? process.env.AIRTABLE_BASE_ID
+    : import.meta.env.VITE_AIRTABLE_BASE_ID;
+
 const PRODUCTS_TABLE_ID = "tbl4pJbIUvWA53Arr"
 const CATEGORIES_TABLE_ID = "tblCategories" // Assuming we'll create this table
 
@@ -163,6 +171,7 @@ async function fetchFromAirtable<T>(tableId: string, params: Record<string, stri
 
   const queryParams = new URLSearchParams(params);
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${tableId}?${queryParams.toString()}`;
+  console.log("[Airtable] Request URL:", url); // Debug log
   
   // Create the request promise and store it
   const requestPromise = requestQueue.add(async () => {
@@ -173,13 +182,22 @@ async function fetchFromAirtable<T>(tableId: string, params: Record<string, stri
           Authorization: `Bearer ${AIRTABLE_API_KEY}`,
         },
       });
-      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Airtable] Error response body:`, errorText);
         throw new Error(`Airtable API error: ${response.status} ${response.statusText}`);
       }
-      
       const data = await response.json() as AirtableResponse<T>;
-      
+      // Warn if expected fields are missing
+      if (data.records && data.records.length > 0) {
+        const fields = Object.keys(data.records[0].fields ?? {});
+        const expected = ["id","name","description","price","categoryId","slug","inStock","featured"];
+        expected.forEach(f => {
+          if (!fields.includes(f)) {
+            console.warn(`[Airtable] WARNING: Field '${f}' is missing in first record. Actual fields:`, fields);
+          }
+        });
+      }
       // Cache the result for 30 minutes
       responseCache.set(cacheKey, data.records);
       

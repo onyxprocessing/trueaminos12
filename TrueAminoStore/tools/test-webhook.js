@@ -56,8 +56,6 @@ async function testWebhook() {
       }
     };
 
-    console.log('Sending test webhook event...');
-
     // Send to webhook endpoint
     const response = await fetch('http://localhost:5000/api/webhook', {
       method: 'POST',
@@ -67,10 +65,7 @@ async function testWebhook() {
       body: JSON.stringify(mockEvent)
     });
 
-    console.log(`Status: ${response.status} ${response.statusText}`);
     const data = await response.json();
-    console.log('Response:', data);
-    console.log('Test completed. Check server logs for detailed processing information.');
   } catch (error) {
     console.error('Error testing webhook:', error);
   }

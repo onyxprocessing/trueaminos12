@@ -16,8 +16,6 @@ if (!AIRTABLE_API_KEY) {
 }
 
 async function createTestOrder() {
-  console.log('😀 Starting direct Airtable test with fixed field names...');
-  
   try {
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${ORDERS_TABLE_ID}`;
     const timestamp = Math.floor(Date.now() / 1000);
@@ -47,9 +45,6 @@ async function createTestOrder() {
       }
     };
     
-    console.log('📦 Creating test order record with data:');
-    console.log(JSON.stringify(airtableData, null, 2));
-    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -72,11 +67,8 @@ async function createTestOrder() {
     }
     
     const data = await response.json();
-    console.log('✅ SUCCESS! Order created in Airtable with ID:', data.id);
-    console.log('✨ This proves your Airtable API key and field names are working correctly!');
     
     // Get the record to verify
-    console.log('\n📋 Fetching the record to verify it exists...');
     const getResponse = await fetch(`${url}/${data.id}`, {
       headers: {
         'Authorization': `Bearer ${AIRTABLE_API_KEY}`
@@ -89,9 +81,6 @@ async function createTestOrder() {
     }
     
     const record = await getResponse.json();
-    console.log('✅ Successfully verified the record exists!');
-    console.log('Record fields:');
-    console.log(JSON.stringify(record.fields, null, 2));
     
     return true;
   } catch (error) {

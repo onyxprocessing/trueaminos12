@@ -5,6 +5,12 @@
 
 import fetch from 'node-fetch';
 import { randomBytes } from 'crypto';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Define checkout data interface
 export interface CheckoutData {
@@ -62,6 +68,16 @@ const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY || 'patGluqUFquVBabLM.0bfa
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID || 'app3XDDBbU0ZZDBiY';
 const AIRTABLE_CARTS_TABLE = 'tblhjfzTX2zjf22s1'; // Table for abandoned carts
 
+// Always use absolute path for error log
+const AIRTABLE_ERROR_LOG = path.resolve(__dirname, '../airtable-error.log');
+
+// Test log entry on module load
+try {
+  fs.appendFileSync(AIRTABLE_ERROR_LOG, `[${new Date().toISOString()}] Airtable error log module loaded\n`);
+} catch (e) {
+  console.error('Failed to write to airtable-error.log:', e);
+}
+
 console.log('Airtable integration configured with:');
 console.log('AIRTABLE_API_KEY:', AIRTABLE_API_KEY ? 'Present (length: ' + AIRTABLE_API_KEY.length + ')' : 'Missing');
 console.log('AIRTABLE_BASE_ID:', AIRTABLE_BASE_ID ? 'Present (value: ' + AIRTABLE_BASE_ID + ')' : 'Missing');
@@ -82,10 +98,18 @@ export function generateCheckoutId(): string {
  * @returns The created checkout ID
  */
 export async function createCheckoutInAirtable(sessionId: string): Promise<string> {
+  function logAirtableError(msg: string) {
+    console.error(msg);
+    try {
+      fs.appendFileSync(AIRTABLE_ERROR_LOG, `[${new Date().toISOString()}] ${msg}\n`);
+    } catch (e) {
+      console.error('Failed to write to airtable-error.log:', e);
+    }
+  }
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-    console.error('Airtable credentials missing. Set AIRTABLE_API_KEY and AIRTABLE_BASE_ID');
-    console.error('AIRTABLE_API_KEY:', AIRTABLE_API_KEY ? 'Present (length: ' + AIRTABLE_API_KEY.length + ')' : 'Missing');
-    console.error('AIRTABLE_BASE_ID:', AIRTABLE_BASE_ID ? 'Present (value: ' + AIRTABLE_BASE_ID + ')' : 'Missing');
+    logAirtableError('Airtable credentials missing. Set AIRTABLE_API_KEY and AIRTABLE_BASE_ID');
+    logAirtableError('AIRTABLE_API_KEY:' + (AIRTABLE_API_KEY ? 'Present (length: ' + AIRTABLE_API_KEY.length + ')' : 'Missing'));
+    logAirtableError('AIRTABLE_BASE_ID:' + (AIRTABLE_BASE_ID ? 'Present (value: ' + AIRTABLE_BASE_ID + ')' : 'Missing'));
     return '';
   }
 
@@ -100,39 +124,58 @@ export async function createCheckoutInAirtable(sessionId: string): Promise<strin
     updatedAt: now
   };
 
+  const payload = {
+    fields: {
+      "checkoutid": checkoutData.checkoutId,
+      "session id": checkoutData.sessionId,
+      "status": checkoutData.status,
+      "createdat": checkoutData.createdAt,
+      "firstname": "",
+      "lastname": "",
+      "email": "",
+      "phone": ""
+    }
+  };
+  logAirtableError('Creating checkout in Airtable with payload: ' + JSON.stringify(payload, null, 2));
+
   try {
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_CARTS_TABLE}`;
+    logAirtableError('Airtable POST URL: ' + url);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${AIRTABLE_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        fields: {
-          // Use correct Airtable field names - lowercased and without spaces
-          "checkoutid": checkoutData.checkoutId,
-          "session id": checkoutData.sessionId,  // Correct field name with space
-          "status": checkoutData.status,
-          "createdat": checkoutData.createdAt,  // Removed space in field name
-          "firstname": "",
-          "lastname": "",
-          "email": "",
-          "phone": ""
-        }
-      })
+      body: JSON.stringify(payload)
     });
-
+    logAirtableError('Airtable response status: ' + response.status + ' ' + response.statusText);
     if (!response.ok) {
-      console.error('Failed to create checkout in Airtable:', await response.text());
+      const errorText = await response.text();
+      logAirtableError('--- Airtable Error Start ---');
+      if (errorText.length > 1000) {
+        for (let i = 0; i < errorText.length; i += 1000) {
+          logAirtableError(errorText.substring(i, i + 1000));
+        }
+      } else {
+        logAirtableError(errorText);
+      }
+      logAirtableError('Status code: ' + response.status);
+      logAirtableError('Status text: ' + response.statusText);
+      let headerLog = '';
+      response.headers.forEach((value, key) => {
+        headerLog += `${key}: ${value}\n`;
+      });
+      logAirtableError('Headers: ' + headerLog);
+      logAirtableError('--- Airtable Error End ---');
       return '';
     }
-
     const data = await response.json();
-    console.log('✅ Checkout created in Airtable:', checkoutId);
+    logAirtableError('✅ Checkout created in Airtable: ' + checkoutId);
+    logAirtableError('Airtable response data: ' + JSON.stringify(data, null, 2));
     return checkoutId;
-  } catch (error) {
-    console.error('Error creating checkout in Airtable:', error);
+  } catch (error: any) {
+    logAirtableError('Error creating checkout in Airtable (outer catch): ' + (error && error.stack ? error.stack : error));
     return '';
   }
 }
@@ -267,10 +310,25 @@ export async function updateCheckoutInAirtable(checkoutId: string, updateData: P
     });
 
     if (!updateResponse.ok) {
+      // Read the error as text and log it in chunks if it's long
       const errorText = await updateResponse.text();
-      console.error('Failed to update checkout in Airtable:', errorText);
+      console.error('--- Airtable Error Start ---');
+      if (errorText.length > 1000) {
+        for (let i = 0; i < errorText.length; i += 1000) {
+          console.error(errorText.substring(i, i + 1000));
+        }
+      } else {
+        console.error(errorText);
+      }
       console.error('Status code:', updateResponse.status);
       console.error('Status text:', updateResponse.statusText);
+      // Log headers using forEach for compatibility
+      let headerLog = '';
+      updateResponse.headers.forEach((value, key) => {
+        headerLog += `${key}: ${value}\n`;
+      });
+      console.error('Headers:', headerLog);
+      console.error('--- Airtable Error End ---');
       return false;
     }
     

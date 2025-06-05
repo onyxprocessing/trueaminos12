@@ -35,17 +35,17 @@ interface Request extends ExpressRequest {
   };
 }
 
-export async function initializeCheckout(req: Request): Promise<string> {
-  // Create a checkout ID if one doesn't exist
+export async function initializeCheckout(req: Request): Promise<string | null> {
+  console.error('--- initializeCheckout called ---');
+  console.error('Session ID:', req.session.id);
+  // Get the cart items and check if user actually has items before creating Airtable record
+  const cartItems = await storage.getCartItems(req.session.id);
+  console.error('Cart items:', JSON.stringify(cartItems, null, 2));
   if (!req.session.checkoutId) {
-    // Get the cart items and check if user actually has items before creating Airtable record
-    const cartItems = await storage.getCartItems(req.session.id);
-    
-    // Only create Airtable record if user has items in cart
     if (cartItems.length > 0) {
-      // Create initial checkout entry with cart information
+      console.error('Calling createCheckoutInAirtable...');
       const checkoutId = await createCheckoutInAirtable(req.session.id);
-      
+      console.error('createCheckoutInAirtable returned:', checkoutId);
       if (checkoutId) {
         // Update with cart items right away
         await updateCheckoutInAirtable(checkoutId, {
@@ -54,22 +54,20 @@ export async function initializeCheckout(req: Request): Promise<string> {
           status: 'started',
           updatedAt: new Date().toISOString()
         });
-        
         req.session.checkoutId = checkoutId;
         req.session.checkoutStep = 'started';
         await req.session.save();
         return checkoutId;
+      } else {
+        // Airtable record creation failed, do NOT set a TEMP id
+        return null;
       }
     } else {
-      // Generate a temporary checkout ID for session tracking without creating Airtable record
-      const tempCheckoutId = `TEMP-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-      req.session.checkoutId = tempCheckoutId;
-      req.session.checkoutStep = 'started';
-      await req.session.save();
-      return tempCheckoutId;
+      // Cart is empty, do NOT set a TEMP id
+      return null;
     }
   }
-  return req.session.checkoutId;
+  return req.session.checkoutId || null;
 }
 
 /**

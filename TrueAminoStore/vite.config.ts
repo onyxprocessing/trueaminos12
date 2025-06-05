@@ -1,14 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
-import { visualizer } from 'rollup-plugin-visualizer';
-import { createHtmlPlugin } from 'vite-plugin-html';
-import compression from 'vite-plugin-compression';
 
 // Define environment
 const isProd = process.env.NODE_ENV === "production";
-const isReplit = process.env.REPL_ID !== undefined;
 
 export default defineConfig({
   define: {
@@ -25,62 +20,8 @@ export default defineConfig({
           "@babel/plugin-transform-react-constant-elements",
           "@babel/plugin-transform-react-inline-elements"
         ] : []
-      },
-      // Fast refresh in development only
-      fastRefresh: !isProd
+      }
     }),
-    
-    // Development-specific plugins
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
-      ? [await import("@replit/vite-plugin-cartographer").then((m) => m.cartographer())]
-      : []
-    ),
-    
-    // Production-specific plugins
-    ...(isProd ? [
-      // Generate gzipped bundles for better delivery performance
-      compression({ 
-        algorithm: 'gzip',
-        ext: '.gz',
-        threshold: 1024, // Only compress files > 1kb
-        deleteOriginFile: false
-      }),
-      
-      // Generate brotli bundles for even better compression
-      compression({
-        algorithm: 'brotliCompress',
-        ext: '.br',
-        threshold: 1024,
-        deleteOriginFile: false
-      }),
-      
-      // Add preload directives to HTML for critical resources
-      createHtmlPlugin({
-        minify: {
-          collapseWhitespace: true,
-          removeComments: true,
-          removeRedundantAttributes: true,
-          removeScriptTypeAttributes: true,
-          removeStyleLinkTypeAttributes: true,
-          useShortDoctype: true,
-          minifyCSS: true,
-          minifyJS: true
-        },
-        inject: {
-          data: {
-            BUILD_TIMESTAMP: new Date().toISOString(),
-          }
-        }
-      }),
-      
-      // Enable bundle visualization in production builds
-      visualizer({
-        filename: '../dist/stats.html', 
-        open: false,
-        gzipSize: true
-      })
-    ] : [])
   ],
   
   // Configure path resolution
@@ -289,12 +230,6 @@ export default defineConfig({
       'clsx',
       'class-variance-authority',
       '@radix-ui/react-slot'
-    ],
-    // Force-included deps that might have dynamic imports
-    force: [
-      'react-helmet-async',
-      'lucide-react',
-      'wouter'
     ],
     // Exclude content-heavy packages from optimization
     exclude: [
