@@ -80,6 +80,12 @@ importers:
       postcss-preset-env:
         specifier: ^10.1.6
         version: 10.2.1(postcss@8.5.4)
+      react:
+        specifier: ^19.1.0
+        version: 19.1.0
+      react-dom:
+        specifier: ^19.1.0
+        version: 19.1.0(react@19.1.0)
       react-plaid-link:
         specifier: ^4.0.1
         version: 4.0.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
