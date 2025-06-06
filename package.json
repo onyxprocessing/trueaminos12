@@ -1,7 +1,7 @@
 {
   "name": "trueaminos",
   "version": "1.0.0",
-  "description": "True Aminos full-stack frontend built with Vite.",
+  "description": "True Aminos frontend built with Vite 4 for stable Vercel deployment.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -46,6 +46,6 @@
     "vite-plugin-html": "^3.2.2"
   },
   "devDependencies": {
-    "vite": "5.0.12"
+    "vite": "4.5.2"
   }
 }
