@@ -46,6 +46,9 @@
     "tsx": "^4.19.4",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-html": "^3.2.2"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
   }
 }
 
